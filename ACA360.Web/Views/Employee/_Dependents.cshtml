@@ -1,0 +1,68 @@
+﻿@model ACA360.Web.Models.EmployeeListViewModel
+<div id="section_dependents">
+    <div class="section-header border-bottom">
+        <h6 class="fw-bold mb-0">Dependents Info</h6>
+        <div class="card-header-actions" id="dep_actions">
+            <button type="button" class="btn btn-sm btn-outline-primary btn-edit" onclick="toggleSection('section_dependents', true)">Edit Dependents</button>
+            <div class="action-buttons d-none">
+                <button type="button" class="btn btn-sm btn-primary" onclick="addDynamicRow('dependent')"><i class="bx bx-plus"></i> Add New</button>
+                <button type="button" class="btn btn-sm btn-label-secondary" onclick="toggleSection('section_dependents', false)">Cancel</button>
+                <button type="button" class="btn btn-sm btn-success" onclick="saveGeneric('section_dependents', '/Employee/EmployeeDependentSave', 'CoveredIndividuals', event)">Save</button>
+            </div>
+        </div>
+    </div>
+    <div class="perfectscroller_dependents">
+        <div class="table-responsive">
+            <table class="table table-bordered text-center align-middle ui-table">
+                <thead>
+                    <tr>
+                        <th>First Name</th>
+                        <th>Middle</th>
+                        <th>Last Name</th>
+                        <th>Suffix</th>
+                        <th>SSN</th>
+                        <th>DOB</th>
+                        <th>Coverage Start Date</th>
+                        <th>Coverage End Date</th>
+                        <th style="width: 50px;" class="delete-btn d-none">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="container_dependent">
+                    @if (Model.SelectedEmployeeDetails?.CoveredIndividuals != null)
+                    {
+                        foreach (var item in Model.SelectedEmployeeDetails.CoveredIndividuals)
+                        {
+                            <tr class="dynamic-row">
+                                <input type="hidden" class="data-field" data-key="Id" value="@item.Id" />
+                                <input type="hidden" class="data-field" data-key="EmployeeCodeId" value="@item.EmployeeCodeId" />
+                                <td><input type="text" class="form-control form-control-sm data-field text-uppercase vw-8" data-key="FirstName" value="@item.FirstName" oninput="this.value=this.value.replace(/[^A-Za-z .'-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" maxlength="100" disabled></td>
+                                <td><input type="text" class="form-control form-control-sm data-field text-uppercase vw-8" data-key="MiddleName" value="@item.MiddleName" oninput="this.value=this.value.replace(/[^A-Za-z .'-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" maxlength="100" disabled></td>
+                                <td><input type="text" class="form-control form-control-sm data-field text-uppercase vw-8" data-key="LastName" value="@item.LastName" oninput="this.value=this.value.replace(/[^A-Za-z .'-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" maxlength="100" disabled></td>
+                                <td><input type="text" class="form-control form-control-sm data-field text-uppercase vw-8" data-key="Suffix" value="@item.Suffix" oninput="this.value=this.value.replace(/[^A-Za-z0-9.]/g,'').replace(/\.{2,}/g,'.')" maxlength="50" disabled></td>
+                                @if (CanViewSSNorEIN)
+                                {
+
+                                    <td><input type="text" class="form-control form-control-sm data-field mask-ssn vw-8" data-key="SSN" value="@item.SSN" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'').replace(/^(\d{3})(\d)/,'$1-$2').replace(/^(\d{3}-\d{2})(\d)/,'$1-$2')" disabled></td>
+                                }
+                                else
+                                {
+
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm mask-ssn vw-8" value="@DataMasker.MaskSSN(item.SSN)" disabled readonly>
+                                        <input type="hidden" class="data-field" data-key="SSN" value="@item.SSN" />
+
+                                    </td>
+                                }
+
+                                <td><input type="date" class="form-control form-control-sm data-field text-uppercase" data-key="Birthday" value="@(item.Birthday?.ToString("yyyy-MM-dd"))" onfocus="this.max=new Date().toISOString().split('T')[0]" disabled></td>
+                                <td><input type="date" class="form-control form-control-sm data-field text-uppercase start-date" data-key="CoverageStartDate" onchange="var end=this.closest('.dynamic-row').querySelector('.end-date');end.min=this.value;if(end.value&&end.value<this.value)end.value='';" value="@(item.CoverageStartDate?.ToString("yyyy-MM-dd"))" disabled></td>
+                                <td><input type="date" class="form-control form-control-sm data-field text-uppercase end-date" data-key="CoverageEndDate" value="@(item.CoverageEndDate?.ToString("yyyy-MM-dd"))" disabled></td>
+                                <td class="delete-btn d-none"><button class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="bx bx-x"></i></button></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

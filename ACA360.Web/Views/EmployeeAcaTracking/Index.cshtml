@@ -1,0 +1,1255 @@
+﻿@model ACA360.Core.Models.AcaTrackingViewModel
+
+
+
+@{
+    ViewData["Title"] = "ACA Tracking";
+    int selectedYear = ViewBag.SelectedYear;
+    int selectedMonths = ViewBag.TrendMonths != null ? (int)ViewBag.TrendMonths : 6;
+}
+
+
+
+<form id="antiForgeryForm">@Html.AntiForgeryToken()</form>
+
+
+
+<style>
+
+    /* ==========================================================
+               ACA Tracking - styles scoped to this page only (#acaTrackingRoot)
+               Palette + spacing taken directly from the approved mockup.
+               ========================================================== */
+       #acaTrackingRoot, #acaTrackingRoot * {
+               box-sizing: border-box;
+
+    }
+
+
+
+       #acaTrackingRoot {
+               --atk-ink: #0f172a;
+               --atk-body: #475569;
+               --atk-muted: #64748b;
+               --atk-border: #e5e9f0;
+               --atk-line: #f1f3f7;
+               --atk-blue: #2563eb;
+               --atk-green: #16a34a;
+               --atk-green-fill: #22c55e;
+               --atk-orange: #e08c12;
+               --atk-orange-fill: #f59e0b;
+               --atk-purple: #7c3aed;
+               --atk-purple-fill: #8b5cf6;
+               font-family: 'Inter','Public Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+               color: var(--atk-ink);
+               -webkit-font-smoothing: antialiased;
+
+    }
+
+
+
+
+    /* ---------- page header ---------- */
+       .atk-page-title {
+               font-size: 1.75rem;
+               font-weight: 700;
+               letter-spacing: -.02em;
+               margin: 0 0 .25rem;
+               color: var(--atk-ink);
+
+    }
+
+
+
+       .atk-page-sub {
+               font-size: .9rem;
+               color: var(--atk-muted);
+               margin: 0;
+
+    }
+
+
+
+       .atk-year-label {
+               font-size: .85rem;
+               color: var(--atk-body);
+               white-space: nowrap;
+
+    }
+
+
+
+       .atk-select {
+               border: 1px solid var(--atk-border);
+               border-radius: 8px;
+               font-size: .875rem;
+               color: var(--atk-ink);
+               padding: .45rem 2rem .45rem .75rem;
+               background-color: #fff;
+
+    }
+
+
+
+       .atk-btn-export {
+               border: 1px solid var(--atk-blue);
+               color: var(--atk-blue);
+               background: #fff;
+               border-radius: 8px;
+               font-size: .875rem;
+               font-weight: 500;
+               padding: .45rem 1rem;
+               display: inline-flex;
+               align-items: center;
+               gap: 6px;
+               transition: background-color .15s ease;
+
+    }
+
+
+
+           .atk-btn-export:hover {
+                   background: #eff6ff;
+                   color: var(--atk-blue);
+
+    }
+
+
+
+
+    /* ---------- summary cards ---------- */
+       .atk-summary-card {
+               border: 1px solid var(--atk-border);
+               border-radius: 14px;
+               padding: 1.15rem 1.25rem;
+               height: 100%;
+               display: flex;
+               justify-content: space-between;
+               align-items: flex-start;
+               gap: .75rem;
+
+    }
+
+
+
+       .atk-card-total {
+               background: linear-gradient(180deg,#fbfcfe 0%,#f3f7fd 100%);
+               border-color: #e4ebf6;
+
+    }
+
+
+
+       .atk-card-electronic {
+               background: #f0fdf4;
+               border-color: #d8f2e1;
+
+    }
+
+
+
+       .atk-card-paper {
+               background: #fffaef;
+               border-color: #fbeac6;
+
+    }
+
+
+
+       .atk-card-nopref {
+               background: #f7f5ff;
+               border-color: #e8e2fb;
+
+    }
+
+
+
+       .atk-summary-icon {
+               width: 44px;
+               height: 44px;
+               border-radius: 50%;
+               display: flex;
+               align-items: center;
+               justify-content: center;
+               font-size: 1.3rem;
+               flex-shrink: 0;
+
+    }
+
+
+
+       .atk-icon-total {
+               background: #e1eaff;
+               color: #3b82f6;
+
+    }
+
+
+
+       .atk-icon-electronic {
+               background: #d7f5e3;
+               color: var(--atk-green);
+
+    }
+
+
+
+       .atk-icon-paper {
+               background: #fde9c4;
+               color: var(--atk-orange-fill);
+
+    }
+
+
+
+       .atk-icon-nopref {
+               background: #e7e0fd;
+               color: var(--atk-purple);
+
+    }
+
+
+
+       .atk-metric-label {
+               font-size: .875rem;
+               font-weight: 500;
+               color: var(--atk-body);
+               margin-bottom: .45rem;
+               display: flex;
+               align-items: center;
+               gap: 5px;
+
+    }
+
+
+
+       .atk-metric-value {
+               font-size: 2rem;
+               font-weight: 700;
+               line-height: 1.05;
+               letter-spacing: -.02em;
+
+    }
+
+
+
+       .atk-metric-sub {
+               font-size: .78rem;
+               color: var(--atk-muted);
+               margin-top: .4rem;
+
+    }
+
+
+
+       .atk-val-green {
+               color: var(--atk-green);
+
+    }
+
+
+
+       .atk-val-orange {
+               color: var(--atk-orange);
+
+    }
+
+
+
+       .atk-val-purple {
+               color: var(--atk-purple);
+
+    }
+
+
+
+
+    /* ---------- panels ---------- */
+       .atk-panel {
+               background: #fff;
+               border: 1px solid var(--atk-border);
+               border-radius: 14px;
+               padding: 1.15rem 1.25rem;
+
+    }
+
+
+
+       .atk-panel-title {
+               font-size: 1rem;
+               font-weight: 600;
+               color: var(--atk-ink);
+               display: flex;
+               align-items: center;
+               gap: 6px;
+               margin: 0 0 1rem;
+
+    }
+
+
+
+       .atk-info {
+               font-size: .95rem;
+               color: #b0b8c4;
+               cursor: help;
+
+    }
+
+
+
+       .atk-link {
+               font-size: .82rem;
+               font-weight: 500;
+               color: var(--atk-blue);
+               text-decoration: none;
+               display: inline-flex;
+               align-items: center;
+               gap: 3px;
+
+    }
+
+
+
+           .atk-link:hover {
+                   color: #1d4ed8;
+                   text-decoration: none;
+
+    }
+
+
+
+
+    /* ---------- donut legend ---------- */
+       .atk-legend {
+               list-style: none;
+               margin: 0;
+               padding: 0;
+
+    }
+
+
+
+           .atk-legend li {
+                   margin-bottom: .8rem;
+
+    }
+
+
+
+       .atk-legend-label {
+               display: flex;
+               align-items: center;
+               gap: 8px;
+               font-size: .84rem;
+               color: var(--atk-body);
+               line-height: 1.3;
+
+    }
+
+
+
+       .atk-legend-value {
+               font-size: .88rem;
+               font-weight: 600;
+               color: var(--atk-ink);
+               margin-left: 17px;
+               margin-top: 2px;
+
+    }
+
+
+
+       .atk-legend-dot {
+               width: 9px;
+               height: 9px;
+               border-radius: 50%;
+               flex-shrink: 0;
+
+    }
+
+
+
+       .atk-legend-total {
+               display: flex;
+               justify-content: space-between;
+               align-items: center;
+               border-top: 1px solid var(--atk-line);
+               padding-top: .7rem;
+               margin-top: .2rem;
+               font-size: .88rem;
+
+    }
+
+
+
+           .atk-legend-total .lbl {
+                   color: var(--atk-body);
+
+    }
+
+
+
+           .atk-legend-total .val {
+                   font-weight: 700;
+
+    }
+
+
+
+
+    /* ---------- recent activity ---------- */
+       .atk-activity-item {
+               display: flex;
+               gap: 10px;
+               align-items: flex-start;
+               padding: .7rem 0;
+               border-bottom: 1px solid var(--atk-line);
+
+    }
+
+
+
+           .atk-activity-item:first-child {
+                   padding-top: 0;
+
+    }
+
+
+
+           .atk-activity-item:last-child {
+                   border-bottom: none;
+                   padding-bottom: 0;
+
+    }
+
+
+
+       .atk-activity-icon {
+               width: 32px;
+               height: 32px;
+               border-radius: 50%;
+               display: flex;
+               align-items: center;
+               justify-content: center;
+               font-size: 1rem;
+               flex-shrink: 0;
+
+    }
+
+
+
+           .atk-activity-icon.ok {
+                   background: #dcfce7;
+                   color: var(--atk-green);
+
+    }
+
+
+
+           .atk-activity-icon.warn {
+                   background: #fef3c7;
+                   color: #d97706;
+
+    }
+
+
+
+           .atk-activity-icon.neutral {
+                   background: #ede9fe;
+                   color: var(--atk-purple);
+
+    }
+
+
+
+       .atk-activity-name {
+               font-size: .85rem;
+               font-weight: 600;
+               line-height: 1.3;
+
+    }
+
+
+
+       .atk-activity-text {
+               font-size: .78rem;
+               color: var(--atk-muted);
+               line-height: 1.35;
+
+    }
+
+
+
+       .atk-activity-date {
+               font-size: .73rem;
+               color: var(--atk-muted);
+               text-align: right;
+               white-space: nowrap;
+               line-height: 1.4;
+               flex-shrink: 0;
+
+    }
+
+
+
+       .atk-empty {
+               font-size: .82rem;
+               color: var(--atk-muted);
+               padding: 1.25rem 0;
+               text-align: center;
+
+    }
+
+
+
+
+    /* ---------- reminders ---------- */
+       .atk-reminder-box {
+               background: #eff6ff;
+               border-radius: 10px;
+               padding: .9rem;
+               display: flex;
+               gap: 10px;
+               font-size: .81rem;
+               line-height: 1.55;
+               color: #334155;
+
+    }
+
+
+
+
+    /* ---------- quick actions ---------- */
+       .atk-section-title {
+               font-size: 1rem;
+               font-weight: 600;
+               margin: 0 0 .75rem;
+
+    }
+
+
+
+       .atk-quick-action {
+               display: flex;
+               align-items: center;
+               gap: 12px;
+               width: 100%;
+               background: #fff;
+               border: 1px solid var(--atk-border);
+               border-radius: 12px;
+               padding: .8rem 1rem;
+               margin-bottom: .6rem;
+               text-align: left;
+               text-decoration: none;
+               color: inherit;
+               transition: border-color .15s ease, box-shadow .15s ease;
+
+    }
+
+
+
+           .atk-quick-action:last-child {
+                   margin-bottom: 0;
+
+    }
+
+
+
+           .atk-quick-action:hover {
+                   border-color: #c5d8fb;
+                   box-shadow: 0 2px 8px rgba(15,23,42,.06);
+                   color: inherit;
+
+    }
+
+
+
+       .atk-qa-icon {
+               width: 34px;
+               height: 34px;
+               border-radius: 9px;
+               background: #eaf1ff;
+               color: var(--atk-blue);
+               display: flex;
+               align-items: center;
+               justify-content: center;
+               font-size: 1.05rem;
+               flex-shrink: 0;
+
+    }
+
+
+
+       .atk-qa-title {
+               font-size: .85rem;
+               font-weight: 600;
+               line-height: 1.3;
+
+    }
+
+
+
+       .atk-qa-sub {
+               font-size: .76rem;
+               color: var(--atk-muted);
+               line-height: 1.35;
+
+    }
+
+
+
+
+    /* ---------- location table ---------- */
+       .atk-table {
+               width: 100%;
+               margin: 0;
+               border-collapse: collapse;
+
+    }
+
+
+
+           .atk-table thead th {
+                   font-size: .74rem;
+                   font-weight: 600;
+                   color: var(--atk-muted);
+                   background: #f8fafc;
+                   padding: .7rem .75rem;
+                   border-bottom: 1px solid var(--atk-border);
+                   white-space: nowrap;
+
+    }
+
+
+
+               .atk-table thead th:first-child {
+                       border-top-left-radius: 8px;
+
+    }
+
+
+
+               .atk-table thead th:last-child {
+                       border-top-right-radius: 8px;
+
+    }
+
+
+
+           .atk-table tbody td {
+                   font-size: .84rem;
+                   padding: .8rem .75rem;
+                   border-bottom: 1px solid var(--atk-line);
+                   vertical-align: middle;
+                   color: var(--atk-ink);
+
+    }
+
+
+
+           .atk-table tbody tr:last-child td {
+                   border-bottom: none;
+
+    }
+
+
+
+           .atk-table tbody tr:hover {
+                   background: #fafbfd;
+
+    }
+
+
+
+       .atk-loc-name {
+               font-weight: 600;
+
+    }
+
+
+
+       .atk-progress {
+               height: 6px;
+               width: 62px;
+               border-radius: 99px;
+               background: #eef1f5;
+               overflow: hidden;
+               flex-shrink: 0;
+
+    }
+
+
+
+       .atk-progress-bar {
+               height: 100%;
+               background: var(--atk-green-fill);
+               border-radius: 99px;
+
+    }
+
+
+
+       .atk-chevron {
+               color: #cbd5e1;
+               font-size: 1.1rem;
+
+    }
+</style>
+
+
+
+<div id="acaTrackingRoot" style="padding-bottom: 2rem;">
+
+
+
+    <!-- ============ Page header ============ -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h4 class="atk-page-title">ACA Tracking</h4>
+            <p class="atk-page-sub">Track employee consent for electronic delivery of ACA forms.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="atk-year-label">Tax Year</span>
+            <select id="yearFilter" class="atk-select form-select" style="width:120px;">
+                @for (int y = DateTime.Now.Year + 1; y >= DateTime.Now.Year - 3; y--)
+                {
+                    if (y == selectedYear)
+                    {
+                        <option value="@y" selected>@y</option>
+                    }
+                    else
+                    {
+                        <option value="@y">@y</option>
+                    }
+                }
+            </select>
+            <button type="button" class="atk-btn-export" onclick="downloadReport()">
+                <i class="bx bx-download"></i> Export Report
+            </button>
+        </div>
+    </div>
+
+
+
+    <!-- ============ Summary cards ============ -->
+    <div class="row g-3 mb-3">
+        <div class="col-lg-3 col-md-6">
+            <div class="atk-summary-card atk-card-total">
+                <div>
+                    <div class="atk-metric-label">
+                        Total Employees <i class="bx bx-info-circle atk-info" title="All active employees for this employer"></i>
+                    </div>
+                    <div class="atk-metric-value">@Model.TotalEmployees.ToString("N0")</div>
+                    <div class="atk-metric-sub">100% of workforce</div>
+                </div>
+                <div class="atk-summary-icon atk-icon-total"><i class="bx bx-group"></i></div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="atk-summary-card atk-card-electronic">
+                <div>
+                    <div class="atk-metric-label">
+                        Consented to Electronic <i class="bx bx-info-circle atk-info" title="Employees who agreed to receive forms electronically"></i>
+                    </div>
+                    <div class="atk-metric-value atk-val-green">@Model.ElectronicCount.ToString("N0")</div>
+                    <div class="atk-metric-sub">@Model.ElectronicPercent% of workforce</div>
+                </div>
+                <div class="atk-summary-icon atk-icon-electronic"><i class="bx bx-check-circle"></i></div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="atk-summary-card atk-card-paper">
+                <div>
+                    <div class="atk-metric-label">
+                        Paper Delivery <i class="bx bx-info-circle atk-info" title="Employees who receive printed forms by mail"></i>
+                    </div>
+                    <div class="atk-metric-value atk-val-orange">@Model.PaperCount.ToString("N0")</div>
+                    <div class="atk-metric-sub">@Model.PaperPercent% of workforce</div>
+                </div>
+                <div class="atk-summary-icon atk-icon-paper"><i class="bx bx-envelope"></i></div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="atk-summary-card atk-card-nopref">
+                <div>
+                    <div class="atk-metric-label">
+                        No Preference Set <i class="bx bx-info-circle atk-info" title="Employees who have not chosen a delivery method yet"></i>
+                    </div>
+                    <div class="atk-metric-value atk-val-purple">@Model.NoPreferenceCount.ToString("N0")</div>
+                    <div class="atk-metric-sub">@Model.NoPreferencePercent% of workforce</div>
+                </div>
+                <div class="atk-summary-icon atk-icon-nopref"><i class="bx bx-user-x"></i></div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- ============ Row 2 : Donut | Trend | Recent activity ============ -->
+    <div class="row g-3 mb-3">
+
+
+
+        <!-- Consent Status Overview -->
+        <div class="col-lg-4 col-md-6">
+            <div class="atk-panel h-100 d-flex flex-column">
+                <div class="atk-panel-title">
+                    Consent Status Overview <i class="bx bx-info-circle atk-info" title="Breakdown of delivery preferences"></i>
+                </div>
+                <div class="d-flex align-items-center gap-3 flex-grow-1">
+                    <div style="position:relative;width:170px;height:170px;flex-shrink:0;">
+                        <canvas id="consentDonutChart"></canvas>
+                    </div>
+                    <ul class="atk-legend flex-grow-1">
+                        <li>
+                            <span class="atk-legend-label"><span class="atk-legend-dot" style="background:#22c55e"></span>Consented to Electronic</span>
+                            <div class="atk-legend-value">@Model.ElectronicCount.ToString("N0") (@Model.ElectronicPercent%)</div>
+                        </li>
+                        <li>
+                            <span class="atk-legend-label"><span class="atk-legend-dot" style="background:#f59e0b"></span>Paper Delivery</span>
+                            <div class="atk-legend-value">@Model.PaperCount.ToString("N0") (@Model.PaperPercent%)</div>
+                        </li>
+                        <li>
+                            <span class="atk-legend-label"><span class="atk-legend-dot" style="background:#8b5cf6"></span>No Preference Set</span>
+                            <div class="atk-legend-value">@Model.NoPreferenceCount.ToString("N0") (@Model.NoPreferencePercent%)</div>
+                        </li>
+                        <li class="atk-legend-total">
+                            <span class="lbl">Total</span>
+                            <span class="val">@Model.TotalEmployees.ToString("N0")</span>
+                        </li>
+                    </ul>
+                </div>
+                <a href="#locationTable" class="atk-link mt-3">View detailed breakdown <i class="bx bx-chevron-right"></i></a>
+            </div>
+        </div>
+
+
+
+        <!-- Consent Trend -->
+        <div class="col-lg-4 col-md-6">
+            <div class="atk-panel h-100 d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="atk-panel-title mb-0">
+                        Consent Trend <i class="bx bx-info-circle atk-info" title="Cumulative electronic consents over time"></i>
+                    </div>
+                    <select id="trendMonths" class="atk-select form-select" style="width:135px;padding-top:.3rem;padding-bottom:.3rem;font-size:.8rem;">
+                        <option value="3" selected="@(selectedMonths == 3)">Last 3 Months</option>
+                        <option value="6" selected="@(selectedMonths == 6)">Last 6 Months</option>
+                        <option value="12" selected="@(selectedMonths == 12)">Last 12 Months</option>
+                    </select>
+                </div>
+                <div class="flex-grow-1" style="position:relative;min-height:200px;">
+                    <canvas id="consentTrendChart"></canvas>
+                </div>
+                <a href="#locationTable" class="atk-link mt-3">View trend report <i class="bx bx-chevron-right"></i></a>
+            </div>
+        </div>
+
+
+
+        <!-- Recent Consent Activity -->
+        <div class="col-lg-4">
+            <div class="atk-panel h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="atk-panel-title mb-0">
+                        Recent Consent Activity <i class="bx bx-info-circle atk-info" title="Latest consent events across your workforce"></i>
+                    </div>
+                    <a href="/Employees" class="atk-link">View all</a>
+                </div>
+
+
+
+                @if (Model.RecentActivity != null && Model.RecentActivity.Any())
+                {
+                    foreach (var act in Model.RecentActivity)
+                    {
+                        var toneClass = act.EventType == "Consent Provided" ? "ok"
+                        : act.EventType == "Consent Withdrawn" ? "warn"
+                        : "neutral";
+                        var iconClass = act.EventType == "Consent Provided" ? "bx-check"
+                        : act.EventType == "Consent Withdrawn" ? "bx-envelope"
+                        : act.EventType == "Disclosure Viewed" ? "bx-show"
+                        : "bx-user";
+                        <div class="atk-activity-item">
+                            <div class="atk-activity-icon @toneClass"><i class="bx @iconClass"></i></div>
+                            <div class="flex-grow-1">
+                                <div class="atk-activity-name">@act.EmployeeName</div>
+                                <div class="atk-activity-text">@act.DisplayText</div>
+                            </div>
+                            <div class="atk-activity-date">
+                                <div>@(act.ActionDate?.ToString("MMM d, yyyy") ?? "-")</div>
+                                <div>@(act.ActionDate?.ToString("h:mm tt") ?? "")</div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="atk-empty">No consent activity yet. Activity appears here once employees set a delivery preference.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- ============ Row 3 : Location table | Reminders + Quick actions ============ -->
+    <div class="row g-3">
+
+
+
+        <div class="col-lg-8">
+            <div class="atk-panel h-100 d-flex flex-column" id="locationTable">
+                <div class="atk-panel-title">
+                    Consent by Work Location <i class="bx bx-info-circle atk-info" title="Consent rate grouped by employee work state"></i>
+                </div>
+                <div class="table-responsive flex-grow-1">
+                    <table class="atk-table">
+                        <thead>
+                            <tr>
+                                <th class="text-start">Work Location</th>
+                                <th class="text-start">Total Employees</th>
+                                <th class="text-start">Consented Electronic</th>
+                                <th class="text-start">Paper Delivery</th>
+                                <th class="text-start">No Preference</th>
+                                <th class="text-start">Consent Rate</th>
+                                <th style="width:36px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.LocationBreakdown != null && Model.LocationBreakdown.Any())
+                            {
+                                foreach (var loc in Model.LocationBreakdown)
+                                {
+                                    var elecPct = loc.TotalEmployees == 0 ? 0 : Math.Round(loc.ElectronicCount * 100.0 / loc.TotalEmployees, 1);
+                                    var paperPct = loc.TotalEmployees == 0 ? 0 : Math.Round(loc.PaperCount * 100.0 / loc.TotalEmployees, 1);
+                                    var noPrefPct = loc.TotalEmployees == 0 ? 0 : Math.Round(loc.NoPreferenceCount * 100.0 / loc.TotalEmployees, 1);
+                                    <tr>
+                                        <td class="atk-loc-name">@loc.WorkLocation</td>
+                                        <td>@loc.TotalEmployees.ToString("N0")</td>
+                                        <td class="atk-val-green">@loc.ElectronicCount.ToString("N0") (@elecPct%)</td>
+                                        <td class="atk-val-orange">@loc.PaperCount.ToString("N0") (@paperPct%)</td>
+                                        <td class="atk-val-purple">@loc.NoPreferenceCount.ToString("N0") (@noPrefPct%)</td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="atk-progress">
+                                                    <div class="atk-progress-bar" style="width:@(loc.ConsentRate)%"></div>
+                                                </div>
+                                                <span style="font-size:.8rem;color:var(--atk-body);">@loc.ConsentRate%</span>
+                                            </div>
+                                        </td>
+                                        <td class="text-end"><i class="bx bx-chevron-right atk-chevron"></i></td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="7" class="atk-empty">No location data found for this tax year.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <a href="/Employees" class="atk-link mt-3">View all locations <i class="bx bx-chevron-right"></i></a>
+            </div>
+        </div>
+
+
+
+        <div class="col-lg-4">
+            <!-- Important Reminders -->
+            <div class="atk-panel mb-3">
+                <div class="atk-panel-title">
+                    Important Reminders <i class="bx bx-info-circle atk-info" title="IRS electronic delivery requirements"></i>
+                </div>
+                <div class="atk-reminder-box">
+                    <i class="bx bx-info-circle" style="font-size:1.15rem;color:var(--atk-blue);flex-shrink:0;"></i>
+                    <span>Employees must provide consent to receive ACA forms electronically. Consents are retained for at least 3 tax years.</span>
+                </div>
+                <a href="https://www.irs.gov/affordable-care-act" target="_blank" rel="noopener" class="atk-link mt-3">
+                    View compliance guidelines <i class="bx bx-link-external"></i>
+                </a>
+            </div>
+
+
+
+            <!-- Quick Actions -->
+            <div class="atk-section-title">Quick Actions</div>
+            <button type="button" class="atk-quick-action" onclick="sendConsentReminder()">
+                <span class="atk-qa-icon"><i class="bx bx-envelope"></i></span>
+                <span class="flex-grow-1">
+                    <span class="d-block atk-qa-title">Send Consent Reminder</span>
+                    <span class="d-block atk-qa-sub">Send a reminder to employees without a preference</span>
+                </span>
+                <i class="bx bx-chevron-right atk-chevron"></i>
+            </button>
+            <button type="button" class="atk-quick-action" onclick="downloadReport()">
+                <span class="atk-qa-icon"><i class="bx bx-file"></i></span>
+                <span class="flex-grow-1">
+                    <span class="d-block atk-qa-title">Download Consent Report</span>
+                    <span class="d-block atk-qa-sub">Export detailed consent status report</span>
+                </span>
+                <i class="bx bx-chevron-right atk-chevron"></i>
+            </button>
+            <button type="button" class="atk-quick-action" onclick="openEmployeeListModal()">
+                <span class="atk-qa-icon"><i class="bx bx-group"></i></span>
+                <span class="flex-grow-1">
+                    <span class="d-block atk-qa-title">View Employee List</span>
+                    <span class="d-block atk-qa-sub">See all employees and their consent status</span>
+                </span>
+                <i class="bx bx-chevron-right atk-chevron"></i>
+            </button>
+        </div>
+    </div>
+
+
+
+</div>
+
+
+
+
+
+<!--  NEW: Employee List Modal -->
+<div class="modal fade" id="employeeListModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bx bx-group me-2"></i>Employee Consent List</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="position:relative;">
+                <div id="employeeListLoader" class="text-center py-5" style="display:none;">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+                <div id="EmployeeListModalContainer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <script src="~/js/common-grid.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        (function () {
+            var FONT = "Inter, 'Public Sans', -apple-system, 'Segoe UI', Roboto, sans-serif";
+            if (window.Chart) {
+                Chart.defaults.font.family = FONT;
+                Chart.defaults.font.size = 11;
+                Chart.defaults.color = '#64748b';
+            }
+
+
+
+            // ---------- Donut with % labels drawn inside the arcs ----------
+            var donutLabels = {
+                id: 'donutLabels',
+                afterDatasetsDraw: function (chart) {
+                    var ctx = chart.ctx;
+                    var values = chart.data.datasets[0].data;
+                    var total = values.reduce(function (a, b) { return a + b; }, 0);
+                    if (!total) return;
+                    var meta = chart.getDatasetMeta(0);
+                    ctx.save();
+                    ctx.font = '600 11px ' + FONT;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    meta.data.forEach(function (arc, i) {
+                        var pct = values[i] * 100 / total;
+                        if (pct < 4) return;           // too small to fit a label
+                        var p = arc.getCenterPoint();
+                        ctx.fillText(pct.toFixed(1) + '%', p.x, p.y);
+                    });
+                    ctx.restore();
+                }
+            };
+
+
+
+            new Chart(document.getElementById('consentDonutChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Consented to Electronic', 'Paper Delivery', 'No Preference Set'],
+                    datasets: [{
+                        data: [@Model.ElectronicCount, @Model.PaperCount, @Model.NoPreferenceCount],
+                        backgroundColor: ['#22c55e', '#f59e0b', '#8b5cf6'],
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '62%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            padding: 10,
+                            cornerRadius: 8,
+                            displayColors: false
+                        }
+                    }
+                },
+                plugins: [donutLabels]
+            });
+
+
+
+            // ---------- Trend ----------
+        var trendLabels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Trend.Select(t => t.MonthLabel)));
+        var trendData   = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Trend.Select(t => t.ElectronicCount)));
+            var trendMax = Math.max.apply(null, trendData.concat([0]));
+
+
+
+            new Chart(document.getElementById('consentTrendChart'), {
+                type: 'line',
+                data: {
+                    labels: trendLabels,
+                    datasets: [{
+                        label: 'Electronic Consent',
+                        data: trendData,
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34,197,94,0.10)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#22c55e',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 1.5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { top: 6 } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            padding: 10,
+                            cornerRadius: 8,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: Math.max(4, Math.ceil(trendMax * 1.25)),
+                            ticks: { precision: 0, maxTicksLimit: 5, padding: 6 },
+                            grid: { color: '#f1f3f7', drawTicks: false },
+                            border: { display: false }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { padding: 6 },
+                            border: { color: '#e5e9f0' }
+                        }
+                    }
+                }
+            });
+
+
+
+            // ---------- Filters ----------
+            function reload() {
+                var year = document.getElementById('yearFilter').value;
+                var months = document.getElementById('trendMonths').value;
+                window.location.href = '/EmployeeAcaTracking/Index?year=' + year + '&months=' + months + '#locationTable';
+            }
+            document.getElementById('yearFilter').addEventListener('change', reload);
+            document.getElementById('trendMonths').addEventListener('change', reload);
+        })();
+
+
+
+
+
+        // Employee List Modal logic ⬇️⬇️⬇️
+        var employeeListModalEl = document.getElementById('employeeListModal');
+        var employeeListModal = new bootstrap.Modal(employeeListModalEl);
+        var acaEmployerId = '@ViewBag.EmployerId';
+
+
+
+        function openEmployeeListModal() {
+            var year = document.getElementById('yearFilter').value;
+            employeeListModal.show();
+
+
+
+            GridManager.init({
+                url: '@Url.Action("DistributionListPartial", "Distribution")?employerId=' + acaEmployerId + '&year=' + year + '&statusFilter=all',
+                container: '#EmployeeListModalContainer',
+                loadingContainer: '#employeeListLoader',
+                cookieName: 'view_mode_aca_employee_list',
+                state: {
+                    pageIndex: 1,
+                    pageSize: 10,
+                    search: '',
+                    sortColumn: 0,
+                    sortOrder: 'asc',
+                    viewMode: 'List'
+                },
+                onLoad: function () {
+                    var tooltipTriggerList = [].slice.call(document.querySelectorAll('#employeeListModal [data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.map(function (el) { return new bootstrap.Tooltip(el); });
+                }
+            });
+
+
+
+            GridManager.reload();
+        }
+
+
+
+        employeeListModalEl.addEventListener('hidden.bs.modal', function () {
+            document.getElementById('EmployeeListModalContainer').innerHTML = '';
+        });
+
+
+
+        function sendConsentReminder() {
+            var year = document.getElementById('yearFilter').value;
+            var token = document.querySelector('#antiForgeryForm input[name="__RequestVerificationToken"]').value;
+            fetch('/EmployeeAcaTracking/SendConsentReminder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'year=' + year + '&__RequestVerificationToken=' + encodeURIComponent(token)
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (res) { alert(res.message); })
+            .catch(function () { alert('Could not send reminders. Please try again.'); });
+        }
+
+
+
+                function downloadReport() {
+            var year = document.getElementById('yearFilter').value;
+            var url = '/EmployeeAcaTracking/DownloadConsentReport?year=' + year + '&format=excel';
+
+
+
+            var iframeName = 'downloadReportFrame_' + new Date().getTime();
+            var iframe = document.createElement('iframe');
+            iframe.name = iframeName;
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+            iframe.src = url;
+
+
+
+            // Cleanup after giving the download time to trigger
+            setTimeout(function () {
+                iframe.remove();
+            }, 5000);
+        }
+    </script>
+}

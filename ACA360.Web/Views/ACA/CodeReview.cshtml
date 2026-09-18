@@ -1,0 +1,1171 @@
+﻿@{
+    ViewData["Title"] = "Smart Code Review";
+}
+
+<style>
+    .code-cell {
+        min-width: 80px;
+        text-align: center;
+        padding: 8px !important;
+        border-right: 1px solid #eee;
+        transition: all 0.2s;
+        font-size: 0.75rem;
+        position: relative;
+    }
+
+        .code-cell:hover {
+            transform: scale(1.05);
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 6px;
+        }
+
+    /* The 3-Line Stack Design */
+    .code-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .line-14 {
+        font-weight: 800;
+        font-size: 0.85rem;
+    }
+
+    .line-15 {
+        color: #888;
+        font-size: 0.7rem;
+    }
+
+    .line-16 {
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: #555;
+    }
+
+    /* Status Colors */
+    .status-safe {
+        background-color: #e8fadf !important;
+        border-left: 3px solid #71dd37;
+    }
+
+    .status-risk {
+        background-color: #fff2f2 !important;
+        border-left: 3px solid #ff3e1d;
+    }
+
+    .status-neutral {
+        background-color: #f5f5f9 !important;
+        border-left: 3px solid #8592a3;
+    }
+
+    .emp-info-cell {
+        min-width: 200px;
+        font-weight: 500;
+        border-right: 2px solid #d9dee3 !important;
+    }
+
+    .ssn-sub {
+        font-size: 0.75rem;
+        color: #a1acb8;
+        display: block;
+    }
+
+    /* Hide the default ugly buttons and style our custom ones */
+    .dt-buttons {
+        display: none;
+    }
+
+    .audit-item {
+        border-left: 3px solid #d9dee3;
+        padding-left: 12px;
+        margin-bottom: 14px;
+    }
+
+    .audit-system {
+        border-color: #8592a3;
+    }
+
+    .audit-manual {
+        border-color: #696cff;
+    }
+
+    .audit-autofix {
+        border-color: #71dd37;
+    }
+
+    .audit-meta {
+        font-size: 0.75rem;
+        color: #8592a3;
+    }
+
+</style>
+<div class="row mb-4 g-3">
+    <div class="col-lg-3 col-md-6">
+        <div class="card h-100 border-start border-4 border-primary">
+            <div class="card-body px-4 py-3">
+                <small class="text-muted text-uppercase fw-bold">Total Employees</small>
+                <h3 class="mb-0 mt-1" id="statTotal">0</h3>
+                <small class="text-success fw-semibold">
+                    <i class="bx bx-up-arrow-alt"></i> Active
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="card h-100 border-start border-4 border-success">
+            <div class="card-body px-4 py-3">
+                <small class="text-muted text-uppercase fw-bold">Compliance Score</small>
+                <h3 class="mb-0 mt-1 text-success" id="statScore">0%</h3>
+                <div class="progress mt-2" style="height: 6px;">
+                    <div class="progress-bar bg-success" id="statProgress" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="card h-100 border-start border-4 border-danger">
+            <div class="card-body px-4 py-3">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <small class="text-muted text-uppercase fw-bold">At Risk Cases</small>
+                        <h3 class="mb-0 mt-1 text-danger" id="statRisk">0</h3>
+                    </div>
+                    <div class="avatar avatar-sm bg-label-danger rounded p-1">
+                        <i class="bx bx-error fs-4"></i>
+                    </div>
+                </div>
+                <small class="text-muted">Potential penalty exposure</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="card h-100 bg-label-secondary">
+            <div class="card-body px-4 py-3 d-flex flex-column justify-content-center gap-2">
+                <button class="btn btn-sm btn-white shadow-sm text-danger fw-bold text-start" onclick="filterGrid('risk')">
+                    <i class='bx bx-filter-alt me-2'></i> Show Risks Only
+                </button>
+                <button class="btn btn-sm btn-white shadow-sm text-primary fw-bold text-start" onclick="filterGrid('locked')">
+                    <i class='bx bx-lock-alt me-2'></i> Show Locked (Manual)
+                </button>
+                <button class="btn btn-sm btn-outline-secondary text-start" onclick="filterGrid('all')">
+                    <i class='bx bx-reset me-2'></i> Reset Filters
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card mb-3">
+    <div class="alert alert-info d-flex align-items-center mb-3">
+        <i class="bx bx-info-circle fs-4 me-2"></i>
+        <div>
+            <strong>How to use this page:</strong>
+            <ul class="mb-0 ps-3">
+                <li>
+                    <strong>Click anywhere on a row</strong> to manually edit and lock employee codes.
+                </li>
+                <li>
+                    <strong>Click the <i class="bx bx-info-circle text-danger"></i> icon</strong>
+                    to view penalty risk details and apply auto-fix.
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card-header border-bottom py-3 d-flex justify-content-between align-items-center position-sticky top-0 z-index-1">
+        <div class="d-flex align-items-center gap-3">
+            <div>
+                <h4 class="mb-1 text-primary fw-bold">@ViewBag.EmployerName</h4>
+                <span class="badge bg-label-secondary">Tax Year @ViewBag.Year</span>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <input type="text" id="customSearch" class="form-control form-control-sm" placeholder="Search Employee..." style="width: 200px;">
+
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="triggerExport('copy')">
+                    <i class='bx bx-copy'></i> Copy
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-success" onclick="triggerExport('excel')">
+                    <i class='bx bx-spreadsheet'></i> Excel
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="triggerExport('pdf')">
+                    <i class='bx bxs-file-pdf'></i> PDF
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="triggerExport('print')">
+                    <i class='bx bx-printer'></i> Print
+                </button>
+            </div>
+
+            <a href="javascript:void(0)" class="btn btn-sm btn-primary ms-2" onclick="history.back();">
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="table-responsive text-nowrap" style="height: 75vh;">
+            <table id="smartCodeTable" class="table table-hover mb-0 w-100">
+                <thead class="bg-light sticky-top" style="top: 0; z-index: 2;">
+                    <tr>
+                        <th class="ps-4" style="min-width: 200px;">Employee</th>
+                        <th>ALL</th>
+                        @foreach (var m in new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" })
+                        {
+                            <th class="text-center text-uppercase small text-muted" style="min-width: 80px;">@m</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+<div class="modal fade" id="editCodeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manual Override: <span id="modalEmpName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="alert alert-warning">
+                                <i class='bx bx-lock-alt'></i> Saving changes here will <strong>LOCK</strong> this record.
+                                Future automatic calculations will <strong>ignore</strong> this employee to preserve your edits.
+                            </div>
+                            <form id="editCodeForm" class="perfectscroller">
+                                <input type="hidden" id="editEmpId" name="EmployeeId" />
+                                <input type="hidden" name="FilingYear" value="@ViewBag.Year" />
+
+                                <div class="table-responsive">
+                                    <table class="table table-bordered text-center">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Line</th>
+                                                <th>Jan</th>
+                                                <th>Feb</th>
+                                                <th>Mar</th>
+                                                <th>Apr</th>
+                                                <th>May</th>
+                                                <th>Jun</th>
+                                                <th>Jul</th>
+                                                <th>Aug</th>
+                                                <th>Sep</th>
+                                                <th>Oct</th>
+                                                <th>Nov</th>
+                                                <th>Dec</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="fw-bold">14</td>
+                                                @foreach (var m in new[] { "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" })
+                                                {
+                                                    <td class="p-2">
+                                                        <select class="form-select form-select-sm text-center select2-aca" name="@(m)_COC" style="width: 100%;">
+                                                            <option value=""></option>
+                                                            @foreach (var code in ViewBag.Line14Codes)
+                                                            {
+                                                                <option value="@code">@code</option>
+                                                            }
+                                                        </select>
+                                                    </td>
+                                                }
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold">15</td>
+                                                @foreach (var m in new[] { "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" })
+                                                {
+                                                    <td class="p-2 align-middle" style="min-width: 100px;">
+                                                        <div class="input-group input-group-sm flex-nowrap">
+                                                            <span class="input-group-text bg-light px-2 text-muted">$</span>
+                                                            <input type="number" step="0.01" class="form-control text-center px-1" name="@(m)_LCMP" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';">
+                                                        </div>
+                                                    </td>
+
+                                                }
+
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold">16</td>
+                                                @foreach (var m in new[] { "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" })
+                                                {
+                                                    <td class="p-2">
+                                                        <select class="form-select form-select-sm text-center select2-aca" name="@(m)_SHC" style="width: 100%;">
+                                                            <option value=""></option>
+                                                            @foreach (var code in ViewBag.Line16Codes)
+                                                            {
+                                                                <option value="@code">@code</option>
+                                                            }
+                                                        </select>
+
+                                                    </td>
+                                                }
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold">Action</td>
+                                                @foreach (var m in new[] { "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC" })
+                                                {
+                                                    <th class="text-center align-middle" style="min-width: 95px;">
+                                                        <div class="d-flex justify-content-center gap-12">
+                                                            <i class='bx bx-chevrons-left cursor-pointer text-primary fs-5'
+                                                               onclick="propagateMonth('@m', 'left')"
+                                                               data-bs-toggle="tooltip" title="Apply all 3 lines to prior months"></i>
+
+                                                            <i class='bx bx-chevrons-right cursor-pointer text-primary fs-5'
+                                                               onclick="propagateMonth('@m', 'right')"
+                                                               data-bs-toggle="tooltip" title="Apply all 3 lines to future months"></i>
+                                                        </div>
+                                                    </th>
+                                                }
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-3">
+                <div class="form-check me-auto mx-4">
+                    <input type="checkbox" class="form-check-input" id="chk_auto_code" checked />
+                    <label class="form-check-label">Disable Automatic Coding</label>
+                </div>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveManualCodes()">Update Codes</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="riskDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bx bx-error-circle me-2"></i>
+                    ⚠ Penalty Risk Detail
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="mb-3 text-heading">
+                                <strong>Employee:</strong>
+                                <span id="riskEmpName"></span>
+                                <input type="hidden" id="riskEmpId" name="EmployeeId" />
+                            </div>
+
+                            <div class="alert alert-danger">
+                                <strong>IRS Rule Impacted:</strong>
+                                <div id="riskReason"></div>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="card border-danger h-100">
+                                        <div class="card-body">
+                                            <small class="text-muted">Estimated Annual Penalty :</small>
+                                            <h4 class="text-danger mt-1" id="riskPenalty">$0</h4>
+                                            <small class="text-muted">IRC §4980H(b)</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="card border-success h-100">
+                                        <div class="card-body">
+                                            <small class="text-muted">Recommended Fix</small>
+                                            <div class="fw-semibold mt-1" id="riskFix"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr />
+
+                            <div>
+                                <span class="text-heading">IRS 226J Defense Language:</span>
+                                <div class="bg-light p-3 rounded mt-2 small text-heading" id="riskDefense"></div>
+                            </div>
+                            <hr />
+
+                            <div>
+                                <span class="text-heading">Risk Months:</span>
+                                <div class="d-flex flex-wrap gap-1 mt-1" id="riskMonthList">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+           
+            <div class="modal-footer py-3">
+                <div class="form-check me-auto mx-4">
+                    <input type="checkbox" class="form-check-input" id="chk_auto_code" checked />
+                    <label class="form-check-label">Disable Automatic Coding</label>
+                </div>
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Close
+                </button>
+
+                @*  <button class="btn btn-warning" onclick="openManualEditFromRisk()">
+                    ✏ Manual Override
+                </button> *@
+
+                <button class="btn btn-success" id="fixNowBtn">
+                    ⚡ Auto-Fix (Safe Harbor)
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="auditTimelineModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+
+                    Audit History
+                </h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="card">
+                       <div class="card-body" id="auditTimelineBody">
+                         <!-- Timeline injected here -->
+                       </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+    <script>
+        var dataTable;
+        // Global storage for raw data to fix filtering issues
+        var rawGridData = [];
+        const MONTH_KEYS = [
+            { label: "Jan", key: "jaN" },
+            { label: "Feb", key: "feB" },
+            { label: "Mar", key: "maR" },
+            { label: "Apr", key: "apR" },
+            { label: "May", key: "maY" },
+            { label: "Jun", key: "juN" },
+            { label: "Jul", key: "juL" },
+            { label: "Aug", key: "auG" },
+            { label: "Sep", key: "seP" },
+            { label: "Oct", key: "ocT" },
+            { label: "Nov", key: "noV" },
+            { label: "Dec", key: "deC" }
+        ];
+
+        $(document).ready(function() {
+            dataTable = $('#smartCodeTable').DataTable({
+            ajax: {
+            url: '@Url.Action("GetCodeReviewData", "ACA")',
+            data: { employerId: @ViewBag.EmployerId, year: @ViewBag.Year },
+            dataSrc: function(json) {
+
+                const normalize = (val) => (val === null || val === undefined) ? '' : String(val).trim();
+
+                json.data.forEach(row => {
+                    let isSame = true;
+
+                    const firstCOC = normalize(row[`${MONTH_KEYS[0].key}_COC`]);
+                    const firstLCMP = normalize(row[`${MONTH_KEYS[0].key}_LCMP`]);
+                    const firstSHC = normalize(row[`${MONTH_KEYS[0].key}_SHC`]);
+
+                    for(let i = 1; i < MONTH_KEYS.length; i++) {
+                        const currentCOC = normalize(row[`${MONTH_KEYS[i].key}_COC`]);
+                        const currentLCMP = normalize(row[`${MONTH_KEYS[i].key}_LCMP`]);
+                        const currentSHC = normalize(row[`${MONTH_KEYS[i].key}_SHC`]);
+
+                        if (currentCOC !== firstCOC || currentLCMP !== firstLCMP || currentSHC !== firstSHC) {
+                            isSame = false;
+                            break;
+                        }
+                    }
+
+                    // ----------------------------------------------------
+                    // 🚨 NEW LOGIC: EXCEPTION HANDLING FOR THE "ALL" COLUMN
+                    // ----------------------------------------------------
+
+                    // 1. If it is 1H and Line 15/16 are empty, DO NOT show 'ALL' (force show 12 months)
+                    if (isSame && firstCOC === '1H' && firstLCMP === '' && firstSHC === '') {
+                        isSame = false;
+                    }
+                    // 2. If the entire row is completely blank, DO NOT show 'ALL'
+                    else if (isSame && firstCOC === '' && firstLCMP === '' && firstSHC === '') {
+                        isSame = false;
+                    }
+
+                    // Assign the final decision to the row
+                    row.isAllSame = isSame;
+
+                    // Populate the ALL column data only if it passed the rules above
+                    if (isSame) {
+                        row.all_COC = firstCOC;
+                        row.all_LCMP = firstLCMP;
+                        row.all_SHC = firstSHC;
+                    }
+                });
+
+                rawGridData = json.data;
+                calculateStats(rawGridData);
+
+                return json.data;
+            }
+        },
+                dom: 'Brt<"row p-3"<"col-sm-6"i><"col-sm-6"p>>',
+                pageLength: 20,
+                ordering: false,
+
+                // Initialize Tooltips
+                        drawCallback: function () {
+            document
+                .querySelectorAll('[data-bs-toggle="tooltip"]')
+                .forEach(el => {
+                    if (!bootstrap.Tooltip.getInstance(el)) {
+                        new bootstrap.Tooltip(el);
+                    }
+                });
+        },
+
+                buttons: [
+                    { extend: 'copy', className: 'd-none' },
+                    {
+                        extend: 'excel',
+                        className: 'd-none',
+                        title: 'ACA_1095C_Codes_@ViewBag.EmployerName',
+                        exportOptions: {
+                            format: {
+                                body: function (data, row, column, node) {
+                                    if (column === 0) return $(node).text().replace('---', '').trim();
+                                    if (column > 0) return $(node).find('.code-stack').text().replace(/\s+/g, ' ').trim();
+                                    return data;
+                                }
+                            }
+                        }
+                    },
+                    { extend: 'pdf', className: 'd-none', orientation: 'landscape', pageSize: 'LEGAL' },
+                    { extend: 'print', className: 'd-none', autoPrint: true }
+                ],
+                                columns: [
+            {
+                data: null,
+                className: "emp-info-cell ps-4 align-middle",
+                render: function(d) {
+                    return `
+                        <div class="d-flex flex-column">
+                            <span class="text-heading fw-semibold">
+                                ${d.firstName} ${d.lastName}
+                                ${d.isLocked ? "<i class='bx bxs-lock-alt text-warning ms-1'></i>" : ""}
+                            </span>
+                            <span class="ssn-sub">${d.ssn || '---'}</span>
+                            <button
+                                class="btn btn-link btn-sm p-0 text-primary fw-semibold align-self-start"
+                                onclick="event.stopPropagation(); showAuditTimeline('${d.employeeId}')">
+                                <i class="bx bx-history me-1"></i> View Audit
+                            </button>
+                            ${renderPenaltySummary(d)}
+                        </div>`;
+                }
+            },
+            // ALL column: Show if isAllSame is TRUE, otherwise show empty
+            {
+                data: null,
+                render: (d) => d.isAllSame ? renderMonthCell(d.all_COC, d.all_LCMP, d.all_SHC, d) : renderEmpty()
+            },
+            // Month columns: Show if isAllSame is FALSE, otherwise show empty
+            { data: null, render: (d) => d.isAllSame ? renderEmpty() : renderMonthCell(d.jaN_COC, d.jaN_LCMP, d.jaN_SHC, d) },
+            { data: null, render: (d) => d.isAllSame ? renderEmpty() : renderMonthCell(d.feB_COC, d.feB_LCMP, d.feB_SHC, d) },
+            { data: null, render: (d) => d.isAllSame ? renderEmpty() : renderMonthCell(d.maR_COC, d.maR_LCMP, d.maR_SHC, d) },
+            { data: null, render: (d) => d.isAllSame ? renderEmpty() : renderMonthCell(d.apR_COC, d.apR_LCMP, d.apR_SHC, d) },
+            { data: null, render: (d) => d.isAllSame ? renderEmpty() : renderMonthCell(d.maY_COC, d.maY_LCMP, d.maY_SHC, d) },
+            { data: null, render: (d) => d.isAllSame ? renderEmpty() : renderMonthCell(d.juN_COC, d.juN_LCMP, d.juN_SHC, d) },
+            { data: null, render: (d) => d.isAllSame ? renderEmpty() : renderMonthCell(d.juL_COC, d.juL_LCMP, d.juL_SHC, d) },
+            { data: null, render: (d) => d.isAllSame ? renderEmpty() : renderMonthCell(d.auG_COC, d.auG_LCMP, d.auG_SHC, d) },
+            { data: null, render: (d) => d.isAllSame ? renderEmpty() : renderMonthCell(d.seP_COC, d.seP_LCMP, d.seP_SHC, d) },
+            { data: null, render: (d) => d.isAllSame ? renderEmpty() : renderMonthCell(d.ocT_COC, d.ocT_LCMP, d.ocT_SHC, d) },
+            { data: null, render: (d) => d.isAllSame ? renderEmpty() : renderMonthCell(d.noV_COC, d.noV_LCMP, d.noV_SHC, d) },
+            { data: null, render: (d) => d.isAllSame ? renderEmpty() : renderMonthCell(d.deC_COC, d.deC_LCMP, d.deC_SHC, d) }
+        ]
+            });
+
+            // Search Logic
+            $('#customSearch').on('keyup', function() {
+                dataTable.search(this.value).draw();
+            });
+
+            // Click Handler for Edit
+            $('#smartCodeTable tbody').on('click', 'tr', function () {
+                if ($(this).hasClass('child')) return;
+                var data = dataTable.row(this).data();
+                if (data) openEditModal(data);
+            });
+            // $('#smartCodeTable tbody').on('click', '.code-cell', function (e) {
+
+            //     // Stop row click (edit modal) ONLY for risk cells
+            //     var isRisk = $(this).data('risk');
+            //     if (!isRisk) return;
+
+            //     e.stopPropagation(); // 🔥 critical
+
+            //     var rowData = dataTable.row($(this).closest('tr')).data();
+            //     if (!rowData) return;
+
+            //     var c14 = $(this).data('code14');
+            //     var c16 = $(this).data('code16');
+
+            //     showRiskDetail(rowData, c14, c16);
+            // });
+        $('#smartCodeTable tbody').on('click', '.risk-icon', function (e) {
+            e.stopPropagation(); // prevent row edit
+
+            const rowData = dataTable.row($(this).closest('tr')).data();
+            if (!rowData) return;
+
+            const cell = $(this).closest('.code-cell');
+            const c14 = cell.find('.line-14').text().trim();
+            const c16 = cell.find('.line-16').text().trim();
+
+            showRiskDetail(rowData, c14, c16);
+        });
+
+
+
+           $('#editCodeModal').on('shown.bs.modal', function () {
+            $('.select2-aca').select2({
+                dropdownParent: $('#editCodeModal'), // Prevents z-index bugs in modals
+                placeholder: " ",
+                width: '100%' // Ensures it fills the table cell correctly
+            });
+           });
+
+        });
+       
+        $('#fixNowBtn').on('click', function () {
+
+            if (!confirm('Apply Federal Poverty Line (2G) safe harbor to all risk months?')) {
+                return;
+            }
+
+            const empId = $('#riskEmpId').val(); // already available from row click
+            const isLockedState = $('#chk_auto_code').is(':checked');
+            const token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '/ACA/ApplySafeHarbor',
+                type: 'POST',
+                headers: { "RequestVerificationToken": token },
+                data: {
+                    employeeId: empId,
+                    safeHarborCode: '2G',
+                    isLocked: isLockedState
+                },
+                success: function (res) {
+                    if (res.success) {
+                        $('#riskDetailModal').modal('hide');
+                        alert('Safe Harbor applied successfully.');
+                        dataTable.ajax.reload(null, false);
+                    } else {
+                        alert(res.message || 'Unable to apply safe harbor.');
+                    }
+                }
+            });
+        });
+
+        // Export Trigger
+        function triggerExport(type) {
+            dataTable.button(`.buttons-${type}`).trigger();
+        }
+
+        // ------------------------------------------
+        // CORE LOGIC FUNCTIONS
+        // ------------------------------------------
+
+        function getReasonText(c14, c16) {
+
+            // Normalize
+            c14 = c14 || '';
+            c16 = c16 || '';
+
+            /* ----------------------------
+               LINE 14 = NO OFFER (1H)
+            -----------------------------*/
+            if (c14 === '1H') {
+                if (c16 === '2A')
+                    return "Employee not employed during the month";
+
+                if (c16 === '2B')
+                    return "Part-time employee (not full-time for ACA)";
+
+                if (c16 === '2D')
+                    return "Waiting period / initial measurement period";
+
+                return "Full-time employee with no offer of coverage (Penalty Risk)";
+            }
+
+            /* ----------------------------
+               QUALIFYING OFFER
+            -----------------------------*/
+            if (c14 === '1A') {
+                return "Qualifying offer: Affordable minimum value coverage to employee, spouse & dependents";
+            }
+
+            /* ----------------------------
+               FULL FAMILY OFFER
+            -----------------------------*/
+            if (c14 === '1E') {
+                if (c16 === '2C')
+                    return "Employee enrolled in employer-sponsored coverage";
+
+                if (c16)
+                    return "Coverage offered to employee, spouse & dependents (Safe Harbor applied)";
+
+                return "Coverage offered to employee, spouse & dependents";
+            }
+
+            /* ----------------------------
+               PARTIAL OFFERS
+            -----------------------------*/
+            if (c14 === '1D')
+                return "Coverage offered to employee and spouse (no dependents)";
+
+            if (c14 === '1C')
+                return "Coverage offered to employee and dependents (no spouse)";
+
+            if (c14 === '1B')
+                return "Coverage offered to employee only";
+
+            /* ----------------------------
+               SAFE HARBOR EXPLANATIONS
+            -----------------------------*/
+            if (c16 === '2C')
+                return "Employee enrolled in coverage for the month";
+
+            if (c16 === '2F')
+                return "W-2 wages safe harbor applied";
+
+            if (c16 === '2G')
+                return "Federal Poverty Line safe harbor applied";
+
+            if (c16 === '2H')
+                return "Rate of Pay safe harbor applied";
+
+            /* ----------------------------
+               FALLBACK
+            -----------------------------*/
+            return "System calculated ACA compliance code";
+        }
+        function renderEmpty() {
+            return `<div class="code-cell status-neutral d-flex align-items-center justify-content-center">
+                        <span class="text-muted" style="opacity: 0.5;">-</span>
+                    </div>`;
+        }
+
+                function renderMonthCell(code14, premium, code16, row) {
+
+            code14 = code14 || '';
+            code16 = code16 || '';
+            if (!code14 && !code16) return renderEmpty();
+            const isRisk = (code14 === '1H' && (!code16 || code16 === ''));
+            const isLocked = row && (row.isLocked === true || row.isLocked === 1);
+
+            let cssClass = "status-neutral";
+            if (['1A','1E'].includes(code14)) cssClass = "status-safe";
+            else if (code16 === '2C') cssClass = "status-safe";
+            else if (isRisk) cssClass = "status-risk";
+
+            const reason = getReasonText(code14, code16);
+
+            // Safely parse the premium to avoid the .toFixed() TypeError
+            const parsedPremium = parseFloat(premium);
+            const isValidPremium = !isNaN(parsedPremium) && parsedPremium > 0;
+
+            const costDisplay =
+                (code14 !== '1A' && isValidPremium)
+                    ? `<span class="line-15">$${parsedPremium.toFixed(2)}</span>`
+                    : `<span class="line-15" style="opacity:0;">-</span>`;
+
+            /* 🔒 LOCK ICON (manual override) */
+            const lockIcon = isLocked
+                ? `<span class="cell-icon lock-icon"
+                          data-bs-toggle="tooltip"
+                          title="Manually overridden & locked">
+                       <i class="bx bxs-lock-alt text-warning"></i>
+                   </span>`
+                : '';
+
+            /* ⚠ RISK ICON (penalty exposure) */
+            const riskIcon = isRisk
+                ? `<span class="cell-icon risk-icon"
+                          data-action="risk"
+                          title="View compliance risk details">
+                       <i class="bx bx-error-circle text-danger"></i>
+                   </span>`
+                : '';
+
+            return `
+                <div class="code-cell ${cssClass}"
+                     data-bs-toggle="tooltip"
+                     data-bs-html="true"
+                     title="<b>${reason}</b><br>L14: ${code14 || '-'}<br>L16: ${code16 || '-'}">
+
+                    ${lockIcon}
+                    ${riskIcon}
+
+                    <div class="code-stack">
+                        <span class="line-14">${code14 || '-'}</span>
+                        ${costDisplay}
+                        <span class="line-16">${code16 || '-'}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+
+
+
+        // ------------------------------------------
+        // FIX FOR ISSUE 1: Analytics Logic
+        // ------------------------------------------
+        function calculateStats(data) {
+            if(!data) return;
+
+            var total = data.length;
+            var riskCount = 0;
+            var safeCount = 0;
+            var lockedCount = 0;
+
+            data.forEach(row => {
+                if (row.isLocked) lockedCount++;
+
+                var hasRisk = false;
+                var months = ["jaN", "feB", "maR", "apR", "maY", "juN", "juL", "auG", "seP", "ocT", "noV", "deC"];
+
+                months.forEach(m => {
+                    var c14 = row[m + "_COC"];
+                    var c16 = row[m + "_SHC"];
+                    // Risk Definition: 1H AND NOT (2A or 2B)
+                    if (c14 === '1H' && (!c16 || c16 === '')) {
+                        hasRisk = true;
+                    }
+                });
+
+                if (hasRisk) riskCount++;
+                else safeCount++;
+            });
+
+            // Update UI Elements
+            $('#statTotal').text(total);
+            $('#statRisk').text(riskCount);
+
+            var score = total > 0 ? Math.round((safeCount / total) * 100) : 0;
+            $('#statScore').text(score + "%");
+            $('#statProgress').css('width', score + "%");
+        }
+
+        // ------------------------------------------
+        // FIX FOR ISSUE 2: Smart Filter Functions
+        // ------------------------------------------
+        window.filterGrid = function(mode) {
+            // Reset any existing custom filters
+            $.fn.dataTable.ext.search = [];
+
+            if (mode === 'all') {
+                dataTable.search('').draw();
+                return;
+            }
+
+            // Add Custom Search Logic using RAW data lookup
+            $.fn.dataTable.ext.search.push(
+                function(settings, searchData, index, rowData, counter) {
+                    // 'index' matches the index in our 'rawGridData' array because we aren't using server-side processing (yet)
+                    // BUT to be safe, we access the data object associated with the row.
+                    var data = dataTable.row(index).data();
+
+                    if (!data) return false;
+
+                    if (mode === 'locked') {
+                        return data.isLocked === true || data.isLocked === 1;
+                    }
+
+                    if (mode === 'risk') {
+                        var hasRisk = false;
+                        var months = ["jaN", "feB", "maR", "apR", "maY", "juN", "juL", "auG", "seP", "ocT", "noV", "deC"];
+                        months.forEach(m => {
+                            var c14 = data[m + "_COC"];
+                            var c16 = data[m + "_SHC"];
+                            if (c14 === '1H' && c16 !== '2A' && c16 !== '2B') hasRisk = true;
+                        });
+                        return hasRisk;
+                    }
+                    return true;
+                }
+            );
+
+            dataTable.draw(); // Re-draw the grid with the filter applied
+        };
+
+        // ------------------------------------------
+        // MODAL & SAVE LOGIC
+        // ------------------------------------------
+        function openEditModal(data) {
+            $('#modalEmpName').text(data.firstName + ' ' + data.lastName);
+            $('#editEmpId').val(data.employeeId);
+
+            var months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+            months.forEach(m => {
+                var jsonPrefix = m.charAt(0).toLowerCase() + m.charAt(1).toLowerCase() + m.charAt(2).toUpperCase();
+               $(`select[name='${m}_COC']`).val(data[`${jsonPrefix}_COC`]).trigger('change');
+                $(`input[name='${m}_LCMP']`).val(data[`${jsonPrefix}_LCMP`]);
+               $(`select[name='${m}_SHC']`).val(data[`${jsonPrefix}_SHC`]).trigger('change');
+            });
+
+            $('#editCodeModal').modal('show');
+        }
+
+        function saveManualCodes() {
+            var isLocked = $('#chk_auto_code').is(':checked');
+            var formData = $('#editCodeForm').serialize() + '&IsLocked=' + isLocked;
+
+            $.ajax({
+                url: '@Url.Action("SaveManualCodes", "ACA")',
+                type: 'POST',
+                data: formData,
+                success: function(res) {
+                    if(res.success) {
+                        // 1. Hide the modal
+                        $('#editCodeModal').modal('hide');
+
+                        // 2. Show SweetAlert Success Message
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Locked & Saved',
+                            text: 'Monthly codes have been updated successfully.',
+                            timer: 2000, // Auto-closes after 2 seconds
+                            showConfirmButton: false
+                        });
+
+                        // 3. Reload the DataTable
+                        dataTable.ajax.reload(null, false);
+                    } else {
+                        // Show SweetAlert Error Message from server response
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Update Failed',
+                            text: res.message
+                        });
+                    }
+                },
+                error: function() {
+                    // Optional but recommended: Catch actual AJAX/Network failures
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Network Error',
+                        text: 'There was a problem communicating with the server.'
+                    });
+                }
+            });
+        }
+
+        function showRiskDetail(row, c14, c16) {
+            $('#riskEmpId').val(row.employeeId);
+            const MONTHS = [
+                    { label: "Jan", key: "jaN" },
+        { label: "Feb", key: "feB" },
+        { label: "Mar", key: "maR" },
+        { label: "Apr", key: "apR" },
+        { label: "May", key: "maY" },
+        { label: "Jun", key: "juN" },
+        { label: "Jul", key: "juL" },
+        { label: "Aug", key: "auG" },
+        { label: "Sep", key: "seP" },
+        { label: "Oct", key: "ocT" },
+        { label: "Nov", key: "noV" },
+        { label: "Dec", key: "deC" }
+            ];
+
+            let riskMonths = [];
+
+            MONTHS.forEach(m => {
+                const c14 = row[`${m.key}_COC`];
+                const c16 = row[`${m.key}_SHC`];
+                // IRS risk definition
+                if (c14 === '1H' && (!c16 || c16 === '')) {
+                    riskMonths.push(m.label);
+                }
+            });
+
+            const penaltyPerMonth = 360;
+            const totalPenalty = riskMonths.length * penaltyPerMonth;
+
+            // Populate modal
+            $('#riskEmpName').text(`${row.firstName} ${row.lastName}`);
+
+            $('#riskReason').html(`
+                Full-time employee was not offered coverage during the
+                following month(s), with no affordability safe harbor applied.
+            `);
+
+            $('#riskPenalty').text(`$${totalPenalty.toLocaleString()}`);
+
+            $('#riskFix').html(`
+                Offer affordable minimum value coverage or apply
+                a safe harbor (2G – Federal Poverty Line or 2H – Rate of Pay).
+            `);
+
+            $('#riskDefense').html(`
+                The employee was full-time and did not receive an offer of
+                minimum essential coverage for ${riskMonths.length} month(s).
+                No safe harbor protection applies under IRC §4980H(b).
+            `);
+
+            // 🔥 NEW: Month breakdown
+            $('#riskMonthList').html(
+                riskMonths.length
+                    ? riskMonths.map(m => `<span class="badge bg-danger">${m}</span>`).join('')
+                    : '<span class="badge bg-success">No risk months detected</span>'
+            );
+            // <div class="d-flex flex-wrap gap-1 mt-1">
+            //             ${penaltyMonths.map(m =>
+            //                 `<span class="badge bg-danger">${m}</span>`
+            //             ).join('')}
+            //         </div>
+            $('#riskDetailModal').modal('show');
+        }
+        function getPenaltyMonths(row) {
+            const months = [];
+
+            MONTH_KEYS.forEach(m => {
+                const c14 = row[m.key + "_COC"];
+                const c16 = row[m.key + "_SHC"];
+
+                // IRS Rule: 1H + NO Line 16 protection
+                if (c14 === '1H' && (!c16 || c16 === '')) {
+                    months.push(m.label);
+                }
+            });
+
+            return months;
+        }
+
+        function renderPenaltySummary(row) {
+            const penaltyMonths = getPenaltyMonths(row);
+
+            if (penaltyMonths.length === 0) {
+                return `<span class="badge bg-label-success">No penalty months</span>`;
+            }
+
+            const amount = penaltyMonths.length * 360; // 4980H(b) est.
+
+            return `
+                <div class="mt-1">
+                    <span class="badge bg-label-danger mb-1">
+                        ⚠ ${penaltyMonths.length} Penalty Month(s)
+                    </span>
+                    <div class="d-flex flex-wrap gap-1 mt-1">
+                        ${penaltyMonths.map(m =>
+                            `<span class="badge bg-danger">${m}</span>`
+                        ).join('')}
+                    </div>
+                    <div class="small text-danger fw-semibold mt-1">
+                        Annual Penalty: $${amount.toLocaleString()}
+                    </div>
+                </div>
+            `;
+        }
+
+        function showAuditTimeline(employeeId) {
+            $.get('@Url.Action("GetEmployeeAuditTimeline", "ACA")',
+                { employeeId: employeeId, year: @ViewBag.Year },
+                function (data) {
+
+                    let html = '';
+                    let currentMonth = '';
+
+                    data.forEach(a => {
+                        if (a.monthCode !== currentMonth) {
+                            currentMonth = a.monthCode;
+                            html += `<h6 class="mt-3">${currentMonth} ${@ViewBag.Year}</h6>`;
+                        }
+
+                        let cls = a.changeSource === 'MANUAL' ? 'text-warning' : a.changeSource === 'AUTOFIX' ? 'text-info' : 'text-success';
+
+                      html += `
+            <div class="audit-item mb-3 p-3 border rounded text-heading">
+                <strong class="${cls}"><i class="bx bx-check-circle me-1"></i>${a.changeSource}</strong><br>
+                <span class="text-muted">Line ${a.lineNumber}:</span> ${a.oldValue || '-'} <i class="bx bx-right-arrow-alt"></i> ${a.newValue || '-'}<br>
+                <span class="audit-meta small text-muted d-block mt-1">
+                    ${a.changeReason}<br>
+                    <i class="bx bx-user me-1"></i>${a.changedByUserName || 'System'} &middot;
+                    <i class="bx bx-time me-1"></i>${new Date(a.changedOn).toLocaleString()}
+                </span>
+            </div>`;
+                    });
+
+                    $('#auditTimelineBody').html(html);
+                    $('#auditTimelineModal').modal('show');
+                });
+        }
+
+                // --- MASTER PROPAGATION FUNCTION ---
+        function propagateMonth(startMonth, direction) {
+            var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+            var startIndex = months.indexOf(startMonth);
+
+            if (startIndex === -1) return;
+
+            // 1. Get the source values from the exact month the user clicked
+            var sourceCoc = $(`[name="${startMonth}_COC"]`).val();
+            var sourceLcmp = $(`[name="${startMonth}_LCMP"]`).val();
+            var sourceShc = $(`[name="${startMonth}_SHC"]`).val();
+
+            // 2. Clear the 'ALL' column fields since the months will now have fragmented values
+            $('#modal_ALL_COC').val('').trigger('change.select2');
+            $('#modal_ALL_LCMP').val('');
+            $('#modal_ALL_SHC').val('').trigger('change.select2');
+
+            // 3. Helper function to apply the source values to a target month
+            function applyToMonth(m) {
+                $(`[name="${m}_COC"]`).val(sourceCoc).trigger('change.select2');
+                $(`[name="${m}_LCMP"]`).val(sourceLcmp);
+                $(`[name="${m}_SHC"]`).val(sourceShc).trigger('change.select2');
+            }
+
+            // 4. Loop and apply based on direction
+            if (direction === 'left') {
+                // Apply to everything BEFORE and INCLUDING the current month
+                for (var i = 0; i <= startIndex; i++) {
+                    applyToMonth(months[i]);
+                }
+            } else if (direction === 'right') {
+                // Apply to everything AFTER and INCLUDING the current month
+                for (var i = startIndex; i < months.length; i++) {
+                    applyToMonth(months[i]);
+                }
+            }
+        }
+    </script>
+}

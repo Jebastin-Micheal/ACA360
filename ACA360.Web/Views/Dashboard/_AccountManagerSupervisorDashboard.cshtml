@@ -1,0 +1,188 @@
+@model ACA360.Core.Models.DashboardViewModel
+@{
+    var d = Model.SupervisorData ?? new ACA360.Core.Models.SupervisorDashboardData();
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="d-metric accent-danger">
+            <div class="d-metric-label">Past Due</div>
+            <div class="d-metric-value counter text-danger" data-target="@d.PastDueClients">@d.PastDueClients</div>
+            <div class="d-metric-sub">Clients at risk</div>
+            <i class='bx bx-alarm-exclamation d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="d-metric">
+            <div class="d-metric-label">Portfolio Size</div>
+            <div class="d-metric-value counter" data-target="@d.TotalUniqueClients">@d.TotalUniqueClients</div>
+            <div class="d-metric-sub fw-bold text-primary">@d.TotalEINs Total EINs</div>
+            <i class='bx bx-buildings d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="d-metric accent-info">
+            <div class="d-metric-label">Forms Mailed</div>
+            <div class="d-metric-value counter" data-target="@d.FormsMailedCount">@d.FormsMailedCount</div>
+            <div class="d-metric-sub">1095-C sent</div>
+            <i class='bx bx-mail-send d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="d-metric accent-success">
+            <div class="d-metric-label">e-Filed</div>
+            <div class="d-metric-value counter" data-target="@d.FormsEfiledCount">@d.FormsEfiledCount</div>
+            <div class="d-metric-sub">Accepted by IRS</div>
+            <i class='bx bx-check-shield d-metric-icon'></i>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-xl-6">
+        <div class="d-card h-100">
+            <div class="d-card-header">
+                <h6 class="d-card-title"><i class='bx bx-git-branch me-2 text-primary'></i>Process Pipeline</h6>
+            </div>
+            <div class="card-body"><div id="amsPipelineChart" style="height:240px;"></div></div>
+        </div>
+    </div>
+    <div class="col-12 col-xl-6">
+        <div class="d-card h-100">
+            <div class="d-card-header">
+                <h6 class="d-card-title"><i class='bx bx-bar-chart-alt-2 me-2 text-warning'></i>Team Workload (Clients per AM)</h6>
+            </div>
+            <div class="card-body">
+                <div id="amsWorkloadChart" style="height:240px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Quick user management *@
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="d-card">
+            <div class="d-card-header">
+                <h6 class="d-card-title"><i class='bx bxs-user-account me-2 text-primary'></i>Quick User Management</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label" style="font-size:.75rem;font-weight:600;">Select Account Manager</label>
+                        <select class="form-select form-select-sm" id="amsUserSelect">
+                            <option>Choose a team member…</option>
+                            @foreach (var staff in d.StaffWorkload)
+                            {
+                                <option value="@staff.Name">@staff.Name (@staff.FileCount clients)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-sm btn-primary" onclick="resetAmPassword()">
+                            <i class='bx bx-lock-open me-1'></i>Reset Password
+                        </button>
+                    </div>
+                    <div class="col-auto">
+                        <a href="@Url.Action("Index", "UserAccounts")" class="btn btn-sm btn-outline-secondary">
+                            <i class='bx bx-user-plus me-1'></i>Manage All Users
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-card">
+    <div class="d-card-header">
+        <h6 class="d-card-title"><i class='bx bx-table me-2 text-primary'></i>Client Portfolio Details</h6>
+        <input type="text" id="amsSearch" class="form-control form-control-sm" placeholder="Search employer or AM…" style="width:220px;">
+    </div>
+    <div class="table-responsive">
+        <table id="amsTable" class="table table-hover align-middle mb-0" style="font-size:.82rem;">
+            <thead style="background:rgba(105,108,255,.04);">
+                <tr>
+                    <th class="ps-4 py-3" style="font-size:.68rem;letter-spacing:.5px;">EMPLOYER</th>
+                    <th class="py-3" style="font-size:.68rem;letter-spacing:.5px;">ACCOUNT MANAGER</th>
+                    <th class="py-3" style="font-size:.68rem;letter-spacing:.5px;">TYPE</th>
+                    <th class="py-3" style="font-size:.68rem;letter-spacing:.5px;">STEP</th>
+                    <th class="py-3" style="font-size:.68rem;letter-spacing:.5px;">DUE DATE</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in d.ClientStatusList ?? new List<ACA360.Core.Models.ClientProcessStatusRow>())
+                {
+                    <tr>
+                        <td class="ps-4">
+                            <a href="@Url.Action("Dashboard", "Employer", new { id = row.EmployerId })" class="fw-semibold text-primary text-decoration-none">
+                                @row.EmployerName
+                            </a>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar avatar-xs">
+                                    <span class="avatar-initial rounded-circle bg-label-primary" style="font-size:.65rem;">
+                                        @(string.IsNullOrEmpty(row.AccountManagerName) ? "?" : row.AccountManagerName[0].ToString())
+                                    </span>
+                                </div>
+                                <span>@row.AccountManagerName</span>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-label-@(row.IsAffiliate ? "secondary" : "info")" style="font-size:.68rem;">@(row.IsAffiliate ? "Affiliate" : "Main HQ")</span></td>
+                        <td><span class="badge bg-@row.StepColor" style="font-size:.72rem;">@row.CurrentStep</span></td>
+                        <td class="@(row.IsPastDue ? "text-danger fw-bold" : "")">
+                            @if (row.IsPastDue)
+                            {
+                                <i class='bx bxs-alarm-exclamation me-1'></i>
+                            }
+    @row.DueDate.ToString("MMM dd")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script id="amsWorkloadLabels" type="application/json">@Json.Serialize(d.StaffWorkload?.Select(x => x.Name) ?? Enumerable.Empty<string>())</script>
+<script id="amsWorkloadValues" type="application/json">@Json.Serialize(d.StaffWorkload?.Select(x => x.FileCount) ?? Enumerable.Empty<int>())</script>
+<script id="amsPipelineLabels" type="application/json">@Json.Serialize(d.ProcessStepDistribution?.Keys ?? Enumerable.Empty<string>())</script>
+<script id="amsPipelineValues" type="application/json">@Json.Serialize(d.ProcessStepDistribution?.Values ?? Enumerable.Empty<int>())</script>
+
+<script>
+    $(document).ready(function() {
+        var table = $('#amsTable').DataTable({ pageLength:10, order:[[4,'asc']],
+            dom:'t<"d-flex justify-content-between px-4 py-3"ip>' });
+        $('#amsSearch').on('keyup', function(){ table.search(this.value).draw(); });
+
+        
+        new ApexCharts(document.querySelector('#amsWorkloadChart'), {
+            series: [{ name:'Clients', data:JSON.parse(document.getElementById('amsWorkloadValues').textContent) }],
+            chart: { type:'bar', height:240, toolbar:{ show:false } },
+            plotOptions: { bar:{ borderRadius:5, horizontal:true, barHeight:'60%' } },
+            xaxis: { categories:JSON.parse(document.getElementById('amsWorkloadLabels').textContent), labels:{ style:{fontSize:'11px'} } },
+            colors: ['#696cff'], grid:{ borderColor:'rgba(105,108,255,.08)' },
+            dataLabels:{ enabled:true, style:{fontSize:'11px',fontWeight:700} }, legend:{show:false}
+        }).render();
+
+        new ApexCharts(document.querySelector('#amsPipelineChart'), {
+            series:JSON.parse(document.getElementById('amsPipelineValues').textContent),
+            labels:JSON.parse(document.getElementById('amsPipelineLabels').textContent),
+            chart:{ type:'donut', height:240 },
+            colors:['#71dd37','#ff3e1d','#03c3ec','#8592a3'],
+            plotOptions:{ pie:{ donut:{ size:'62%', labels:{ show:true,
+                total:{ show:true, label:'Clients', fontWeight:700 } } } } },
+            dataLabels:{enabled:false}, legend:{position:'right',fontSize:'12px'}, stroke:{width:0}
+        }).render();
+    });
+    function resetAmPassword() {
+        var user = document.getElementById('amsUserSelect').value;
+        if(user.startsWith('Choose')) { alert('Please select a team member.'); return; }
+        if(confirm('Reset password for ' + user + '?')) alert('Reset link sent to ' + user + '.');
+    }
+</script>

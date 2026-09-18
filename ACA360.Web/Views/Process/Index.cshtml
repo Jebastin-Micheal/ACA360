@@ -1,0 +1,210 @@
+﻿@{
+    ViewData["Title"] = "Process Management";
+    ViewBag.ShowFilterButton = true;
+    ViewBag.ShowViewModeToggle = false;
+}
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Process Steps",
+    items = new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Title = "Employer", Url = Url.Action("Index", "Employer"), IsActive = false },
+    new BreadcrumbItem { Title = "Tracker", Url = "", IsActive = false },
+    new BreadcrumbItem { Title = "Process Steps", Url = "", IsActive = true }
+}
+})
+
+<div id="ProcessListContainerWrapper" style="position:relative;">
+
+    <div id="loader" class="loader" style="display:none;">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="card mb-6">
+        <div class="card-body">
+            @{
+                ViewBag.ShowFilterButton = true;
+                ViewBag.ShowViewModeToggle = false;
+            }
+            @await Html.PartialAsync("_GridToolbarCommon", new
+            {
+                IsEmployerPage = false,
+                        CustomButtons = @"<button class=""btn create-new btn-primary"" type=""button"" id=""add_Process_controls"">
+                        <span class=""d-flex align-items-center gap-2"">
+                        <i class=""icon-base bx bx-plus icon-sm""></i>
+                        <span class=""d-none d-sm-inline-block"">Add New Process Step</span>
+                        </span>
+                        </button>"
+                        })
+
+            <div class="collapse mb-4" id="filterCollapse">
+                <div class="card card-action border shadow-none bg-lighter">
+                    <div class="card-body py-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0 text-primary"><i class='bx bx-filter-alt me-2'></i>Filters</h5>
+                            <button type="button" class="btn-close" data-bs-toggle="collapse" data-bs-target="#filterCollapse"></button>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-4 col-md-6 mb-3">
+                                <label class="form-label fw-bold">Category</label>
+                                <select id="ddlCategory" class="form-select" asp-items="ViewBag.Categories">
+                                    <option value="">All</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div id="gridContainer">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="processModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" id="modalContent">
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/common-grid.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+
+            // 1. Initialize Common Grid Manager
+            GridManager.init({
+                url: '@Url.Action("GetProcessList", "Process")',
+                container: '#gridContainer',
+                loadingContainer: '#loader',
+                cookieName: 'view_mode_process',
+                state: {
+                    pageIndex: 1,
+                    pageSize: 10,
+                    search: '',
+                    sortColumn: 'DisplayOrder',
+                    sortOrder: 'ASC',
+                    viewMode: 'List'
+                },
+                // ✅ Extra filter param (Category) merged into every request
+                additionalParams: function () {
+                    return { categoryId: $('#ddlCategory').val() };
+                }
+            });
+
+            // ✅ Trigger first load
+            GridManager.reload();
+
+            // 2. Add Process
+            $("#add_Process_controls").click(function () {
+                openModal(0);
+            });
+
+            // 3. Edit Process
+            $(document).on('click', '.edit-Process-btn', function () {
+                var id = $(this).data('id');
+                openModal(id);
+            });
+
+            // 4. Delete Process
+            $(document).on('click', '.delete-Process-btn', function () {
+                var id = $(this).data('id');
+                deleteProcess(id);
+            });
+
+            // 5. Category filter change
+            $('#ddlCategory').on('change', function () {
+                GridManager.setPageIndex(1);
+            });
+
+            // 6. Sort header click
+            $(document).on('click', '.cursor-pointer[onclick^="sortGrid"]', function (e) {
+                e.preventDefault();
+                var col = $(this).attr('onclick').match(/'([^']+)'/)[1];
+                var state = GridManager.getState();
+                if (state.sortColumn === col) {
+                    state.sortOrder = state.sortOrder === 'ASC' ? 'DESC' : 'ASC';
+                } else {
+                    state.sortColumn = col;
+                    state.sortOrder = 'ASC';
+                }
+                GridManager.reload();
+            });
+
+        });
+
+        function openModal(id) {
+            $.get('/Process/AddUpdate/' + id).done(function (html) {
+                $('#modalContent').html(html);
+                new bootstrap.Modal(document.getElementById('processModal')).show();
+            });
+        }
+
+        function saveProcess() {
+            const form = $('#frmProcess');
+            $.validator.unobtrusive.parse(form);
+
+            if (!form.valid()) {
+                form.find('.border-danger').removeClass('border-danger');
+                var errors = form.find('.input-validation-error');
+                errors.addClass('border-danger');
+                if (errors.first().length) errors.first().focus();
+                return;
+            }
+
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '/Process/Save',
+                type: 'POST',
+                data: form.serialize(),
+                headers: { "RequestVerificationToken": token },
+                success: function (res) {
+                    if (res && res.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('processModal')).hide();
+                        Swal.fire('Saved!', 'Process Step saved successfully.', 'success');
+                        GridManager.reload();
+                    } else {
+                        Swal.fire('Error', res.message || 'Failed to save process Step.', 'error');
+                    }
+                },
+                error: function () {
+                    Swal.fire('Error', 'Error occurred while saving the process Step.', 'error');
+                }
+            });
+        }
+
+        function deleteProcess(id) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    var token = $('input[name="__RequestVerificationToken"]').val();
+                    $.ajax({
+                        url: '/Process/Delete/' + id,
+                        type: 'POST',
+                        headers: { "RequestVerificationToken": token },
+                        success: function (res) {
+                            if (res.success) {
+                                Swal.fire('Deleted!', 'Process Step has been deleted.', 'success');
+                                GridManager.reload();
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+}

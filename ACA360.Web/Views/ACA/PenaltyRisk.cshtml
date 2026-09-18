@@ -1,0 +1,350 @@
+﻿@model ACA360.Core.ViewModels.PenaltyDashboardViewModel
+@{
+    ViewData["Title"] = "Penalty Risk Analysis";
+    var culture = new System.Globalization.CultureInfo("en-US");
+    // --- LOGIC: DISTANCE TO SAFETY ---
+    // Calculate how close you are to the 95% threshold
+    int allowedFailures = (int)Math.Floor(Model.TotalFullTimeEmployees * 0.05);
+    int currentFailures = Model.TypeA_RiskDetails.Count;
+    int fixesNeeded = currentFailures - allowedFailures;
+
+    // Clamp values
+    if (fixesNeeded < 0) fixesNeeded = 0;
+
+    // Percentage for Progress Bar
+    double currentCompliance = 0;
+    if (Model.TotalFullTimeEmployees > 0)
+    {
+        currentCompliance = 100 - ((double)currentFailures / Model.TotalFullTimeEmployees * 100);
+    }
+}
+<div class="col-12">
+    <div class="card">
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="fw-bold m-0"><span class="text-muted fw-light">Compliance /</span> Penalty Risk Analysis</h4>
+                    <div class="text-muted small">
+                        @Model.EmployerName | Tax Year: @Model.TaxYear
+                    </div>
+                </div>
+                <div>
+                    <form asp-action="RecalculateRisk" method="post">
+                        <input type="hidden" name="employerId" value="@Model.EmployerId" />
+                        <input type="hidden" name="year" value="@Model.TaxYear" />
+
+                        <a href="javascript:void(0)" class="btn btn-outline-secondary me-2" onclick="history.back();">Back to Dashboard</a>
+                        <a class="btn btn-success me-2 download-report" href="@Url.Action("DownloadPenaltyReport", "Downloads", new { employerId = Model.EmployerId, year = Model.TaxYear })">
+                            <i class='bx bx-shield-quarter me-2 text-danger'></i> Download Penalty Summary Report
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bx bx-refresh me-1"></i> Re-Assess Risks
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+
+                <div class="col-md-6">
+                    <div class="card h-100 border border-2 @(Model.TypeA_Triggered ? "border-danger shadow-danger-sm" : "border-success")">
+                        <div class="card-header d-flex justify-content-between align-items-center m-1">
+                            <div>
+                                <h5 class="card-title mb-0 text-uppercase fw-bold">4980H(A) Assessment</h5>
+                                <small class="text-muted">"The Sledgehammer Penalty"</small>
+                            </div>
+                            @if (Model.TypeA_Triggered)
+                            {
+                                <span class="badge bg-danger fs-6 pulse">RISK TRIGGERED</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success fs-6">PASSED (MEC MET)</span>
+                            }
+                        </div>
+
+                        <div class="card-body pt-4">
+
+                            @if (Model.TypeA_Triggered)
+                            {
+                                <div class="mb-4 p-3 bg-label-danger rounded">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="fw-bold text-danger small text-uppercase">95% Offer Threshold</span>
+                                        <span class="fw-bold text-danger">@currentCompliance.ToString("0.0")%</span>
+                                    </div>
+                                    <div class="progress" style="height: 12px; background-color: #ffcccc;">
+                                        <div class="progress-bar bg-danger" role="progressbar"
+                                             style="width: @currentCompliance%"
+                                             aria-valuenow="@currentCompliance" aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                        <div class="position-absolute border-start border-2 border-dark"
+                                             style="left: 95%; height: 12px; opacity: 0.6;"
+                                             title="Goal: 95%">
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 text-center">
+                                        <span class="text-danger">
+                                            <i class='bx bxs-error-circle'></i> You must fix
+                                            <strong class="text-dark border-bottom border-dark">@fixesNeeded more employees</strong>
+                                            to remove this penalty.
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="d-flex align-items-center justify-content-center mb-3 text-muted small">
+                                <div class="text-center px-2">
+                                    <span class="d-block fw-bold text-dark fs-5">@Model.TotalFullTimeEmployees</span>
+                                    <span>Total FT</span>
+                                </div>
+                                <div class="h5 mb-0">-</div>
+                                <div class="text-center px-2">
+                                    <span class="d-block fw-bold text-dark fs-5">@Model.ReliefCount</span>
+                                    <span>Relief</span>
+                                </div>
+                                <div class="h5 mb-0">×</div>
+                                <div class="text-center px-2">
+                                    <span class="d-block fw-bold text-dark fs-5">@Model.TypeA_MonthlyRate.ToString("C0")</span>
+                                    <span>Rate</span>
+                                </div>
+                                <div class="h5 mb-0">×</div>
+                                <div class="text-center px-2">
+                                    <span class="d-block fw-bold text-dark fs-5">@Model.TypeA_ApplicableMonths</span>
+                                    <span>Mos</span>
+                                </div>
+                            </div>
+
+                            <div class="alert @(Model.TypeA_Triggered ? "alert-danger" : "alert-secondary") text-center mb-0">
+                                <small class="text-uppercase fw-bold">Potential Annual Exposure</small>
+                                <h2 class="mb-0 fw-bold">@Model.TypeA_TotalExposure.ToString("C", culture)</h2>
+                                @if (!Model.TypeA_Triggered)
+                                {
+                                    <small class="d-block mt-1"><i class='bx bxs-check-shield'></i> You are safe! MEC offered to >95%.</small>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card h-100 border border-2 border-warning">
+                        <div class="card-header d-flex justify-content-between align-items-center me-1">
+                            <div>
+                                <h5 class="card-title mb-0 text-uppercase fw-bold">4980H(B) Assessment</h5>
+                                <small class="text-muted">"The Tack Hammer Penalty"</small>
+                            </div>
+                            <span class="badge bg-label-warning fs-6 text-dark">ACCUMULATING</span>
+                        </div>
+                        <div class="card-body pt-4">
+                            <div class="row text-center">
+                                <div class="col-6 border-end">
+                                    @* <div class="display-6 fw-bold text-warning">@Model.TypeB_TotalViolations</div> *@
+                                    <span class="badge @(Model.TypeB_TotalViolations > 0 ? "bg-warning" : "bg-success") fs-6">
+                                        @(Model.TypeB_TotalViolations > 0 ? "ACCUMULATING" : "NO VIOLATIONS")
+                                    </span>
+                                    <span class="text-muted">Total Violations (@Model.TypeB_TotalViolations Months)</span>
+                                </div>
+                                <div class="col-6">
+                                    <div class="display-6 fw-bold">@Model.TypeB_MonthlyRate.ToString("C0")</div>
+                                    <span class="text-muted">Rate Per Month</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 p-3 bg-label-warning rounded text-center">
+                                <small class="text-uppercase fw-bold text-dark">Potential Annual Exposure</small>
+                                <h2 class="mb-0 fw-bold text-dark">@Model.TypeB_TotalExposure.ToString("C", culture)</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.TypeA_Triggered)
+            {
+                <div class="card shadow-danger-sm mb-4 border-danger border-start border-2">
+                    <div class="card-header bg-label-danger border-bottom d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0 text-danger fw-bold"><i class='bx bxs-alarm-exclamation me-1'></i> Sledgehammer Risk Contributors</h5>
+                            <small class="text-danger">
+                                Showing top offenders. Fix <strong>@fixesNeeded</strong> more to eliminate the Sledgehammer Penalty.
+                            </small>
+                        </div>
+                        <a href="@Url.Action("CodeReview", "ACA", new { employerId = Model.EmployerId, year = Model.TaxYear })" class="btn btn-danger">
+                            <i class='bx bx-edit'></i> Fix All in Code Review
+                        </a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Employee Name</th>
+                                        <th>SSN (Last 4)</th>
+                                        <th class="text-center">Months with No Offer (1H)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.TypeA_RiskDetails.Take(10))
+                                    {
+                                        <tr>
+                                            <td class="fw-bold text-danger">@item.EmployeeName</td>
+                                            <td>@(CanViewSSNorEIN? item.SSN: DataMasker.MaskSSN(item.SSN))</td>
+                                            <td class="text-center">@item.BadMonthCount</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                @if (Model.TypeA_RiskDetails.Count > 10)
+                                {
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted small bg-light">
+                                                ...and <strong>@(Model.TypeA_RiskDetails.Count - 10)</strong> more. Use the "Fix All" button above.
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                }
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (Model.RiskDetails.Count > 0)
+            {
+                <div class="card shadow-sm">
+                    <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Employees Contributing to B-Penalty Risk</h5>
+                        <a href="@Url.Action("CodeReview", "ACA", new { employerId = Model.EmployerId, year = Model.TaxYear })" class="btn btn-primary btn-sm">
+                            <i class='bx bx-edit'></i> Fix in Code Review
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="riskTable" class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Employee Name</th>
+                                        <th>SSN (Last 4)</th>
+                                        <th class="text-center">Bad Months Count</th>
+                                        <th>Failed Months</th>
+                                        <th class="text-end">Est. Penalty</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.RiskDetails)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar avatar-sm me-2">
+                                                        <span class="avatar-initial rounded-circle bg-label-danger">@item.EmployeeName.Substring(0, 1)</span>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0">@item.EmployeeName</h6>
+                                                        <small class="text-muted">ID: @item.EmployeeId</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>***-**-@item.SSN.Substring(Math.Max(0, item.SSN.Length - 4))</td>
+                                            <td class="text-center">
+                                                <span class="badge bg-danger rounded-pill">@item.BadMonthCount</span>
+                                            </td>
+                                            <td>
+                                                <small class="text-danger text-wrap" style="max-width: 250px;">
+                                                    <i class='bx bxs-calendar-x me-1'></i> @item.BadMonthsList
+                                                </small>
+                                            </td>
+                                            <td class="text-end fw-bold text-dark">
+                                                @item.EstimatedPenalty.ToString("C", culture)
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                @if (Model.RiskDetails.Count > 10)
+                                {
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted small bg-light">
+                                                ...and <strong>@(Model.RiskDetails.Count - 10)</strong> more. Use the "Fix All" button above.
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                }
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#riskTable').DataTable({
+                "pageLength": 10,
+                "ordering": true,
+                "order": [[4, "desc"]], // Sort by Highest Penalty
+                "language": {
+                    "search": "Search List:",
+                    "emptyTable": "No penalties found! Great job."
+                }
+            });
+            // Bind click event to all links with the 'download-report' class
+            $('.download-report').on('click', function (e) {
+                // 1. Stop the default link click so the global loader doesn't fire
+                e.preventDefault();
+
+                // 2. Get the URL from the clicked link
+                var downloadUrl = $(this).attr('href');
+
+                // 3. Show your SweetAlert toast
+                Swal.fire({
+                    title: 'Downloading...',
+                    icon: 'success',
+                    timer: 2000,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+
+                // 4. Trigger the download safely using a hidden iframe
+                var iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = downloadUrl;
+                document.body.appendChild(iframe);
+
+                // 5. Clean up the iframe from the DOM after 5 seconds
+                setTimeout(function() {
+                    document.body.removeChild(iframe);
+                }, 5000);
+            });
+        });
+    </script>
+
+    <style>
+        .pulse {
+            animation: pulse-red 2s infinite;
+        }
+
+        @@keyframes pulse-red {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 82, 82, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+            }
+        }
+    </style>
+}

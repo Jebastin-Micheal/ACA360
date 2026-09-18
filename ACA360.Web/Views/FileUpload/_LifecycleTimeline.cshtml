@@ -1,0 +1,128 @@
+﻿@model IEnumerable<ACA360.Core.Models.FileLifecycleHistory>
+
+<div class="modal-header border-0 pb-0">
+    <div>
+        <h5 class="modal-title fw-semibold">
+            <i class="bx bx-history me-2 text-primary"></i>File Timeline
+        </h5>
+        <small class="text-muted">Full audit trail of every action taken on this file</small>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body pt-3 pb-4" style="max-height:68vh;overflow-y:auto;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                @if (!Model.Any())
+                {
+                    <div class="text-center py-5">
+                        <span class="avatar avatar-lg rounded-circle bg-label-secondary mb-3
+                                 d-inline-flex align-items-center justify-content-center">
+                            <i class="bx bx-history fs-3 text-muted"></i>
+                        </span>
+                        <p class="text-muted mb-0">No history recorded yet.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="timeline ps-2">
+                        @{
+                            var events = Model.OrderByDescending(e => e.Timestamp).ToList();
+                        }
+                        @foreach (var ev in events)
+                        {
+                            // Icon + color mapping from action name
+                            string icon = "bx-radio-circle";
+                            string color = "secondary";
+
+                            if (ev.ActionName.Contains("Upload", StringComparison.OrdinalIgnoreCase)) { icon = "bx-upload"; color = "primary"; }
+                            if (ev.ActionName.Contains("Process", StringComparison.OrdinalIgnoreCase)) { icon = "bx-cog"; color = "info"; }
+                            if (ev.ActionName.Contains("Validat", StringComparison.OrdinalIgnoreCase)) { icon = "bx-check"; color = "info"; }
+                            if (ev.ActionName.Contains("Accept", StringComparison.OrdinalIgnoreCase)) { icon = "bx-user-check"; color = "warning"; }
+                            if (ev.ActionName.Contains("Assign", StringComparison.OrdinalIgnoreCase)) { icon = "bx-user-plus"; color = "warning"; }
+                            if (ev.ActionName.Contains("Approve", StringComparison.OrdinalIgnoreCase)) { icon = "bx-check-double"; color = "success"; }
+                            if (ev.ActionName.Contains("Import", StringComparison.OrdinalIgnoreCase)) { icon = "bx-data"; color = "success"; }
+                            if (ev.ActionName.Contains("Complete", StringComparison.OrdinalIgnoreCase)) { icon = "bx-check-double"; color = "success"; }
+                            if (ev.ActionName.Contains("Error", StringComparison.OrdinalIgnoreCase)) { icon = "bx-x-circle"; color = "danger"; }
+                            if (ev.ActionName.Contains("Fail", StringComparison.OrdinalIgnoreCase)) { icon = "bx-error-alt"; color = "danger"; }
+                            if (ev.ActionName.Contains("Reject", StringComparison.OrdinalIgnoreCase)) { icon = "bx-block"; color = "secondary"; }
+                            if (ev.ActionName.Contains("Hold", StringComparison.OrdinalIgnoreCase)) { icon = "bx-pause-circle"; color = "secondary"; }
+                            if (ev.ActionName.Contains("Release", StringComparison.OrdinalIgnoreCase)) { icon = "bx-play-circle"; color = "success"; }
+
+                            bool isLatest = ev == events.First();
+
+                            <div class="d-flex gap-3 mb-4 position-relative timeline-entry">
+
+                                @* Vertical connector line — drawn behind the avatar *@
+                                @if (ev != events.Last())
+                                {
+                                    <div class="position-absolute"
+                                         style="left:1.1rem;top:2.5rem;bottom:-1rem;width:2px;
+                                                            background:var(--bs-border-color);z-index:0;"></div>
+                                }
+
+                                @* Avatar dot *@
+                                <div class="flex-shrink-0 position-relative" style="z-index:1;">
+                                    <span class="avatar avatar-sm">
+                                        <span class="avatar-initial rounded-circle bg-label-@color
+                                                         @(isLatest ? "shadow" : "")">
+                                            <i class="bx @icon" style="font-size:14px;"></i>
+                                        </span>
+                                    </span>
+                                </div>
+
+                                @* Content card *@
+                                <div class="flex-grow-1 pb-1">
+                                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-1">
+                                        <div>
+                                            <span class="fw-semibold text-body" style="font-size:.9rem;">
+                                                @ev.ActionName
+                                            </span>
+                                            @if (isLatest)
+                                            {
+                                                <span class="badge bg-label-primary ms-1" style="font-size:.62rem;">Latest</span>
+                                            }
+                                        </div>
+                                        <small class="text-muted text-nowrap">
+                                            <i class="bx bx-time-five me-1"></i>
+                                            @ev.Timestamp.ToString("MMM dd, yyyy · HH:mm")
+                                        </small>
+                                    </div>
+
+                                    <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+                                        <span class="badge bg-label-secondary" style="font-size:.68rem;">
+                                            <i class="bx bx-user me-1"></i>
+                                            @(ev.PerformedByUserName ?? "System")
+                                        </span>
+                                    </div>
+
+                                    @if (!string.IsNullOrEmpty(ev.Message))
+                                    {
+                                        <div class="mt-2 px-3 py-2 rounded border-start border-3
+                                                                border-@color bg-light"
+                                             style="font-size:.82rem;color:var(--bs-secondary-color);">
+                                            @ev.Message
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-footer border-0 py-3">
+    <small class="text-muted me-auto text-heading">
+        <i class="bx bx-time me-1"></i>
+        @Model.Count() event@(Model.Count() == 1 ? "" : "s") recorded
+    </small>
+    <button type="button" class="btn btn-sm btn-outline-secondary"
+            data-bs-dismiss="modal">
+        Close
+    </button>
+</div>

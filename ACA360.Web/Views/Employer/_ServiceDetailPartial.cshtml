@@ -1,0 +1,756 @@
+﻿@model ACA360.Web.Models.EmployerServiceInfoViewModel
+
+<div class="d-flex flex-column h-100 animate__animated animate__fadeIn">
+
+    <div class="p-3 border-bottom shadow-sm">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="fw-bold mb-0 text-primary">@Model.SelectedService.ServiceName</h5>
+                <span class="badge bg-label-secondary mt-1">Plan Year @Model.PlanYear</span>
+            </div>
+
+
+        </div>
+    </div>
+
+    <div class="flex-grow-1 p-4 overflow-auto">
+        <form id="formServiceDetailEdit" autocomplete="off">
+            <input type="hidden" asp-for="SelectedService.ServiceId" />
+            <input type="hidden" asp-for="EmployerId" />
+            <input type="hidden" asp-for="SelectedService.ServiceListId" />
+            <input type="hidden" asp-for="PlanYear" />
+
+            <div class="row g-4">
+                <div class="col-12">
+
+                    <div class="card mb-4 border-0 shadow-sm overflow-hidden">
+                        <div class="row g-0 text-center">
+                            <div class="col-md-6 p-3 border-end">
+                                <label class="form-label fw-bold text-uppercase fs-tiny">Filing Status</label>
+                                <select class="form-select border-0 bg-label-primary fw-bold text-dark text-start" asp-for="SelectedService.Status">
+                                    <option value="Opportunity">Opportunity</option>
+                                    <option value="Sold">Sold</option>
+                                    <option value="Lost">Lost</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 p-3">
+                                <label class="form-label fw-bold text-uppercase fs-tiny text-warning">Assigned Auditor</label>
+                                <select class="form-select border-0 bg-label-warning fw-bold text-dark text-start" asp-for="SelectedService.AuditBy"
+                                        asp-items="@(new SelectList(Model.SelectedService.AuditUsers, "Name", "Name"))">
+                                    <option value="">Unassigned</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div id="receiptLedgerRowEmployer" class="card mb-4 border-0 shadow-sm d-none"
+                         data-emp-id="@Model.EmployerId"
+                         data-emp-svc-id="@Model.SelectedService.ServiceId"
+                         data-svc-id="@Model.SelectedService.ServiceListId"
+                         data-plan-year="@Model.PlanYear"
+                         data-svc-name="@Model.SelectedService.ServiceName">
+                        <div class="card-header bg-transparent border-bottom d-flex align-items-center justify-content-between py-2">
+                            <h6 class="m-0 fw-bold text-uppercase fs-tiny text-muted cursor-pointer" data-bs-toggle="collapse" data-bs-target="#receiptLedgerBodyEmployer" aria-expanded="true" aria-controls="receiptLedgerBodyEmployer">
+                                <i class="bx bx-list-ul me-1"></i> Receipt IDs (IRS) by Employer / EIN
+                            </h6>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-sm btn-primary" id="btnAddReceiptEmployer">
+                                    <i class="bx bx-plus me-1"></i> Add Receipt
+                                </button>
+                                <button type="button" class="btn btn-sm btn-icon btn-label-secondary" id="btnToggleReceiptLedgerEmployer"
+                                        data-bs-toggle="collapse" data-bs-target="#receiptLedgerBodyEmployer" aria-expanded="true" aria-controls="receiptLedgerBodyEmployer" title="Show / hide">
+                                    <i class="bx bx-chevron-up"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="receiptLedgerBodyEmployer" class="collapse show">
+                            <div class="card-body p-3">
+                                <div id="receiptKpiStripEmployer" class="d-flex flex-wrap align-items-center gap-3 mb-3 pb-3 border-bottom"></div>
+                                <div id="receiptLedgerListEmployer"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="row g-4 align-items-center">
+                                <div class="col-md-6 border-end">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <span class="badge badge-center rounded-pill me-2"><i class="bx bx-send"></i></span>
+                                        <h6 class="m-0 fw-bold text-uppercase small">Proposal Phase</h6>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="fs-tiny text-muted">DATE SENT</label>
+                                            <input type="date" class="form-control shadow-sm" asp-for="SelectedService.ProposalSent" />
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="fs-tiny text-muted">DATE SIGNED</label>
+                                            <input type="date" class="form-control shadow-sm" asp-for="SelectedService.ProposalSigned" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 ps-md-4">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <span class="badge badge-center rounded-pill bg-success me-2"><i class="bx bx-certification"></i></span>
+                                        <h6 class="m-0 fw-bold text-uppercase small">Contract Phase</h6>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="fs-tiny text-muted">DATE SENT</label>
+                                            <input type="date" class="form-control shadow-sm" asp-for="SelectedService.ContractSent" />
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="fs-tiny text-muted">DATE SIGNED</label>
+                                            <input type="date" class="form-control shadow-sm" asp-for="SelectedService.ContractSigned" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4 border-0 shadow-sm border-top border-primary border-3">
+                        <div class="card-body p-4">
+                            <div class="row align-items-end g-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar avatar-xs me-2">
+                                                <span class="avatar-initial rounded bg-label-primary"><i class="bx bx-spreadsheet"></i></span>
+                                            </div>
+                                            <label class="form-label fw-bold small text-uppercase m-0">1095 Process Step</label>
+                                        </div>
+                                    </div>
+                                    <select class="form-select border-primary fw-bold p-2"
+                                            asp-for="SelectedService.ImplementationProcess"
+                                            asp-items="@(new SelectList(Model.SelectedService._implementation, "Name", "Name"))"
+                                            style="pointer-events:none; appearance:none; -webkit-appearance:none; -moz-appearance:none; background-image:none;">
+                                        <option value="">Not Applicable</option>
+                                    </select>
+                                    <input type="hidden" asp-for="SelectedService.ImplementationProcess" />
+                                </div>
+                                <div class="col-md-3 fu-field">
+                                    <label class="form-label small text-muted">Last Updated</label>
+                                    <input type="date" class="form-control border-0 bg-secondary-subtle" asp-for="SelectedService.LastUpdated" asp-format="{0:yyyy-MM-dd}" readonly tabindex="-1" style="pointer-events:none;" />
+                                </div>
+                                <div class="col-md-3 fu-field">
+                                    <label class="form-label small text-primary fw-bold">Next Follow-Up</label>
+                                    <input type="date" class="form-control border-primary bg-label-primary fw-bold" asp-for="SelectedService.FollowUpDate" asp-format="{0:yyyy-MM-dd}" readonly tabindex="-1" style="pointer-events:none;" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm border-top border-info border-3">
+                                <div class="card-body p-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bx bx-calculator me-2 text-info fs-4"></i>
+                                            <label class="fs-tiny fw-bold text-info text-uppercase m-0">FTE Tracking Step</label>
+                                        </div>
+
+                                    </div>
+                                    <select class="form-select mb-3 border-info fw-bold"
+                                            asp-for="SelectedService.ProcessStep1094"
+                                            asp-items="@(new SelectList(Model.SelectedService._1094Process, "Name", "Name"))"
+                                            style="pointer-events:none; appearance:none; -webkit-appearance:none; -moz-appearance:none; background-image:none;">
+                                        <option value="">Not Applicable</option>
+                                    </select>
+                                    <input type="hidden" asp-for="SelectedService.ProcessStep1094" />
+                                    <div class="row g-2">
+                                        <div class="col-6 fu-field">
+                                            <label class="fs-tiny text-muted">Last Updated</label>
+                                            <input type="date" class="form-control form-control-sm border-0 bg-secondary-subtle" asp-for="SelectedService.FTETrackingStep_lastupdated" asp-format="{0:yyyy-MM-dd}" readonly tabindex="-1" />
+                                        </div>
+                                        <div class="col-6 fu-field">
+                                            <label class="fs-tiny text-info">Next Follow-Up</label>
+                                            <input type="date" class="form-control form-control-sm border-info" asp-for="SelectedService.FTETrackingStep_nextfollowup" asp-format="{0:yyyy-MM-dd}" readonly tabindex="-1" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm border-top border-warning border-3">
+                                <div class="card-body p-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bx bx-map-pin me-2 text-warning fs-4"></i>
+                                            <label class="fs-tiny fw-bold text-warning text-uppercase m-0">State Filing Process Step</label>
+                                        </div>
+
+                                    </div>
+                                    <select class="form-select mb-3 border-warning fw-bold"
+                                            asp-for="SelectedService.StateFilingProcessStep"
+                                            asp-items="@(new SelectList(Model.SelectedService._statefilingprocess, "Name", "Name"))"
+                                            style="pointer-events:none; appearance:none; -webkit-appearance:none; -moz-appearance:none; background-image:none;">
+                                        <option value="">Not Applicable</option>
+                                    </select>
+                                    <input type="hidden" asp-for="SelectedService.StateFilingProcessStep" />
+                                    <div class="row g-2">
+                                        <div class="col-6 fu-field">
+                                            <label class="fs-tiny text-muted">Last Updated</label>
+                                            <input type="date" class="form-control form-control-sm border-0 bg-secondary-subtle" asp-for="SelectedService.StateFilingProcessStepUpdated" asp-format="{0:yyyy-MM-dd}" readonly tabindex="-1" />
+                                        </div>
+                                        <div class="col-6 fu-field">
+                                            <label class="fs-tiny text-warning">Next Follow-Up</label>
+                                            <input type="date" class="form-control form-control-sm border-warning" asp-for="SelectedService.StateFiling_FollowUpDate" asp-format="{0:yyyy-MM-dd}" readonly tabindex="-1" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <!-- FRESH BOTTOM FOOTER ADDITION -->
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                <!-- Left Side: Generic Back Trigger -->
+                <button type="button" class="btn btn-outline-secondary rounded-pill btn-tab-back px-4">
+                    <i class='bx bx-arrow-back me-1'></i> Back
+                </button>
+
+                <!-- Right Side: Service Action Buttons -->
+                <div class="d-flex gap-2">
+                    <button type="button" id="btnSaveService" class="btn btn-primary rounded-pill px-4">
+                        <i class="bx bx-save me-1"></i> Save
+                    </button>
+                    <button type="button" id="btnSaveAndNext" class="btn btn-dark rounded-pill px-4">
+                        <i class="bx bx-skip-next-circle me-1"></i> Save & Continue
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="offcanvas offcanvas-end shadow" tabindex="-1" id="offcanvasProcessHistory">
+    <div class="offcanvas-header border-bottom bg-light-soft">
+        <div class="d-flex align-items-center">
+            <div class="avatar avatar-sm bg-label-primary rounded me-2 d-flex align-items-center justify-content-center">
+                <i class="bx bx-time-five fs-5"></i>
+            </div>
+            <h5 class="offcanvas-title fw-bold" id="offcanvasDynamicTitle">Audit Trail</h5>
+        </div>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div id="historyLoader" class="text-center mt-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-2 small">Loading History...</p>
+        </div>
+        <ul class="timeline modern-timeline mt-3" id="historyTimelineContainer" style="display: none;"></ul>
+    </div>
+</div>
+<style>
+    /* 1. Main Workspace Fixes */
+    .bg-light-soft {
+        background-color: #f5f5f9;
+    }
+
+    /* Ensure the container takes full height of the parent */
+    #serviceDetailContainer {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* 2. Custom Typography */
+    .fs-tiny {
+        font-size: 0.7rem !important;
+        letter-spacing: 0.5px;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    /* 3. Input & Select Polish */
+    .form-control-sm {
+        font-size: 0.8rem;
+    }
+
+    /* Make read-only looking inputs cleaner */
+    .bg-light:focus {
+        background-color: #fff !important;
+    }
+
+    /* 4. Timeline Vertical Stretching */
+    /* This helps fill the vertical space in the right column */
+    .timeline .timeline-item {
+        padding-bottom: 3.5rem !important; /* Extra padding to stretch the card */
+    }
+
+    .timeline .timeline-event {
+        min-height: 80px;
+    }
+
+    /* 5. Process Card Accents */
+    .card-header.bg-label-primary {
+        border-bottom: 1px solid rgba(105, 108, 255, 0.1);
+    }
+
+    .card-header.bg-label-info {
+        border-bottom: 1px solid rgba(3, 195, 236, 0.1);
+    }
+
+    /* 6. Date Input "Smart" Colors (for the script I gave earlier) */
+    .bg-label-danger {
+        background-color: #ffe0e0 !important;
+        color: #ff3e1d !important;
+    }
+
+    .bg-label-warning {
+        background-color: #fff1e0 !important;
+        color: #ffab00 !important;
+    }
+
+    /* Animation for smooth loading */
+    .animate__fadeIn {
+        animation-duration: 0.4s;
+    }
+    /* Custom Icon Hover States */
+    .custom-btn-primary-hover:hover {
+        background-color: rgba(105, 108, 255, 0.1) !important;
+        color: #696cff !important;
+        transform: scale(1.05);
+        transition: all 0.2s ease;
+    }
+
+    .custom-btn-info-hover:hover {
+        background-color: rgba(3, 195, 236, 0.1) !important;
+        transform: scale(1.05);
+        transition: all 0.2s ease;
+    }
+
+    .custom-btn-warning-hover:hover {
+        background-color: rgba(255, 171, 0, 0.1) !important;
+        transform: scale(1.05);
+        transition: all 0.2s ease;
+    }
+
+    /* Timeline Polish */
+    .modern-timeline {
+        list-style: none;
+        padding-left: 1.2rem;
+        position: relative;
+    }
+
+        .modern-timeline::before {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e4e6fb;
+        }
+
+    .modern-timeline-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+    }
+
+    .modern-timeline-point {
+        position: absolute;
+        left: -1.2rem;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+    }
+</style>
+<script>
+    // 1. GLOBAL FUNCTIONS (Outside document.ready so onclick="..." can see them)
+    function openProcessHistory(employerServiceId, categoryName, processTitle) {
+        $('#offcanvasDynamicTitle').text(processTitle + ' History');
+        var historyCanvas = new bootstrap.Offcanvas(document.getElementById('offcanvasProcessHistory'));
+        $('#historyTimelineContainer').hide().empty();
+        $('#historyLoader').show();
+        historyCanvas.show();
+
+        $.ajax({
+            url: '/Employer/GetProcessHistory',
+            type: 'GET',
+            data: { employerServiceId: employerServiceId, categoryName: categoryName },
+            success: function (data) {
+                $('#historyLoader').hide();
+                if (data && data.length > 0) {
+                    let html = '';
+                    data.forEach(function(item, index) {
+                        let dotClass = index === 0 ? 'bg-primary' : 'bg-secondary';
+                        let textClass = index === 0 ? 'text-primary fw-bold' : 'text-dark';
+
+                        html += `
+                            <li class="modern-timeline-item">
+                                <div class="modern-timeline-point ${dotClass}"></div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="small text-muted fw-bold">${new Date(item.createdDate).toLocaleDateString()}</span>
+                                    <span class="badge bg-label-secondary"><i class="bx bx-user me-1"></i>${item.updatedBy || 'System'}</span>
+                                </div>
+                                <h6 class="mb-1 ${textClass}">${item.processName}</h6>
+                                <div class="small text-muted">Next Follow-up: <strong>${item.nextFollowUpDate ? new Date(item.nextFollowUpDate).toLocaleDateString() : 'N/A'}</strong></div>
+                            </li>
+                        `;
+                    });
+                    $('#historyTimelineContainer').html(html).fadeIn();
+                } else {
+                    $('#historyTimelineContainer').html('<li class="text-muted text-center mt-4">No history recorded yet.</li>').fadeIn();
+                }
+            },
+            error: function () {
+                $('#historyLoader').hide();
+                $('#historyTimelineContainer').html('<li class="text-danger">Failed to load history.</li>').fadeIn();
+            }
+        });
+    }
+
+                function toggleDateFields(dropdownId, fieldIds) {
+        var val = $('#' + dropdownId).val();
+        var isEmpty = !val || val === '';
+        fieldIds.forEach(function (id) {
+            var $wrap = $('#' + id).closest('.fu-field');
+            if (isEmpty) $wrap.hide();
+            else $wrap.show();
+        });
+    }
+
+    // 2. JQUERY DOCUMENT READY
+    $(document).ready(function () {
+
+        // --- REAL-TIME BUSINESS DAYS CALCULATION ---
+            $('#SelectedService_ImplementationProcess, #SelectedService_ProcessStep1094, #SelectedService_StateFilingProcessStep').on('change', function () {
+
+        var dropdownId = $(this).attr('id');
+        var processName = $(this).val();
+        var lastUpdatedId, nextFollowUpId;
+
+        if (dropdownId === 'SelectedService_ImplementationProcess') {
+            lastUpdatedId = 'SelectedService_LastUpdated';
+            nextFollowUpId = 'SelectedService_FollowUpDate';
+            toggleDateFields(dropdownId, [lastUpdatedId, nextFollowUpId]);
+        }
+        else if (dropdownId === 'SelectedService_ProcessStep1094') {
+            lastUpdatedId = 'SelectedService_FTETrackingStep_lastupdated';
+            nextFollowUpId = 'SelectedService_FTETrackingStep_nextfollowup';
+            toggleDateFields(dropdownId, [lastUpdatedId, nextFollowUpId]);
+        }
+        else if (dropdownId === 'SelectedService_StateFilingProcessStep') {
+            lastUpdatedId = 'SelectedService_StateFilingProcessStepUpdated';
+            nextFollowUpId = 'SelectedService_StateFiling_FollowUpDate';
+            toggleDateFields(dropdownId, [lastUpdatedId, nextFollowUpId]);
+        }
+
+        var today = new Date();
+        var todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+        $('#' + lastUpdatedId).val(todayStr);
+
+        if (!processName) { $('#' + nextFollowUpId).val(''); return; }
+
+            $.ajax({
+        url: '/Employer/CalculateFollowUpDate',
+        type: 'GET',
+        data: {
+            processName: processName,
+            baseDateStr: todayStr,
+            categoryId: (dropdownId === 'SelectedService_ImplementationProcess' ? 1
+                        : dropdownId === 'SelectedService_ProcessStep1094' ? 2
+                        : 3)
+        },
+        success: function (response) {
+            if (response.success) {
+                $('#' + nextFollowUpId).val(response.nextDate).removeClass('border-danger text-danger');
+                checkDeadlines();
+            }
+        },
+        error: function() {
+            console.warn("Could not calculate business days for " + processName);
+        }
+    });
+    });
+
+        // --- SAVE BUTTON LOGIC ---
+        $('#btnSaveService').on('click', function() {
+            submitServiceForm(false);
+        });
+
+        $('#btnSaveAndNext').on('click', function() {
+            submitServiceForm(true);
+        });
+
+        function submitServiceForm(shouldGoNext) {
+            const $form = $('#formServiceDetailEdit');
+            const $btn = shouldGoNext ? $('#btnSaveAndNext') : $('#btnSaveService');
+            const originalHtml = $btn.html();
+
+            // Objectify form data for JSON
+            const formData = {};
+            $form.serializeArray().forEach(item => {
+                let cleanKey = item.name.replace('SelectedService.', '');
+                formData[cleanKey] = item.value;
+            });
+
+            // Ensure root level properties are captured
+            formData['EmployerId'] = $('#EmployerId').val();
+            formData['PlanYear'] = $('#PlanYear').val();
+
+            $btn.html('<span class="spinner-border spinner-border-sm me-1"></span>...').prop('disabled', true);
+             var token = $('input[name="__RequestVerificationToken"]').val();
+            $.ajax({
+                url: '/Employer/UpdateEmployerService',
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(formData),
+                headers: {
+                  "RequestVerificationToken": token   // ✅ Add this
+                },
+                success: function (response) {
+                    if (response.success) {
+                            if (shouldGoNext) {
+                                         // 1. Show a quick success checkmark on the button
+                                         $btn.removeClass('btn-dark').addClass('btn-success').html('<i class="bx bx-check"></i> Saved!');
+
+                                         setTimeout(() => {
+                                         // 1. Unlock the other fieldset so it's ready for data
+                                         $('[id$="-other"] fieldset').prop('disabled', false);
+
+                                         // 2. Find the tab and simulate a TRUE human mouse click
+
+                                         let nextTab = $('[data-bs-target$="-other"], [href$="-other"]')[0];
+                                         if (nextTab) {
+                                               nextTab.click();
+                                         }
+
+                                         // 3. Reset the Save button
+                                         $btn.removeClass('btn-success').addClass('btn-dark').html('<i class="bx bx-skip-next-circle me-1"></i> Save & Continue').prop('disabled', false);
+                                         }, 800);
+                            }
+
+                        else {
+                            $btn.removeClass('btn-primary').addClass('btn-success').html('<i class="bx bx-check"></i>');
+                            setTimeout(() => {
+                                $btn.removeClass('btn-success').addClass('btn-primary').html(originalHtml).prop('disabled', false);
+                            }, 2000);
+                        }
+                                   checkDeadlines();
+            Swal.fire({ icon: 'success', title: 'Saved!', text: response.message || 'Service info saved successfully.', timer: 1200, showConfirmButton: false });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Update Failed',
+                text: response.message
+            });
+            $btn.html(originalHtml).prop('disabled', false);
+        }
+    },
+    error: function (xhr) {
+        console.error(xhr.responseText);
+        Swal.fire({
+            icon: 'error',
+            title: 'Connection Error',
+            text: 'Something went wrong (Error ' + xhr.status + '). Please check the console.'
+        });
+        $btn.html(originalHtml).prop('disabled', false);
+    }
+            });
+        }
+
+       // --- DEADLINE HIGHLIGHTER ---
+        function checkDeadlines() {
+            const today = new Date().toISOString().split('T')[0];
+
+            // ONLY check the Next Follow-Up fields! Ignore "Last Updated" and "Contracts"
+            const followUpFields = [
+                '#SelectedService_FollowUpDate',
+                '#SelectedService_FTETrackingStep_nextfollowup',
+                '#SelectedService_StateFiling_FollowUpDate'
+            ].join(', ');
+
+            $(followUpFields).each(function() {
+                const dateVal = $(this).val();
+                if (dateVal) {
+                    if (dateVal < today) {
+                        // Past due!
+                        $(this).addClass('border-danger text-danger bg-label-danger');
+                    } else {
+                        // Safe!
+                        $(this).removeClass('border-danger text-danger bg-label-danger');
+                    }
+                }
+            });
+        }
+
+       
+
+        // Only trigger the check when these specific fields are manually changed
+        $(document).on('change', '#SelectedService_FollowUpDate, #SelectedService_FTETrackingStep_nextfollowup, #SelectedService_StateFiling_FollowUpDate', checkDeadlines);
+
+            toggleDateFields('SelectedService_ImplementationProcess', ['SelectedService_LastUpdated', 'SelectedService_FollowUpDate']);
+            toggleDateFields('SelectedService_ProcessStep1094', ['SelectedService_FTETrackingStep_lastupdated', 'SelectedService_FTETrackingStep_nextfollowup']);
+            toggleDateFields('SelectedService_StateFilingProcessStep', ['SelectedService_StateFilingProcessStepUpdated', 'SelectedService_StateFiling_FollowUpDate']);
+            checkDeadlines();
+              // Load receipt IDs inline
+        (function () {
+            var $box = $('#receiptLedgerRowEmployer');
+            var empSvcId = $box.data('emp-svc-id');
+            if (!empSvcId) {
+                renderEmployerReceiptLedger([]);
+                return;
+            }
+            var ctx = {
+                employerId:        $box.data('emp-id'),
+                employerServiceId: empSvcId,
+                serviceId:         $box.data('svc-id'),
+                planYear:          $box.data('plan-year'),
+                serviceName:       $box.data('svc-name'),
+                scopeToEmployer:   true
+            };
+            window._currentSvcCtx = ctx;
+            if (typeof loadReceiptBadge === 'function') loadReceiptBadge(ctx);
+            $.getJSON('/TrackerEmployer/GetReceiptIds', { employerServiceId: empSvcId, employerId: ctx.employerId }, function (data) {
+                renderEmployerReceiptLedger(data || []);
+            }).fail(function () {
+                renderEmployerReceiptLedger([]);
+            });
+        })();
+
+        $(document).off('click.addRcptEmp').on('click.addRcptEmp', '#btnAddReceiptEmployer', function () {
+            openReceiptModal(window._currentSvcCtx);
+        });
+
+        $('#receiptLedgerBodyEmployer')
+            .off('show.bs.collapse.rcptToggle hide.bs.collapse.rcptToggle')
+            .on('show.bs.collapse.rcptToggle', function () {
+                $('#btnToggleReceiptLedgerEmployer i').removeClass('bx-chevron-down').addClass('bx-chevron-up');
+            })
+            .on('hide.bs.collapse.rcptToggle', function () {
+                $('#btnToggleReceiptLedgerEmployer i').removeClass('bx-chevron-up').addClass('bx-chevron-down');
+            });
+
+        $(document).off('receiptsUpdated.ledgerEmp').on('receiptsUpdated.ledgerEmp', function (e) {
+            var ctx = window._currentSvcCtx;
+            if (!ctx || !ctx.employerServiceId) return;
+            var all = (e.detail && e.detail.receipts) || [];
+            var filtered = all.filter(function (r) {
+                var svcId = r.employerServiceId || r.EmployerServiceId;
+                var einId = r.affiliateEINId || r.AffiliateEINId;
+                return svcId === ctx.employerServiceId && einId === ctx.employerId;
+            });
+            renderEmployerReceiptLedger(filtered);
+        });
+
+        function renderEmployerReceiptLedger(receipts) {
+            var $ledgerRow = $('#receiptLedgerRowEmployer');
+            var $kpi = $('#receiptKpiStripEmployer');
+            var $list = $('#receiptLedgerListEmployer');
+            $ledgerRow.removeClass('d-none');
+
+            if (!receipts.length) {
+                $kpi.empty();
+                $list.html('<div class="text-center text-muted py-3 fs-tiny"><i class="bx bx-receipt d-block mb-1 opacity-25 fs-3"></i>No receipts recorded.</div>');
+                return;
+            }
+
+            var sorted = receipts.slice().sort(function (a, b) {
+                var da = new Date(a.receivedDate || a.ReceivedDate || 0);
+                var db = new Date(b.receivedDate || b.ReceivedDate || 0);
+                return db - da;
+            });
+            var latest = sorted[0];
+            var latestVal = latest.receiptIdValue || latest.ReceiptIdValue || '—';
+            var latestDate = latest.receivedDate || latest.ReceivedDate;
+            var fmtLatest = latestDate ? new Date(latestDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+
+            $kpi.html(
+                '<div class="d-flex align-items-center gap-2">' +
+                '  <span class="badge badge-center rounded-pill bg-label-primary p-2"><i class="bx bx-receipt fs-5"></i></span>' +
+                '  <div>' +
+                '    <div class="fs-4 fw-bold lh-1">' + receipts.length + '</div>' +
+                '    <div class="fs-tiny text-muted text-uppercase">Total Transmission' + (receipts.length === 1 ? '' : 's') + '</div>' +
+                '  </div>' +
+                '</div>' +
+                '<div class="vr d-none d-sm-block"></div>' +
+                '<div>' +
+                '  <div class="fs-tiny text-muted text-uppercase">Latest</div>' +
+                '  <span class="fw-bold font-monospace">' + _escEmp(latestVal) + '</span>' +
+                '  <span class="badge bg-label-secondary ms-1">' + fmtLatest + '</span>' +
+                '</div>'
+            );
+
+            var groups = {};
+            var order = [];
+            receipts.forEach(function (r) {
+                var key = r.affiliateEINId || r.AffiliateEINId || 0;
+                if (!groups[key]) {
+                    groups[key] = {
+                        name: r.affiliateName || r.AffiliateName || 'Unlinked',
+                        ein: r.affiliateEIN || r.AffiliateEIN || '—',
+                        isPrimary: r.isPrimary || r.IsPrimary || false,
+                        receipts: []
+                    };
+                    order.push(key);
+                }
+                groups[key].receipts.push(r);
+            });
+
+            var listHtml = '';
+            order.forEach(function (key) {
+                var g = groups[key];
+                listHtml += '<div class="mb-3">';
+                listHtml += '  <div class="d-flex align-items-center gap-2 mb-2">';
+                listHtml += '    <span class="fw-bold text-uppercase fs-tiny">' + _escEmp(g.name) + '</span>';
+                listHtml += '    <span class="badge bg-label-secondary fs-tiny">EIN: ' + _escEmp(g.ein) + '</span>';
+                if (g.isPrimary) listHtml += '    <span class="badge bg-label-success fs-tiny">Primary</span>';
+                listHtml += '    <span class="text-muted fs-tiny">(' + g.receipts.length + ' Transmission' + (g.receipts.length === 1 ? '' : 's') + ')</span>';
+                listHtml += '  </div>';
+                listHtml += '  <ul class="list-group">';
+
+                g.receipts.forEach(function (r) {
+                    var rid = r.receiptEntryId || r.ReceiptEntryId;
+                    var rval = r.receiptIdValue || r.ReceiptIdValue || '—';
+                    var rdate = r.receivedDate || r.ReceivedDate;
+                    var fmtDate = rdate ? new Date(rdate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+                    var rnotes = r.notes || r.Notes || '';
+
+                    listHtml += '    <li class="list-group-item">';
+                    listHtml += '      <div class="d-flex justify-content-between align-items-start gap-2">';
+                    listHtml += '        <div class="d-flex align-items-center gap-2">';
+                    listHtml += '          <span class="fw-bold font-monospace">' + _escEmp(rval) + '</span>';
+                    listHtml += '          <button type="button" class="btn btn-xs btn-icon btn-label-secondary border-0 p-0" title="Copy Receipt ID" onclick="copyReceiptIdValue(this, \'' + _escEmp(rval).replace(/'/g, "\\'") + '\')"><i class="bx bx-copy"></i></button>';
+                    listHtml += '        </div>';
+                    listHtml += '        <div class="d-flex align-items-center gap-2">';
+                    listHtml += '          <span class="text-muted fs-tiny"><i class="bx bx-calendar-event me-1"></i>' + fmtDate + '</span>';
+                    listHtml += '          <button type="button" class="btn btn-xs btn-icon btn-label-primary border-0 p-0" title="Edit" onclick="openReceiptModal(window._currentSvcCtx); setTimeout(function(){ editReceiptId(' + rid + '); }, 400)"><i class="bx bx-edit-alt"></i></button>';
+                    listHtml += '          <button type="button" class="btn btn-xs btn-icon btn-label-danger border-0 p-0" title="Delete" onclick="deleteReceiptId(' + rid + ')"><i class="bx bx-trash"></i></button>';
+                    listHtml += '        </div>';
+                    listHtml += '      </div>';
+                    listHtml += '      <div class="text-muted fs-tiny mt-1">' +
+                                 '<i class="bx bx-message-square-detail me-1"></i>' +
+                                 (rnotes ? _escEmp(rnotes) : '<span class="opacity-50">No description provided</span>') +
+                                 '</div>';
+                    listHtml += '    </li>';
+                });
+
+                listHtml += '  </ul>';
+                listHtml += '</div>';
+            });
+
+            $list.html(listHtml);
+        }
+
+        function _escEmp(s) {
+            if (s == null) return '';
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        window.copyReceiptIdValue = function (btn, value) {
+            navigator.clipboard.writeText(value).then(function () {
+                var $icon = $(btn).find('i');
+                $icon.removeClass('bx-copy').addClass('bx-check text-success');
+                setTimeout(function () { $icon.removeClass('bx-check text-success').addClass('bx-copy'); }, 1200);
+            });
+        };
+    });
+</script>      

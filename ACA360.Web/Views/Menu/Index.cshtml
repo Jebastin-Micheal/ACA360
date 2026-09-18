@@ -1,0 +1,281 @@
+﻿@using ACA360.Core.Extensions
+@using ACA360.Web.ViewComponents
+@model ACA360.Web.Models.MenuViewModel
+
+@{
+    ViewBag.Title = "Menu List";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // ✅ CONFIG: Toolbar Buttons for Menu
+    var customButtons = "";
+
+    customButtons += @"
+<div class='dropdown grid-export-wrapper me-2'
+     data-export-url='/Menu/Export'
+     data-file-base-name='MenuList'>
+    <button class='btn btn-outline-secondary dropdown-toggle hide-arrow'
+            type='button' data-bs-toggle='dropdown'>
+        <i class='bx bx-export me-1'></i> Export
+    </button>
+    <ul class='dropdown-menu dropdown-menu-end grid-export-menu'>
+        <li><a class='dropdown-item grid-export-action' href='#' data-format='print'><i class='bx bx-printer me-2'></i>Print</a></li>
+        <li><a class='dropdown-item grid-export-action' href='#' data-format='csv'><i class='bx bx-file me-2'></i>CSV</a></li>
+        <li><a class='dropdown-item grid-export-action' href='#' data-format='excel'><i class='bx bxs-file-export me-2'></i>Excel</a></li>
+        <li><a class='dropdown-item grid-export-action' href='#' data-format='pdf'><i class='bx bxs-file-pdf me-2'></i>PDF</a></li>
+    </ul>
+</div>";
+
+    if (User.HasPermission("Menu", "Add"))
+    {
+        customButtons += "<button class='btn create-new btn-primary' type='button' id='add_menu_controls'><span class='d-flex align-items-center gap-2'><i class='icon-base bx bx-plus icon-sm'></i><span class='d-none d-sm-inline-block'>Add New Menu</span></span></button>";
+    }
+
+    var toolbarConfig = new
+    {
+        IsEmployerPage = false,
+        CustomButtons = customButtons
+    };
+}
+
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Menu List",
+    items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem { Title = "Employer", Url = Url.Action("Index", "Employer"), IsActive = false },
+        new BreadcrumbItem { Title = "Master Settings", Url = "", IsActive = false },
+        new BreadcrumbItem { Title = "Menu Controls", Url = "", IsActive = true }
+    }
+})
+
+<link href="~/assets/vendor/libs/select2/select2.css" rel="stylesheet" />
+
+<div id="menuListContainerWrapper" style="position:relative;">
+
+    <div id="loader" class="loader" style="display:none;">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="card mb-6">
+        <div class="card-body">
+            @{
+                ViewBag.ShowFilterButton = false;
+                ViewBag.ShowViewModeToggle = false;
+            }
+            @await Html.PartialAsync("_GridToolbarCommon", toolbarConfig)
+
+            <div class="row">
+                <div id="menuListContainer">
+                    @await Html.PartialAsync("_MenuListPartial", Model)
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="menuFormModal" tabindex="-1" aria-labelledby="menuFormModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="menuFormModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body menu-body">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-3">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="menuForm" class="btn btn-primary menuForm_save">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/common-grid.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+
+            // 1. Initialize Common Grid Manager
+            GridManager.init({
+                url: '@Url.Action("MenuListPartial", "Menu")',
+                container: '#menuListContainer',
+                loadingContainer: '#loader',
+                state: {
+                    pageIndex: @(Model.Metadata?.CurrentPage ?? 1),
+                    pageSize: @(Model.Metadata?.PageSize ?? 10),
+                    search: '@Html.Raw(Model.Search ?? "")',
+                    sortColumn: '@Html.Raw(Model.SortColumn)',
+                    sortOrder: '@Html.Raw(Model.SortOrder ?? "")',
+                    viewMode: ''
+                }
+            });
+
+            // 2. Open modal for Add or Edit
+            function openMenuModal(id) {
+                let url = '/Menu/GetMenuForm';
+                if (id) url += '?id=' + id;
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function (html) {
+                        $('#menuFormModal .menu-body').html(html);
+                        $('#menuFormModalLabel').text(id ? 'Edit Menu' : 'Add Menu');
+                        $('#menuFormMessage').empty();
+                        var modal = new bootstrap.Modal(document.getElementById('menuFormModal'));
+                        modal.show();
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Failed to load form.', 'error');
+                    }
+                });
+            }
+
+            // Add button click
+            $("#add_menu_controls").click(function () {
+                var add_url = '/Menu/Add_New';
+                $.ajax({
+                    type: "POST",
+                    url: add_url,
+                    success: function (data) {
+                       $('#menuFormModal .menu-body').html(data);
+                       $('#menuFormModalLabel').text('Add Menu');
+                       var modal = new bootstrap.Modal(document.getElementById('menuFormModal'));
+                       modal.show();
+                    },
+                    error: function (xhr) {
+                        console.log("Error response:", xhr.responseText);
+                    }
+                });
+            });
+
+            // Edit button click
+            $(document).on('click', '.edit-menu-btn', function () {
+                var id = String($(this).data('id')); // Handled explicitly as string
+                openMenuModal(id);
+            });
+
+            // Clear input validation errors on typing
+            $('#menuFormModal').on('input change', '.required-field, .input-validation-error', function() {
+                $(this).removeClass('border-danger');
+            });
+
+            // 3. AJAX Save Menu Form Logic
+            $(document).on('click', '.menuForm_save', function (e) {
+                e.preventDefault();
+                var $form = $('#menuForm');
+                var isValid = true;
+
+                $form.find('.border-danger').removeClass('border-danger');
+                $('.select2-selection').removeClass('border-danger');
+
+                if ($.validator && $.validator.unobtrusive && $form.data('validator')) {
+                    if (!$form.valid()) {
+                        $form.find('.input-validation-error').not('#ParentMenuId').addClass('border-danger');
+                        isValid = false;
+                    }
+                }
+
+                $form.find('.required-field').not('#ParentMenuId').each(function() {
+                    var val = $(this).val();
+                    if (val === null || val === undefined || val.toString().trim() === '' || val == 0) {
+                        $(this).addClass('border-danger');
+                        isValid = false;
+                    }
+                });
+
+                var actions = $('#SelectedActionIds').val();
+                if (!actions || actions.length === 0 || (actions.length === 1 && actions[0] === 'select_toggle')) {
+                    $('#SelectedActionIds').next('.select2-container').find('.select2-selection').addClass('border-danger');
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    var $firstError = $form.find('.border-danger').first();
+                    if ($firstError.hasClass('select2-selection') || $firstError.is('select')) {
+                        $('#SelectedActionIds').select2('open');
+                    } else {
+                        $firstError.focus();
+                    }
+                    return;
+                }
+
+                var roleId = 2; // Default per your original logic
+                var url = '/Menu/AddOrUpdateMenu?roleId=' + encodeURIComponent(roleId);
+                var data = $form.serialize();
+
+                $.post(url, data)
+                    .done(function (response) {
+                        if (response.success) {
+                            $('#menuFormModal').modal('hide');
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Saved!',
+                                text: response.message || 'Menu saved successfully.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(function () {
+                                GridManager.reload(); // Refresh via GridManager
+                            });
+                        } else {
+                            Swal.fire('Failed!', response.message || 'Something went wrong.', 'error');
+                        }
+                    })
+                    .fail(function (xhr) {
+                        Swal.fire('Error!', 'Save failed: ' + xhr.responseText, 'error');
+                    });
+            });
+
+            // 4. Delete Menu
+            $(document).on('click', '.delete-menu-btn', function () {
+                const id = String($(this).data('id')); // Handled explicitly as string
+
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'This menu will be permanently deleted!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/Menu/Delete',
+                            data: { id: id },
+                            success: function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Deleted!',
+                                        text: response.message || 'Menu deleted successfully.',
+                                        timer: 2000,
+                                        showConfirmButton: false
+                                    }).then(function () {
+                                        GridManager.reload(); // Refresh via GridManager
+                                    });
+                                } else {
+                                    Swal.fire('Failed!', response.message, 'error');
+                                }
+                            },
+                            error: function (xhr) {
+                                Swal.fire('Error!', 'Delete failed: ' + xhr.responseText, 'error');
+                            }
+                        });
+                    }
+                });
+            });
+
+        });
+    </script>
+}

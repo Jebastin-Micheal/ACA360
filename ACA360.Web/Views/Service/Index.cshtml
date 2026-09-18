@@ -1,0 +1,183 @@
+﻿@{
+    ViewData["Title"] = "Service Catalog";
+    ViewBag.ShowFilterButton = false;
+    ViewBag.ShowViewModeToggle = false;
+}
+
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Service Catalog",
+    items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem { Title = "Employer", Url = Url.Action("Index", "Employer"), IsActive = false },
+        new BreadcrumbItem { Title = "Tracker", Url = "", IsActive = false },
+        new BreadcrumbItem { Title = "Service Catalog", Url = "", IsActive = true }
+    }
+})
+
+<div id="ServiceListContainerWrapper" style="position:relative;">
+
+    <div id="loader" class="loader" style="display:none;">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="card mb-6">
+        <div class="card-body">
+            @{
+                ViewBag.ShowFilterButton = false;
+                ViewBag.ShowViewModeToggle = false;
+            }
+            @await Html.PartialAsync("_GridToolbarCommon", new
+            {
+                IsEmployerPage = false,
+                        CustomButtons = @"<button class=""btn create-new btn-primary"" type=""button"" id=""add_Service_controls"">
+                        <span class=""d-flex align-items-center gap-2"">
+                        <i class=""icon-base bx bx-plus icon-sm""></i>
+                        <span class=""d-none d-sm-inline-block"">Add New Service</span>
+                        </span>
+                        </button>"
+                        })
+
+            <div class="row">
+                <div id="gridContainer">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+@* ── Add / Edit Modal ── *@
+<div class="modal fade" id="serviceModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/common-grid.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+
+            // 1. Initialize Common Grid Manager
+            GridManager.init({
+                url: '@Url.Action("GetServiceList", "Service")',
+                container: '#gridContainer',
+                loadingContainer: '#loader',
+                cookieName: 'view_mode_service',
+                state: {
+                    pageIndex: 1,
+                    pageSize: 10,
+                    search: '',
+                    sortColumn: 'ServiceName',
+                    sortOrder: 'ASC',
+                    viewMode: 'List'
+                }
+            });
+
+            // ✅ Trigger first load (init() does NOT auto-load)
+            GridManager.reload();
+
+            // 2. Add Service
+            $("#add_Service_controls").click(function () {
+                openModal(0);
+            });
+
+            // 3. Edit Service
+            $(document).on('click', '.edit-Service-btn', function () {
+                var id = $(this).data('id');
+                openModal(id);
+            });
+
+            // 4. Delete Service
+            $(document).on('click', '.delete-Service-btn', function () {
+                var id = $(this).data('id');
+                deleteService(id);
+            });
+
+            // 5. Sort header click — use GridManager state instead of old sortGrid()
+            $(document).on('click', '.cursor-pointer[onclick^="sortGrid"]', function (e) {
+                e.preventDefault();
+                var state = GridManager.getState();
+                var col = 'ServiceName';
+                if (state.sortColumn === col) {
+                    state.sortOrder = state.sortOrder === 'ASC' ? 'DESC' : 'ASC';
+                } else {
+                    state.sortColumn = col;
+                    state.sortOrder = 'ASC';
+                }
+                GridManager.reload();
+            });
+
+        });
+
+        // ── Modal Functions ─────────────────────────────────────────
+        function openModal(id) {
+            $.get('/Service/AddUpdate/' + id).done(function (html) {
+                $('#modalContent').html(html);
+                new bootstrap.Modal(document.getElementById('serviceModal')).show();
+            });
+        }
+
+        function saveService() {
+            var form = $('#frmService');
+            $.validator.unobtrusive.parse(form);
+
+            if (!form.valid()) {
+                form.find('.border-danger').removeClass('border-danger');
+                var errors = form.find('.input-validation-error');
+                errors.addClass('border-danger');
+                if (errors.first().length) errors.first().focus();
+                return;
+            }
+
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '/Service/Save',
+                type: 'POST',
+                data: form.serialize(),
+                headers: { "RequestVerificationToken": token },
+                success: function (res) {
+                    if (res && res.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('serviceModal')).hide();
+                        Swal.fire('Saved!', 'Service saved successfully.', 'success');
+                        GridManager.reload();
+                    } else {
+                        Swal.fire('Error', res.message || 'Failed to save.', 'error');
+                    }
+                },
+                error: function () {
+                    Swal.fire('Error', 'Error occurred while saving.', 'error');
+                }
+            });
+        }
+
+        // ── Delete ──────────────────────────────────────────────────
+        function deleteService(id) {
+            Swal.fire({
+                title: 'Are you sure?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    var token = $('input[name="__RequestVerificationToken"]').val();
+                    $.ajax({
+                        url: '/Service/Delete/' + id,
+                        type: 'POST',
+                        headers: { "RequestVerificationToken": token },
+                        success: function (res) {
+                            if (res.success) {
+                                GridManager.reload();
+                                Swal.fire('Deleted!', '', 'success');
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+}

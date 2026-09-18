@@ -1,0 +1,261 @@
+﻿@model ACA360.Web.Models.AccountManagerAssignmentViewModel
+
+@{
+    ViewData["Title"] = "Manage Assignments - " + Model.AccountManager.AM_name;
+}
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Manage Assignments : <span class="text-info"> @Model.AccountManager.AM_name</span></h3>
+    </div>   
+    <div class="card-body">
+        <!-- Alphabet Filter -->
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="alphabet-filter">
+                    @for (char c = 'A'; c <= 'Z'; c++)
+                    {
+                        <button class="btn btn-sm btn-outline-primary alphabet-btn" data-letter="@c">@c</button>
+                    }
+                    <button class="btn btn-sm btn-outline-secondary alphabet-btn" data-letter="ALL">ALL</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-5">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="card-title mb-0">All Employers</h4>
+                        
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        <ul id="allEmployers" class="list-group">
+                            @foreach (var employer in Model.AllEmployers.Where(e => !e.IsAssigned).OrderBy(e => e.Name))
+                            {
+                                <li class="list-group-item employer-item employer-filter" data-id="@employer.Id" data-name="@employer.Name" ondblclick="assignEmployer(this)">
+                                    @employer.Name
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 text-center" style="padding-top: 100px;">
+                <button class="btn btn-primary mb-2" onclick="assignSelected()">→</button>
+                <br>
+                <button class="btn btn-primary mb-2" onclick="assignAll()">⇉</button>
+                <br>
+                <button class="btn btn-primary mb-2" onclick="removeSelected()">←</button>
+                <br>
+                <button class="btn btn-primary" onclick="removeAll()">⇇</button>
+            </div>
+            <div class="col-md-5">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Assigned Employers</h4>
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        <ul id="assignedEmployers" class="list-group">
+                            @foreach (var employer in Model.AssignedEmployers.OrderBy(e => e.Name))
+                            {
+                                <li class="list-group-item employer-item" data-id="@employer.Id" data-name="@employer.Name" ondblclick="removeEmployer(this)">
+                                    @employer.Name
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-12 text-center">
+                <button id="saveButton" class="btn btn-success float-end" onclick="saveAssignments()">Save</button>
+                @*  <a href="@Url.Action("Index")" class="btn btn-secondary">Back to List</a> *@
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+       // Alphabet filter functionality
+      
+        document.querySelectorAll('.alphabet-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const letter = this.getAttribute('data-letter');
+                filterEmployers(letter);
+            });
+        });
+
+        function filterEmployers(letter) {
+            const allItems = document.querySelectorAll('.employer-filter');
+
+            allItems.forEach(item => {
+                if (letter === 'ALL') {
+                    item.style.display = 'block';
+                } else {
+                    const name = item.getAttribute('data-name');
+                    if (name && name.charAt(0).toUpperCase() === letter) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+    function assignEmployer(element) {
+        var assignedList = document.getElementById('assignedEmployers');
+        assignedList.appendChild(element);
+        element.classList.remove('selected');
+       
+    }
+
+    function removeEmployer(element) {
+        var allList = document.getElementById('allEmployers');
+        allList.appendChild(element);
+        element.classList.remove('selected');
+       
+    }
+
+    function assignSelected() {
+        var allList = document.getElementById('allEmployers');
+        var assignedList = document.getElementById('assignedEmployers');
+        var selected = Array.from(allList.querySelectorAll('.selected'));
+        //console.log('Assigning selected:', selected.length, 'items');
+
+        selected.forEach(function(element) {
+            element.classList.remove('selected');
+            element.classList.remove('employer-filter');
+            assignedList.appendChild(element);
+        });
+
+      
+    }
+
+    function removeSelected() {
+        var allList = document.getElementById('allEmployers');
+        var assignedList = document.getElementById('assignedEmployers');
+        var selected = Array.from(assignedList.querySelectorAll('.selected'));
+        //console.log('Removing selected:', selected.length, 'items');
+
+        selected.forEach(function(element) {
+            element.classList.remove('selected');
+             element.classList.add('employer-filter');
+            allList.appendChild(element);
+        });
+
+       
+    }
+
+    // Move all employers from left to right
+    function assignAll() {
+        var allList = document.getElementById('allEmployers');
+        var assignedList = document.getElementById('assignedEmployers');
+        var items = Array.from(allList.querySelectorAll('.employer-item'));
+        //console.log('Assigning all:', items.length, 'items');
+
+        items.forEach(function(element) {
+            assignedList.appendChild(element);
+            element.classList.remove('selected');
+            element.classList.remove('employer-filter');
+        });
+
+       
+    }
+
+    // Move all employers from right to left
+    function removeAll() {
+        var allList = document.getElementById('allEmployers');
+        var assignedList = document.getElementById('assignedEmployers');
+        var items = Array.from(assignedList.querySelectorAll('.employer-item'));
+        //console.log('Removing all:', items.length, 'items');
+
+        items.forEach(function(element) {
+            allList.appendChild(element);
+            element.classList.remove('selected');
+            element.classList.add('employer-filter');
+        });
+
+      
+    }
+
+
+    document.body.addEventListener('click', function (e) {
+        const li = e.target.closest('.employer-item');
+        if (li) {
+            li.classList.toggle('selected');
+        }
+    });  
+
+    
+
+    function saveAssignments() {
+        var assignedEmployers = document.getElementById('assignedEmployers');
+        var employerIds = Array.from(assignedEmployers.querySelectorAll('li')).map(function(li) {
+            return parseInt(li.getAttribute('data-id'));
+        });
+
+       // console.log('Saving employer IDs:', employerIds);
+
+        // Use query string parameters instead of FormData
+        var params = 'amId=' + @Model.AccountManager.Id;
+        employerIds.forEach(function(id) {
+            params += '&assignedEmployerIds=' + id;
+        });
+
+        $.ajax({
+            url: '@Url.Action("UpdateAssignments", "AccountManager")?' + params,
+            type: 'POST',
+            success: function(response) {
+                if (response.success) {
+                       // SweetAlert success message
+            Swal.fire({
+                title: 'Success!',
+                text: 'Assignments loaded successfully.',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', error, xhr.responseText);
+                alert('An error occurred while saving assignments.');
+            }
+        });
+    }
+       
+    
+</script>
+
+<style>
+    .list-group-item.selected {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .list-group-item {
+        cursor: pointer;
+    }
+
+    .alphabet-filter {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        justify-content: center;
+        margin-bottom: 15px;
+    }
+
+    .alphabet-btn {
+        min-width: 30px;
+        padding: 2px 5px;
+    }
+
+    .card-header .form-check {
+        margin-bottom: 0;
+    }
+</style>

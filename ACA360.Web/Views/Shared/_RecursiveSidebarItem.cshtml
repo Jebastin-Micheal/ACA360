@@ -1,0 +1,74 @@
+﻿@using ACA360.Core.Models
+@model (Menu CurrentMenu, List<Menu> AllMenus, string CurrentController, bool IsHorizontal)
+
+@{
+    var currentMenu = Model.CurrentMenu;
+    var allMenus = Model.AllMenus;
+    var currentController = Model.CurrentController;
+    var isHorizontal = Model.IsHorizontal; // <--- The layout flag
+
+    // Find children of this specific menu
+    var submenus = allMenus.Where(m => m.ParentMenuId == currentMenu.Id).OrderBy(m => m.DisplayOrder).ToList();
+    bool hasSubMenus = submenus.Any();
+
+    // The SINGLE menu that should be highlighted (a leaf). Prefer the explicit ?menuId= so items that
+    // share a controller (e.g. Firm Management & Broker Management both -> Partner) don't both highlight;
+    // otherwise fall back to the first menu matching the current controller.
+    var currentMenuId = ViewContext.HttpContext.Request.Query["menuId"].ToString();
+    int? activeLeafId = null;
+    if (!string.IsNullOrEmpty(currentMenuId) && int.TryParse(currentMenuId, out int _mid) && allMenus.Any(x => x.Id == _mid))
+    {
+        activeLeafId = _mid;
+    }
+    else
+    {
+        var firstMatch = allMenus.FirstOrDefault(x => x.Controller?.Equals(currentController, StringComparison.OrdinalIgnoreCase) == true);
+        if (firstMatch != null) activeLeafId = firstMatch.Id;
+    }
+
+    // Build the active path = the active leaf + all its ancestors, by walking UP via ParentMenuId.
+    // A node highlights only if it is on this path, so parents stay open but sibling items do not light up.
+    var activePathIds = new HashSet<int>();
+    var pathNode = activeLeafId == null ? null : allMenus.FirstOrDefault(x => x.Id == activeLeafId);
+    while (pathNode != null)
+    {
+        activePathIds.Add(pathNode.Id);
+        pathNode = pathNode.ParentMenuId == null ? null : allMenus.FirstOrDefault(x => x.Id == pathNode.ParentMenuId);
+    }
+
+    bool isActiveNode = activePathIds.Contains(currentMenu.Id);
+
+    string liClass = "menu-item";
+    if (isActiveNode)
+    {
+        liClass += " active";
+
+        // ONLY apply 'open' if it has children AND it is the vertical sidebar
+        if (hasSubMenus && !isHorizontal)
+        {
+            liClass += " open";
+        }
+    }
+
+    // ONLY apply display: block if it is the vertical sidebar
+    string ulStyle = (isActiveNode && hasSubMenus && !isHorizontal) ? "display: block;" : "";
+}
+
+<li class="@liClass">
+    <a href="@(hasSubMenus ? "javascript:void(0);" : Url.Action("Index", currentMenu.Controller, new { menuId = currentMenu.Id }))"
+       class="menu-link @(hasSubMenus ? "menu-toggle" : "")">
+        <i class="menu-icon icon-base @currentMenu.Icon"></i>
+        <div data-i18n="@currentMenu.MenuName">@currentMenu.MenuName</div>
+    </a>
+
+    @if (hasSubMenus)
+    {
+        <ul class="menu-sub" style="@ulStyle">
+            @foreach (var sub in submenus)
+            {
+                // Pass the flag down through the recursive calls
+                @await Html.PartialAsync("_RecursiveSidebarItem", (sub, allMenus, currentController, isHorizontal))
+            }
+        </ul>
+    }
+</li>

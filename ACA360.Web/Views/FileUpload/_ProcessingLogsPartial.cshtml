@@ -1,0 +1,89 @@
+﻿@model IEnumerable<ACA360.Core.Models.FileUploadError>
+
+@{
+    // All variables computed once at the top — avoids Razor scope loss inside @if/@else blocks
+    var logList = Model.ToList();
+    var hasLogs = logList.Any();
+    var logTotal = logList.Count;
+    var logLabel = logTotal == 1 ? "Entry" : "Entries";
+    var latestTime = hasLogs
+                    ? logList.OrderByDescending(l => l.CreatedAt).First().CreatedAt.ToString("MMM dd · HH:mm:ss")
+                    : "";
+    var sortedLogs = logList.OrderByDescending(l => l.CreatedAt).ToList();
+}
+
+<div class="modal-header border-0 pb-0">
+    <div>
+        <h5 class="modal-title fw-semibold">
+            <i class="bx bx-list-ul me-2 text-danger"></i>System Processing Logs
+        </h5>
+        <small class="text-muted">Errors and warnings recorded during validation</small>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body pt-3 pb-2" style="max-height:65vh;overflow-y:auto;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                @if (!hasLogs)
+                {
+                    <div class="alert alert-success d-flex align-items-center gap-2 mb-0">
+                        <i class="bx bx-check-circle fs-5"></i>
+                        <span>No errors or warnings were logged. Validation passed cleanly.</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex gap-2 mb-3 flex-wrap">
+                        <span class="badge bg-label-danger py-2 px-3">
+                            <i class="bx bx-error-circle me-1"></i>@logTotal Log @logLabel
+                        </span>
+                        <span class="badge bg-label-secondary py-2 px-3">
+                            <i class="bx bx-time me-1"></i>Latest: @latestTime
+                        </span>
+                    </div>
+
+                    <div class="list-group list-group-flush border rounded overflow-hidden">
+                        @foreach (var log in sortedLogs)
+                        {
+                            bool isSystemError = log.ErrorMessage != null
+                            && log.ErrorMessage.StartsWith("System Error",
+                            StringComparison.OrdinalIgnoreCase);
+                            string rowBg = isSystemError ? "list-group-item-danger" : "";
+                            string iconCss = isSystemError ? "bx-error-alt text-danger" : "bx-info-circle text-warning";
+
+                            <div class="list-group-item @rowBg px-3 py-2">
+                                <div class="d-flex align-items-start gap-2">
+                                    <i class="bx @iconCss mt-1 flex-shrink-0" style="font-size:15px;"></i>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <div class="text-body small" style="word-break:break-word;">
+                                            @log.ErrorMessage
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-label-secondary text-nowrap flex-shrink-0"
+                                          style="font-size:.65rem;">
+                                        @log.CreatedAt.ToString("HH:mm:ss")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-footer border-0 pt-2 py-3">
+    <small class="text-muted me-auto">
+        <i class="bx bx-info-circle me-1"></i>
+        These are raw system logs. Use Error Triage for row-level fixes.
+    </small>
+    <button type="button" class="btn btn-sm btn-outline-secondary"
+            data-bs-dismiss="modal">
+        Close
+    </button>
+</div>

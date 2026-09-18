@@ -1,0 +1,47 @@
+﻿@using ACA360.Web.ViewComponents
+@model ACA360.Web.Models.EmployerListViewModel
+
+@{
+    ViewData["Title"] = "Select Employer";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+
+
+    th.sortable {
+        position: relative;
+        cursor: pointer;
+    }
+
+        th.sortable::after {
+            font-family: FontAwesome;
+            content: "\f0dc";
+            position: absolute;
+            right: 8px;
+            color: #999;
+        }
+
+        th.sortable.asc::after {
+            content: "\f0d8";
+        }
+
+        th.sortable.desc::after {
+            content: "\f0d7";
+        }
+
+        th.sortable:hover::after {
+            color: #333;
+        }
+</style>
+<!-- Marker to indicate we're already on the full employer list page -->
+<div id="isEmployerIndexPage" style="display:none;"></div>
+
+@await Html.PartialAsync("_EmployerList_selectPartial", Model)
+
+
+
+
+
+
+

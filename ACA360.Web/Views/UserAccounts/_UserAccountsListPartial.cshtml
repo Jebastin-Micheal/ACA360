@@ -1,0 +1,202 @@
+﻿@model ACA360.Web.Models.UserAccountsViewModel
+
+@{
+    var metadata = Model.Metadata;
+    var startPage = ((metadata.CurrentPage - 1) / 10) * 10 + 1;
+    var endPage = Math.Min(startPage + 9, metadata.TotalPages);
+    int countIndex = ((metadata.CurrentPage - 1) * metadata.PageSize) + 1;
+}
+
+@if (Model.UserAccounts != null && Model.UserAccounts.Count > 0)
+{
+
+
+    <table class="table table-hover ui-table" id="UserAccountsTable" style="width: 100%;">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th class="sortable @(Model.SortColumn == 0 ? "active " + Model.SortOrder : "")" data-column="0" data-sort="asc">Name</th>
+                <th>Role</th>
+                <th>MFA</th>
+                <th>Status</th>
+                <th class="sortable @(Model.SortColumn == 1 ? "active " + Model.SortOrder : "")" data-column="2" data-sort="asc">Created On</th>                
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+           @foreach (var UserAccounts in Model.UserAccounts)
+           {
+                <tr class="">
+                    <td class="text-muted">@(countIndex++)</td>
+                    <td class="sorting_1">
+                    <div class="d-flex justify-content-start align-items-center user-name">
+                        <div class="avatar-wrapper">
+                            @if (!string.IsNullOrEmpty(UserAccounts.ProfilePicture) && System.Text.RegularExpressions.Regex.IsMatch(UserAccounts.ProfilePicture, @"\.(png|jpg|jpeg|gif|bmp|webp)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+                                {
+                                    <img src="~/uploads/profile-pictures/@UserAccounts.ProfilePicture" alt="Profile Picture" class="avatar me-2 rounded-circle" />
+                                }
+                                else
+                                {
+                                    var color = @DesingHelpers.GetInitialColor(@UserAccounts.ProfilePicture);
+                                    <div class="avatar me-2">
+                                        <span class="avatar-initial rounded-circle bg-@color">@UserAccounts.ProfilePicture</span>
+                                    </div>
+                                }
+                        </div>
+                        <div class="d-flex flex-column">
+                            <a href="javascript:;" class="text-heading text-truncate view-UserAccounts-btn" data-id="@UserAccounts.UserAccounts_ID" data-role-id="@UserAccounts.UserAccounts_Role">
+                               <span class="fw-medium" title="@UserAccounts.UserAccounts_Full_Name">@UserAccounts.UserAccounts_Full_Name</span>
+                            </a>
+                            <small>@UserAccounts.UserAccounts_Email</small>
+                            
+                        </div>
+                            @if (@UserAccounts.AssginCount != 0)
+                            {
+                                <div class="avatar flex-shrink-0 me-4 mx-3">
+                                    <span class="avatar-initial rounded bg-label-info">
+                                        <i class="icon-base bx bx-group icon-lg"></i>@UserAccounts.AssginCount
+                                    </span>
+                                </div>
+                            }
+                    </div>
+                </td>
+                    <td>
+                        <span class="d-flex align-items-center text-heading">
+                            <i class="icon-base bx @DesingHelpers.GetRoleIcon(UserAccounts.UserAccounts_Role) me-2"></i>
+                            @UserAccounts.UserAccounts_Role_Name
+                        </span>
+                    </td>
+
+                    <td>
+                        <label class="switch">
+                            <input type="checkbox" class="switch-input is-valid" @(UserAccounts.IsMFA == 1 ? "checked" : "") disabled />
+                            <span class="switch-toggle-slider">
+                                <span class="switch-on"></span>
+                                <span class="switch-off"></span>
+                            </span>
+                        </label>
+                    </td>
+                    <td class="cursor-pointer">
+                        @if (UserAccounts.UserAccounts_Status == 1)
+                        {
+                            <span class="badge bg-label-success">Active</span>
+                        }
+                        else if (UserAccounts.UserAccounts_Status == 2)
+                        {
+                            <span class="badge bg-label-secondary">Inactive</span>
+                        }
+                        else if (UserAccounts.UserAccounts_Status == 3)
+                        {
+                            <span class="badge bg-label-danger">Terminated</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-label-info">Unknown</span>
+                        }
+                    </td>
+                    <td class="cursor-pointer">@(UserAccounts.createdon?.ToString("yyyy-MM-dd") ?? "")</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <a href="javascript:;" class="btn btn-icon view-UserAccounts-btn" data-id="@UserAccounts.UserAccounts_ID" data-role-id="@UserAccounts.UserAccounts_Role">
+                           <i class="icon-base bx bx-show icon-md"></i>
+                        </a>
+                        <a href="javascript:;" class="btn btn-icon edit-UserAccounts-btn" data-id="@UserAccounts.UserAccounts_ID" data-role-id="@UserAccounts.UserAccounts_Role">
+                           <i class="icon-base bx bx-edit bg-info icon-md"></i>
+                        </a>                      
+                        @if (UserAccounts.UserAccounts_Role == 16 || UserAccounts.UserAccounts_Role == 6 || UserAccounts.UserAccounts_Role == 11 || UserAccounts.UserAccounts_Role == 5 || UserAccounts.UserAccounts_Role == 10)
+                        {
+                                <a href="javascript:;" class="btn btn-icon assgin-UserAccounts-btn" data-id="@UserAccounts.UserAccounts_ID" data-role-id="@UserAccounts.UserAccounts_Role" title="Assign Employers to User" data-bs-toggle="tooltip" data-bs-placement="top">
+                               <i class="icon-base bx bx-user-check bg-success icon-md"></i>
+                            </a>
+                        }
+                        else
+                        {
+                             <a href="javascript:;" class="btn btn-icon" style="cursor: not-allowed; opacity: 0.5;"><i class="icon-base bx bx-user-check bg-success icon-md"></i></a>
+                        }
+                            <a href="javascript:;" class="btn btn-icon dropdown-toggle hide-arrow action-dots-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="icon-base bx bx-dots-vertical-rounded icon-md"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end m-0" style="">
+                           <a href="javascript:;" class="dropdown-item delete-UserAccounts-btn" data-id="@UserAccounts.UserAccounts_ID" data-role-id="@UserAccounts.UserAccounts_Role">
+                                <i class="icon-base bx bx-trash bg-danger icon-md"></i>Delete
+                           </a>                                                                
+                        </div>
+                    </div>
+                </td>
+             </tr>
+           }
+        </tbody>
+    </table>
+
+}
+else
+{
+    <tr>
+       <td colspan="6" class="alert text-danger text-center">
+        No UserAccounts members found.
+    </td>
+    </tr>
+}
+
+<hr />
+
+<div class="row mt-3 justify-content-between">
+    <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto mt-0">
+        <div class="dt-info mx-12 mb-2" role="status">
+            Showing @metadata.StartPage to @metadata.EndPage of @metadata.TotalCount entries
+        </div>
+    </div>
+
+    @if (metadata != null && metadata.TotalPages > 1)
+    {
+        <div class="mt-1 d-md-flex align-items-center dt-layout-end col-md-auto justify-content-md-between justify-content-center d-flex flex-wrap gap-2 mb-md-0 mb-4 mt-0">
+            <div class="dt-paging mx-7">
+                <nav aria-label="pagination">
+                    <ul class="pagination">
+                        <!-- First Button -->
+                        <li class="dt-paging-button page-item @(metadata.CurrentPage == 1 ? "disabled" : "")">
+                            <button class="page-link" type="button" data-pageindex="1" aria-disabled="@(metadata.CurrentPage == 1)">
+                                First
+                            </button>
+                        </li>
+
+                        <!-- Previous Button -->
+                        <li class="dt-paging-button page-item @(metadata.CurrentPage == 1 ? "disabled" : "")">
+                            <button class="page-link previous" type="button" data-pageindex="@(metadata.CurrentPage - 1)" aria-label="Previous" aria-disabled="@(metadata.CurrentPage == 1)">
+                                <i class="icon-base bx bx-chevron-left scaleX-n1-rtl icon-18px"></i>
+                            </button>
+                        </li>
+
+                        @for (var i = startPage; i <= endPage; i++)
+                        {
+                            <li class="dt-paging-button page-item @(metadata.CurrentPage == i ? "active" : "")">
+                                <button class="page-link" type="button" data-pageindex="@i" aria-current="@(metadata.CurrentPage == i ? "page" : null)">
+                                    @i
+                                </button>
+                            </li>
+                        }
+
+                        <!-- Next Button -->
+                        <li class="dt-paging-button page-item @(metadata.CurrentPage == metadata.TotalPages ? "disabled" : "")">
+                            <button class="page-link next" type="button" data-pageindex="@(metadata.CurrentPage + 1)" aria-label="Next" aria-disabled="@(metadata.CurrentPage == metadata.TotalPages)">
+                                <i class="icon-base bx bx-chevron-right scaleX-n1-rtl icon-18px"></i>
+                            </button>
+                        </li>
+
+                        <!-- Last Button -->
+                        <li class="dt-paging-button page-item @(metadata.CurrentPage == metadata.TotalPages ? "disabled" : "")">
+                            <button class="page-link" type="button" data-pageindex="@metadata.TotalPages" aria-disabled="@(metadata.CurrentPage == metadata.TotalPages)">
+                                Last
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    }
+</div>
+
+
+
+
+

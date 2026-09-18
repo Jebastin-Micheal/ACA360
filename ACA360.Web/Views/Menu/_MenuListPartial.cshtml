@@ -1,0 +1,87 @@
+﻿@model ACA360.Web.Models.MenuViewModel
+
+@{
+    var metadata = Model.Metadata;
+    int countIndex = metadata != null ? ((metadata.CurrentPage - 1) * metadata.PageSize) + 1 : 1;
+}
+
+<div class="menu-table-container ui-table-responsive">
+    <table class="table table-bordered table-hover mb-0 ui-table">
+        <thead>
+            <tr class="align-middle">
+                <th>#</th>
+                <th>
+                    @await Html.PartialAsync("_SortableHeader", new
+                    {
+                        Title = "Menu Name",
+                                        Column = 0,
+                                        SortColumn = Model.SortColumn,
+                                        SortOrder = Model.SortOrder
+                                        })
+                </th>
+                <th>Controller</th>
+                <th>Icon</th>
+                <th>
+                    @await Html.PartialAsync("_SortableHeader", new
+                                        {
+                        Title = "Display Order",
+                                        Column = 1,
+                                        SortColumn = Model.SortColumn,
+                                        SortOrder = Model.SortOrder
+                                        })
+                </th>
+                <th>Active</th>
+                <th>Modified</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Menus != null && Model.Menus.Count > 0)
+            {
+                foreach (var menu in Model.Menus)
+                {
+                    <tr>
+                        <td class="text-muted">@(countIndex++)</td>
+                        <td>@menu.MenuName</td>
+                        <td>@menu.Controller</td>
+                        <td><i class="@menu.Icon"></i> @menu.Icon</td>
+                        <td>@menu.DisplayOrder</td>
+                        <td>
+                            @if (menu.IsActive)
+                            {
+                                <span class="badge bg-success">Yes</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">No</span>
+                            }
+                        </td>
+                        <td>@menu.DateModified?.ToString("yyyy-MM-dd")</td>
+                        <td class="text-center">
+                            <button class="btn p-1 me-1 edit-menu-btn" data-id="@menu.Id" title="Edit">
+                                <i class="icon-base bx bx-edit bg-info icon-sm fs-4 text-secondary"></i>
+                            </button>
+
+                            <a href="javascript:;" class="btn btn-icon dropdown-toggle hide-arrow action-dots-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="icon-base bx bx-dots-vertical-rounded icon-md"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end m-0">
+                                <a href="javascript:;" class="dropdown-item delete-menu-btn" data-id="@menu.Id">
+                                    <i class="icon-base bx bx-trash bg-danger me-1"></i> Delete
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="8" class="text-center text-danger">No menu items found.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@await Html.PartialAsync("_GridPagination", Model.Metadata)

@@ -1,0 +1,61 @@
+﻿@model List<ACA360.Core.Models.FilingAuditLogDto>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="text-center py-5" style="color:#212529;">
+        <i class='bx bx-history' style="font-size:40px; color:#adb5bd;"></i>
+        <p class="mt-2" style="color:#212529;">No history recorded yet for this filing.</p>
+    </div>
+}
+else
+{
+    <div class="timeline-list" style="color:#212529;">
+        @foreach (var evt in Model)
+        {
+            string icon = evt.EventType switch
+            {
+                "Finalized" => "bx-check-shield text-success",
+                "Unlocked" => "bx-lock-open-alt text-danger",
+                "DraftGenerated" => "bx-file-blank text-info",
+                _ => "bx-info-circle text-secondary"
+            };
+            string borderColor = evt.EventType switch
+            {
+                "Finalized" => "border-success",
+                "Unlocked" => "border-danger",
+                "DraftGenerated" => "border-info",
+                _ => "border-secondary"
+            };
+            string label = evt.EventType switch
+            {
+                "Finalized" => "Finalized & Locked",
+                "Unlocked" => "Unlocked",
+                "DraftGenerated" => "Draft Generated",
+                _ => evt.EventType
+            };
+
+            <div class="d-flex mb-3 pb-3 border-bottom">
+                <div class="me-3">
+                    <i class='bx @icon' style="font-size:22px;"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="fw-bold">@label</span>
+                        <span class="small text-muted">@evt.EventDate.ToString("MMM dd, yyyy · hh:mm tt")</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(evt.EventDescription))
+                    {
+                        <div class="small text-muted mt-1">@evt.EventDescription</div>
+                    }
+                    @if (!string.IsNullOrEmpty(evt.PerformedByUserId))
+                    {
+                        <div class="small text-muted mt-1">
+                            <i class='bx bx-user'></i> @(evt.PerformedByUserName ?? evt.PerformedByUserId)
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+    <div class="small text-center mt-2" style="color:#6c757d;">@Model.Count events recorded</div>
+}

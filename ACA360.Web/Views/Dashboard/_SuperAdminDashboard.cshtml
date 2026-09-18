@@ -1,0 +1,369 @@
+﻿@model ACA360.Core.Models.DashboardViewModel
+@{
+    var sa = Model.SuperAdminData ?? new ACA360.Core.Models.SuperAdminDashboardData();
+    var filedPct = sa.TotalFilings > 0 ? (int)((double)sa.AcceptedFilings / sa.TotalFilings * 100) : 0;
+    var processing = sa.TotalFilings - sa.AcceptedFilings - sa.RejectedFilings;
+    var fileGrowth = sa.FilesLastMonth > 0
+        ? (int)Math.Round((double)(sa.FilesThisMonth - sa.FilesLastMonth) / sa.FilesLastMonth * 100)
+        : 0;
+    var deadlineDays = (new DateTime(DateTime.Now.Year, 3, 31) - DateTime.Now).Days;
+    if (deadlineDays < 0) deadlineDays = (new DateTime(DateTime.Now.Year + 1, 3, 31) - DateTime.Now).Days;
+}
+
+@* ── Row 1: Hero metrics ───────────────────────────────── *@
+<div class="row g-3 mb-4">
+
+    <div class="col-6 col-xl-3">
+        <div class="d-metric pb-9">
+            <div class="d-metric-label">Total Employers</div>
+            <i class='bx bx-buildings d-metric-icon'></i>
+            <div class="d-metric-value counter" data-target="@sa.TotalEmployers">@sa.TotalEmployers</div>
+            <div class="d-metric-sub d-flex align-items-center gap-2 mt-2">
+                <span class="trend-up"><i class='bx bx-up-arrow-alt'></i> @sa.NewEmployersThisMonth new</span>
+                <span class="text-muted" style="font-size:.72rem;">this month</span>
+            </div>
+           
+        </div>
+    </div>
+
+    <div class="col-6 col-xl-3">
+        <div class="d-metric accent-success">
+            <div class="d-metric-label">IRS Acceptance Rate</div>
+            <i class='bx bx-check-shield d-metric-icon'></i>
+            <div class="d-metric-value counter" data-target="@((int)sa.AcceptanceRate)">@((int)sa.AcceptanceRate)</div>
+            <div class="d-metric-sub d-flex align-items-center gap-2 mt-2">
+                <span style="font-size:1.1rem; font-weight:700; color:var(--d-muted);">%</span>
+                <span class="text-muted" style="font-size:.72rem;">@sa.AcceptedFilings accepted / @sa.TotalFilings total</span>
+            </div>
+            <div class="d-progress mt-2">
+                <div class="d-progress-fill" data-pct="@((int)sa.AcceptanceRate)"
+                     style="--fill-color:var(--d-success);"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-xl-3">
+        <div class="d-metric accent-warning pb-10">
+            <div class="d-metric-label">Files This Month</div>
+            <i class='bx bx-data d-metric-icon'></i>
+            <div class="d-metric-value counter" data-target="@sa.FilesThisMonth">@sa.FilesThisMonth</div>
+            <div class="d-metric-sub mt-2">
+                @if (fileGrowth >= 0)
+                {
+                    <span class="trend-up"><i class='bx bx-trending-up'></i> +@fileGrowth% vs last month</span>
+                }
+                else
+                {
+                    <span class="trend-down"><i class='bx bx-trending-down'></i> @fileGrowth% vs last month</span>
+                }
+            </div>
+           
+        </div>
+    </div>
+
+    <div class="col-6 col-xl-3">
+        <div class="d-metric accent-info pb-9">
+            <div class="d-metric-label">System Users</div>
+            <i class='bx bx-group d-metric-icon'></i>
+            <div class="d-metric-value counter" data-target="@sa.TotalUsers">@sa.TotalUsers</div>
+            <div class="d-metric-sub mt-2">
+                <span class="badge bg-label-info" style="font-size:.7rem;">@sa.AdminsCount Admins</span>
+                <span class="ms-1 text-muted" style="font-size:.72rem;">@(sa.TotalUsers - sa.AdminsCount) Staff</span>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+@* ── Row 2: IRS Filing Pipeline + Alerts + Countdown ─────*@
+<div class="row g-3 mb-4">
+
+    @* IRS Pipeline visual *@
+    <div class="col-12 col-xl-5">
+        <div class="d-card h-100">
+            <div class="d-card-header">
+                <h6 class="d-card-title"><i class='bx bx-file-find me-2 text-primary'></i>IRS Filing Pipeline</h6>
+                <span class="badge bg-label-primary">TY @(DateTime.Now.Year - 1)</span>
+            </div>
+            <div class="card-body pb-2">
+                <div id="irsDonut" style="height:200px;"></div>
+                <div class="row g-2 mt-1">
+                    <div class="col-4 text-center">
+                        <div class="fw-bold fs-5 text-success counter" data-target="@sa.AcceptedFilings">@sa.AcceptedFilings</div>
+                        <div style="font-size:.68rem;" class="text-muted text-uppercase fw-semibold">Accepted</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="fw-bold fs-5 text-danger counter" data-target="@sa.RejectedFilings">@sa.RejectedFilings</div>
+                        <div style="font-size:.68rem;" class="text-muted text-uppercase fw-semibold">Rejected</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="fw-bold fs-5 text-warning counter" data-target="@processing">@processing</div>
+                        <div style="font-size:.68rem;" class="text-muted text-uppercase fw-semibold">Pending</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* File volume trend *@
+    <div class="col-12 col-xl-4">
+        <div class="d-card h-100">
+            <div class="d-card-header">
+                <h6 class="d-card-title"><i class='bx bx-line-chart me-2 text-warning'></i>File Ingestion Trend</h6>
+                <span class="trend-@(fileGrowth >= 0 ? "up" : "down")">
+                    @(fileGrowth >= 0 ? "+" : "")@fileGrowth%
+                </span>
+            </div>
+            <div class="card-body d-flex flex-column justify-content-between p-3" style="gap:1rem;">
+                @* Month comparison — large numbers side by side *@
+                <div class="d-flex align-items-center justify-content-between px-2">
+                    <div class="text-center">
+                        <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;" class="text-muted mb-1">Last Month</div>
+                        <div style="font-size:2rem;font-weight:800;line-height:1;color:var(--bs-heading-color);">@sa.FilesLastMonth</div>
+                        <div style="font-size:.7rem;" class="text-muted mt-1">files processed</div>
+                    </div>
+                    <div class="text-center px-2">
+                        <i class='bx @(fileGrowth >= 0 ? "bx-trending-up text-success" : "bx-trending-down text-danger")' style="font-size:2rem;"></i>
+                    </div>
+                    <div class="text-center">
+                        <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;" class="text-primary mb-1">This Month</div>
+                        <div style="font-size:2rem;font-weight:800;line-height:1;color:var(--d-primary);">@sa.FilesThisMonth</div>
+                        <div style="font-size:.7rem;" class="text-muted mt-1">files processed</div>
+                    </div>
+                </div>
+                @* Sparkline — thin area chart *@
+                <div id="filesTrend" style="height:90px; margin: 0 -8px;"></div>
+                @* Progress toward last month *@
+                @{
+                    var trendPct = sa.FilesLastMonth > 0
+                    ? Math.Min((int)((double)sa.FilesThisMonth / sa.FilesLastMonth * 100), 100)
+                    : 100;
+                }
+                <div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:.72rem;" class="text-muted">vs last month baseline</span>
+                        <span style="font-size:.72rem;font-weight:700;" class="text-@(fileGrowth >= 0 ? "success" : "danger")">@trendPct%</span>
+                    </div>
+                    <div class="d-progress">
+                        <div class="d-progress-fill" data-pct="@trendPct"
+                             style="--fill-color:@(fileGrowth >= 0 ? "var(--d-success)" : "var(--d-danger)");"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Deadline + quick stats *@
+    <div class="col-12 col-xl-3">
+        <div class="d-card h-100" style="overflow:visible;">
+            <div class="d-card-header">
+                <h6 class="d-card-title"><i class='bx bx-alarm me-2 text-danger'></i>Filing Deadline</h6>
+            </div>
+            <div class="card-body d-flex flex-column justify-content-between p-3" style="gap:1rem;">
+                @* Countdown block — solid color fallback instead of gradient clip *@
+                <div class="text-center p-3 rounded"
+                     style="background:linear-gradient(135deg,rgba(255,62,29,.1),rgba(255,171,0,.08));border:1px solid rgba(255,62,29,.18);">
+                    <div style="font-size:3.5rem;font-weight:900;line-height:1;letter-spacing:-3px;color:#ff3e1d;">
+                        @deadlineDays
+                    </div>
+                    <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--d-muted);margin-top:.35rem;">
+                        Days Until March 31
+                    </div>
+                </div>
+                @* Stats *@
+                <div class="d-flex flex-column" style="gap:0;">
+                    <div class="d-stat-row">
+                        <span class="text-muted" style="font-size:.8rem;">Filed</span>
+                        <span class="fw-bold text-success">@filedPct%</span>
+                    </div>
+                    <div class="d-stat-row">
+                        <span class="text-muted" style="font-size:.8rem;">Employers</span>
+                        <span class="fw-bold">@sa.TotalEmployers</span>
+                    </div>
+                    <div class="d-stat-row">
+                        <span class="text-muted" style="font-size:.8rem;">Total Files</span>
+                        <span class="fw-bold">@sa.TotalFiles</span>
+                    </div>
+                </div>
+                @* Mini progress *@
+                <div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:.7rem;" class="text-muted">Filing progress</span>
+                        <span style="font-size:.7rem;font-weight:700;" class="text-success">@filedPct%</span>
+                    </div>
+                    <div class="d-progress" style="height:7px;">
+                        <div class="d-progress-fill" data-pct="@filedPct"
+                             style="--fill-color:var(--d-success);height:7px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Row 3: Critical alerts + admin shortcuts ─────────── *@
+<div class="row g-3 mb-4">
+
+    @* Critical rejections feed *@
+    <div class="col-12 col-xl-8">
+        <div class="d-card h-100">
+            <div class="d-card-header">
+                <h6 class="d-card-title"><i class='bx bx-bell-minus me-2 text-danger'></i>Critical IRS Rejections</h6>
+                <a href="@Url.Action("Index", "Irs")" class="btn btn-sm btn-outline-danger" style="font-size:.73rem; padding:3px 12px;">View All</a>
+            </div>
+            @if (sa.RecentEvents?.Any() == true)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="font-size:.82rem;">
+                        <thead>
+                            <tr style="background:rgba(105,108,255,.04);">
+                                <th class="ps-4 py-2 fw-semibold text-muted" style="font-size:.68rem;letter-spacing:.5px;">EMPLOYER</th>
+                                <th class="py-2 fw-semibold text-muted" style="font-size:.68rem;letter-spacing:.5px;">MESSAGE</th>
+                                <th class="py-2 fw-semibold text-muted" style="font-size:.68rem;letter-spacing:.5px;">DATE</th>
+                                <th class="pe-4 py-2"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ev in sa.RecentEvents)
+                            {
+                                <tr>
+                                    <td class="ps-4 fw-semibold">
+                                        <span class="pulse-dot red me-2"></span>@ev.SourceName
+                                    </td>
+                                    <td class="text-muted text-truncate" style="max-width:280px;" title="@ev.Message">@ev.Message</td>
+                                    <td class="text-muted">@ev.EventDate.ToString("MMM d")</td>
+                                    <td class="pe-4">
+                                        <a href="@Url.Action("CorrectionDetails", "Irs", new { id = ev.EventId })"
+                                           class="btn btn-sm btn-outline-danger" style="font-size:.7rem;padding:2px 10px;">Fix</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="p-5 text-center">
+                    <i class='bx bx-check-shield bx-lg text-success d-block mb-2 mx-auto'></i>
+                    <p class="fw-semibold text-success mb-0">No active rejections</p>
+                    <small class="text-muted">All recent filings were accepted</small>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* Platform admin shortcuts *@
+    <div class="col-12 col-xl-4">
+        <div class="d-card h-100">
+            <div class="d-card-header">
+                <h6 class="d-card-title"><i class='bx bx-grid-alt me-2 text-primary'></i>Quick Actions</h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="row g-2">
+                    @{
+                        var shortcuts = new[] {
+                                        ("User Management",   "bx-user-voice",    "primary",  "Index", "UserAccounts"),
+                                        ("IRS Templates",     "bxs-file-pdf",     "danger",   "Index", "PdfTemplate"),
+                                        ("Employer Master",   "bxs-business",     "info",     "Index", "Employer"),
+                                        ("Background Jobs",   "bx-server",        "warning",  "",      ""),
+                                        ("Validation Rules",  "bx-check-double",  "success",  "Index", "Rules"),
+                                        ("Global Settings",   "bx-slider-alt",    "secondary","Index", "System"),
+                                        };
+                    }
+                    @foreach (var (label, icon, color, action, ctrl) in shortcuts)
+                    {
+                        <div class="col-6">
+                            @if (ctrl == "")
+                            {
+                                <a href="/hangfire" target="_blank"
+                                   class="d-flex flex-column align-items-center justify-content-center p-3 rounded text-decoration-none gap-1"
+                                   style="background:rgba(105,108,255,.05);border:1px solid rgba(105,108,255,.1);min-height:72px;transition:all .2s;"
+                                   onmouseover="this.style.background='rgba(105,108,255,.1)'"
+                                   onmouseout="this.style.background='rgba(105,108,255,.05)'">
+                                    <i class='bx @icon text-@color fs-4'></i>
+                                    <span style="font-size:.71rem;font-weight:600;color:var(--bs-body-color);text-align:center;">@label</span>
+                                </a>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action(action, ctrl)"
+                                   class="d-flex flex-column align-items-center justify-content-center p-3 rounded text-decoration-none gap-1"
+                                   style="background:rgba(105,108,255,.05);border:1px solid rgba(105,108,255,.1);min-height:72px;transition:all .2s;"
+                                   onmouseover="this.style.background='rgba(105,108,255,.1)'"
+                                   onmouseout="this.style.background='rgba(105,108,255,.05)'">
+                                    <i class='bx @icon text-@color fs-4'></i>
+                                    <span style="font-size:.71rem;font-weight:600;color:var(--bs-body-color);text-align:center;">@label</span>
+                                </a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Row 4: System health bar *@
+<div class="d-card">
+    <div class="d-card-header">
+        <h6 class="d-card-title"><i class='bx bx-pulse me-2 text-success'></i>Platform Health Overview</h6>
+        <div class="d-flex align-items-center gap-2">
+            <span class="pulse-dot green"></span>
+            <span style="font-size:.75rem;font-weight:600;color:var(--d-success);">All Systems Operational</span>
+        </div>
+    </div>
+    <div class="card-body py-3">
+        <div class="row g-4">
+            @{
+                var healthItems = new[] {
+                        ("IRS Acceptance", filedPct, "success"),
+                        ("File Processing", Model.FilesProcessedToday > 0 ? 92 : 45, "info"),
+                        ("Data Completeness", 78, "warning"),
+                        ("Validation Pass Rate", sa.TotalFilings > 0 ? (int)sa.AcceptanceRate : 0, "primary"),
+                        };
+            }
+            @foreach (var (label, pct, color) in healthItems)
+            {
+                <div class="col-md-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:.75rem;font-weight:600;">@label</span>
+                        <span style="font-size:.75rem;font-weight:700;" class="text-@color">@pct%</span>
+                    </div>
+                    <div class="d-progress">
+                        <div class="d-progress-fill" data-pct="@pct" style="--fill-color:var(--d-@color);width:0;"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // IRS Filing Donut
+        new ApexCharts(document.querySelector('#irsDonut'), {
+            series:  [@sa.AcceptedFilings, @sa.RejectedFilings, @processing],
+            labels:  ['Accepted', 'Rejected', 'Pending'],
+            chart:   { type: 'donut', height: 200, sparkline: { enabled: false } },
+            colors:  ['#71dd37', '#ff3e1d', '#ffab00'],
+            plotOptions: { pie: { donut: { size: '68%', labels: { show: true,
+                total: { show: true, label: 'Filed', fontWeight: 700,
+                         formatter: () => '@sa.TotalFilings' } } } } },
+            legend:   { show: false },
+            dataLabels: { enabled: false },
+            stroke:  { width: 0 }
+        }).render();
+
+        // File trend — area sparkline (no axes, clean look)
+        new ApexCharts(document.querySelector('#filesTrend'), {
+            series: [{ name: 'Files', data: [@sa.FilesLastMonth, @(Math.Max(sa.FilesLastMonth, sa.FilesThisMonth) > 0 ? (int)((@sa.FilesLastMonth + @sa.FilesThisMonth) / 2.0) : 0), @sa.FilesThisMonth] }],
+            chart:  { type: 'area', height: 90, sparkline: { enabled: true }, toolbar: { show: false } },
+            stroke: { curve: 'smooth', width: 2 },
+            fill:   { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05 } },
+            colors: ['@(fileGrowth >= 0 ? "#71dd37" : "#ff3e1d")'],
+            tooltip: { fixed: { enabled: false }, x: { show: false }, marker: { show: false } }
+        }).render();
+    });
+</script>

@@ -1,0 +1,472 @@
+@model ACA360.Core.Models.EmployeeConsentViewModel
+@using ACA360.Web.Models
+@using System.Linq
+@{
+    ViewData["Title"] = "Electronic Delivery Consent";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var year = ViewBag.TaxYear ?? Model.TaxYear;
+    var active = Model.IsElectronicActive;
+    var withdrawn = string.Equals(Model.Status, "Withdrawn", System.StringComparison.OrdinalIgnoreCase);
+    var consentDate = Model.UpdatedOn ?? Model.CreatedOn;
+    var empName = string.IsNullOrWhiteSpace(Model.EmployeeName) ? "This employee" : Model.EmployeeName;
+    var nameParts = (Model.EmployeeName ?? "").Split(' ', System.StringSplitOptions.RemoveEmptyEntries);
+    var firstName = nameParts.Length > 0 ? nameParts[0] : "the employee";
+
+    string statusText = active ? "Active" : (withdrawn ? "Withdrawn" : "Not Set");
+    string accent = active ? "success" : (withdrawn ? "warning" : "secondary");
+    string heroIcon = active ? "bx-check-shield" : withdrawn ? "bx-envelope" : "bx-info-circle";
+
+    var history = Model.History ?? new List<ACA360.Core.Models.ConsentEvent>();
+    var shown = history.Take(5).ToList();
+    var rest = history.Skip(5).ToList();
+
+    // Small helper for the timeline icon/colour mapping
+    Func<string, (string icon, string color)> map = t => t switch
+    {
+        "Consent Provided" => ("bx-check-circle", "success"),
+        "Disclosure Viewed" => ("bx-file", "primary"),
+        "Consent Withdrawn" => ("bx-x-circle", "danger"),
+        "Preference Selected" => ("bx-list-check", "info"),
+        _ => ("bx-list-check", "info")
+    };
+}
+
+@await Component.InvokeAsync("Breadcrumb", new
+{
+    pageTitle = "Electronic Delivery Consent",
+    items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem { Title = "Employees", Url = Url.Action("Index", "Employee"), IsActive = false },
+        new BreadcrumbItem { Title = empName, Url = Url.Action("Details", "Employee", new { id = Model.EmployeeId, year = year }), IsActive = false },
+        new BreadcrumbItem { Title = "Consent", Url = "", IsActive = true }
+    }
+})
+
+<div class="container-fluid flex-grow-1 container-p-y consent-page">
+
+    @if (TempData["ConsentUpdated"] != null)
+    {
+        <div class="alert alert-success alert-dismissible d-flex align-items-center reveal" role="alert">
+            <i class="bx bx-check-circle me-2"></i>@TempData["ConsentUpdated"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- ===== Hero header ===== -->
+    <div class="card consent-hero consent-hero-@accent reveal mb-4" style="--d:0s">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-4">
+                <div class="d-flex align-items-start gap-3">
+                    <span class="consent-hero-icon text-@accent">
+                        <i class="bx @heroIcon"></i>
+                    </span>
+                    <div>
+                        @if (!string.IsNullOrEmpty(Model.EmployerName))
+                        {
+                            <span class="badge bg-label-secondary mb-2"><i class="bx bx-buildings me-1"></i>@Model.EmployerName</span>
+                        }
+                        <h4 class="mb-1 fw-semibold">
+                            @(active ? "Electronic Delivery Consent Confirmed"
+                                : withdrawn ? "Consent Withdrawn — Paper Delivery"
+                                : "No Electronic Consent on File")
+                        </h4>
+                        <p class="text-muted mb-3">
+                            @if (active)
+                            {
+                                @:@empName has consented to receive ACA tax forms electronically. Consent details and disclosure information are securely recorded.
+                            }
+                            else if (withdrawn)
+                            {
+                                @:@empName will now receive ACA tax forms by mail for @year.
+                            }
+                            else
+                            {
+                                @:@empName has not yet consented to electronic delivery for @year.
+                            }
+                        </p>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <span class="badge bg-@accent d-inline-flex align-items-center">
+                                <i class="bx bx-circle bx-xs me-1"></i>@statusText
+                            </span>
+                            <span class="badge bg-label-primary"><i class="bx bx-calendar me-1"></i>Tax Year @year</span>
+                            @if (consentDate.HasValue)
+                            {
+                                <span class="badge bg-label-secondary"><i class="bx bx-time-five me-1"></i>Updated @consentDate.Value.ToString("MMM dd, yyyy")</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <a href="@Url.Action("Index", "Employee")" class="btn btn-outline-primary">
+                    <i class="bx bx-arrow-back me-1"></i> Return to Employee List
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- ===== Left ===== -->
+        <div class="col-lg-8 d-flex flex-column">
+
+            <!-- Consent summary -->
+            <div class="card hoverable reveal mb-4" style="--d:.06s">
+                <div class="card-header d-flex align-items-center justify-content-between border-bottom py-3">
+                    <h5 class="mb-0 d-flex align-items-center"><i class="bx bx-detail text-primary me-2"></i>Consent Summary</h5>
+                    <span class="badge bg-label-@accent">@statusText</span>
+                </div>
+                <div class="card-body pt-4">
+                    <div class="row g-3">
+                        @{
+                            var fields = new (string Label, string Value, string Icon)[]
+                            {
+                                ("Employee Name", empName, "bx-user"),
+                                ("Consent Date & Time", consentDate.HasValue ? consentDate.Value.ToString("MMM dd, yyyy 'at' h:mm tt") + " UTC" : null, "bx-calendar"),
+                                ("Effective Tax Year", year?.ToString(), "bx-calendar-check"),
+                                ("SSN", Model.SsnMasked, "bx-id-card"),
+                                ("Consent Method", Model.ConsentMethod, "bx-devices"),
+                                ("Consent ID", Model.ConsentId, "bx-hash"),
+                                ("Work Email", Model.WorkEmail, "bx-envelope"),
+                                ("IP Address", Model.IpAddress, "bx-globe"),
+                                ("User Agent", Model.UserAgent, "bx-window-alt")
+                            };
+                        }
+                        @foreach (var f in fields)
+                        {
+                            <div class="col-sm-6 col-xl-4">
+                                <div class="info-tile">
+                                    <span class="info-tile-icon"><i class="bx @f.Icon"></i></span>
+                                    <div class="min-w-0">
+                                        <small class="text-muted d-block text-uppercase info-tile-label">@f.Label</small>
+                                        <span class="fw-medium text-break">@(string.IsNullOrEmpty(f.Value) ? "—" : f.Value)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disclosure -->
+            <div class="card hoverable reveal mb-4" style="--d:.12s">
+                <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div class="d-flex align-items-start gap-3">
+                        <span class="info-tile-icon flex-shrink-0"><i class="bx bx-file-blank"></i></span>
+                        <div>
+                            <h6 class="mb-1">Electronic Delivery Disclosure</h6>
+                            <p class="text-muted mb-0">The employee reviewed and agreed to receive ACA tax forms electronically instead of by mail. A copy of the disclosure presented at the time of consent is stored for your records.</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm flex-shrink-0" data-bs-toggle="modal" data-bs-target="#disclosureModal">
+                        <i class="bx bx-show me-1"></i> View Disclosure
+                    </button>
+                </div>
+            </div>
+
+            <!-- What happens next -->
+            <div class="card hoverable reveal" style="--d:.18s">
+                <div class="card-header border-bottom py-3"><h6 class="mb-0 d-flex align-items-center"><i class="bx bx-flag text-primary me-2"></i>What Happens Next</h6></div>
+                <div class="card-body pt-4">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="next-step">
+                                <span class="next-step-icon next-step-success"><i class="bx bx-bell"></i></span>
+                                <p class="text-muted mb-0 mt-2 small">We will notify @firstName when ACA forms are available.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="next-step">
+                                <span class="next-step-icon next-step-info"><i class="bx bx-lock-alt"></i></span>
+                                <p class="text-muted mb-0 mt-2 small">@firstName can securely access, download, and print forms anytime.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="next-step">
+                                <span class="next-step-icon next-step-warning"><i class="bx bx-leaf"></i></span>
+                                <p class="text-muted mb-0 mt-2 small">Electronic delivery reduces paper and supports sustainability.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Questions -->
+            <div class="card consent-help reveal mt-4 flex-grow-1" style="--d:.24s">
+                <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div>
+                        <h6 class="mb-1 text-primary d-flex align-items-center"><i class="bx bx-help-circle me-2"></i>Questions?</h6>
+                        <p class="text-muted small mb-0">Learn more about electronic delivery and employee consent requirements.</p>
+                    </div>
+                    <a href="https://www.irs.gov/forms-pubs/about-form-1095-c" target="_blank" class="btn btn-outline-primary btn-sm flex-shrink-0">
+                        View Compliance Guidelines <i class="bx bx-link-external ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Right ===== -->
+        <div class="col-lg-4 d-flex flex-column">
+
+            <!-- Consent history (5 + view more) -->
+            <div class="card hoverable reveal mb-4" style="--d:.1s">
+                <div class="card-header border-bottom py-3 d-flex align-items-center justify-content-between">
+                    <h6 class="mb-0 d-flex align-items-center"><i class="bx bx-history text-primary me-2"></i>Consent History</h6>
+                    @if (history.Count > 0)
+                    {
+                        <span class="badge bg-label-secondary rounded-pill">@history.Count</span>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (history.Count > 0)
+                    {
+                        <div class="consent-timeline">
+                            @foreach (var ev in shown)
+                            {
+                                var (icon, color) = map(ev.EventType);
+                                <div class="tl-item">
+                                    <span class="tl-dot text-@color"><i class="bx @icon"></i></span>
+                                    <div class="fw-medium text-@color">@ev.EventType</div>
+                                    <small class="text-muted d-block">@ev.EventOn.ToString("MMM dd, yyyy 'at' h:mm tt") UTC</small>
+                                    @if (!string.IsNullOrEmpty(ev.Detail))
+                                    {
+                                        <small class="text-muted d-block">@ev.Detail</small>
+                                    }
+                                </div>
+                            }
+
+                            @if (rest.Any())
+                            {
+                                <div class="collapse" id="moreHistory">
+                                    @foreach (var ev in rest)
+                                    {
+                                        var (icon, color) = map(ev.EventType);
+                                        <div class="tl-item">
+                                            <span class="tl-dot text-@color"><i class="bx @icon"></i></span>
+                                            <div class="fw-medium text-@color">@ev.EventType</div>
+                                            <small class="text-muted d-block">@ev.EventOn.ToString("MMM dd, yyyy 'at' h:mm tt") UTC</small>
+                                            @if (!string.IsNullOrEmpty(ev.Detail))
+                                            {
+                                                <small class="text-muted d-block">@ev.Detail</small>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        @if (rest.Any())
+                        {
+                            <button class="btn btn-link btn-sm p-0 text-decoration-none mt-3" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#moreHistory"
+                                    onclick="this.textContent = this.textContent.trim().startsWith('View') ? 'Show less' : 'View more (@rest.Count)';">
+                                View more (@rest.Count)
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-4">
+                            <i class="bx bx-time bx-lg d-block mb-2 opacity-50 mx-auto"></i>
+                            <p class="small mb-0">No consent activity recorded yet.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card hoverable reveal flex-grow-1" style="--d:.16s">
+                <div class="card-header border-bottom py-3"><h6 class="mb-0 d-flex align-items-center"><i class="bx bx-cog text-primary me-2"></i>Actions</h6></div>
+                <div class="list-group list-group-flush">
+                    <a href="@Url.Action("Receipt", "Consent", new { id = Model.EmployeeId, year = year })" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                        <i class="bx bx-file fs-5 me-3 text-secondary"></i>
+                        <div class="flex-grow-1"><div class="fw-medium">View Consent Receipt</div><small class="text-muted">Download consent confirmation</small></div>
+                        <i class="bx bx-chevron-right text-muted"></i>
+                    </a>
+
+                    <form asp-action="EmailReceipt" method="post" class="m-0">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.EmployeeId" />
+                        <input type="hidden" name="year" value="@year" />
+                        <button type="submit" class="list-group-item list-group-item-action d-flex align-items-center w-100 border-0 bg-transparent text-start py-3">
+                            <i class="bx bx-envelope fs-5 me-3 text-secondary"></i>
+                            <div class="flex-grow-1"><div class="fw-medium">Email Consent Receipt</div><small class="text-muted">Send confirmation to employee</small></div>
+                            <i class="bx bx-chevron-right text-muted"></i>
+                        </button>
+                    </form>
+
+                    <a href="@Url.Action("Index", "Employee", new { focusId = Model.EmployeeId })" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                        <i class="bx bx-user fs-5 me-3 text-secondary"></i>
+                        <div class="flex-grow-1"><div class="fw-medium">View Employee Profile</div><small class="text-muted">Open employee record (split view)</small></div>
+                        <i class="bx bx-chevron-right text-muted"></i>
+                    </a>
+
+                    @if (active)
+                    {
+                        <form asp-action="WithdrawConsent" method="post"
+                              onsubmit="return confirm('Withdraw electronic consent for @empName and switch to paper delivery?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.EmployeeId" />
+                            <input type="hidden" name="year" value="@year" />
+                            <button type="submit" class="list-group-item list-group-item-action d-flex align-items-center w-100 border-0 bg-transparent text-start py-3">
+                                <i class="bx bx-block fs-5 me-3 text-danger"></i>
+                                <div class="flex-grow-1"><div class="fw-medium text-danger">Withdraw Consent</div><small class="text-muted">Change to paper delivery</small></div>
+                                <i class="bx bx-chevron-right text-muted"></i>
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Electronic Delivery Disclosure modal -->
+<div class="modal fade" id="disclosureModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content bg-white">
+            <div class="modal-header bg-white">
+                <h5 class="modal-title"><i class="bx bx-file me-2"></i>Electronic Delivery Disclosure Presented</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-white">
+                @await Html.PartialAsync("_ElectronicDeliveryDisclosure")
+            </div>
+            <div class="modal-footer bg-white">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* ===== Hero ===== */
+        .consent-page .consent-hero {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--bs-border-color);
+        }
+        .consent-page .consent-hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(var(--accent-rgb), .16), transparent 55%);
+            pointer-events: none;
+        }
+        .consent-page .consent-hero > .card-body { position: relative; z-index: 1; }
+        .consent-page .consent-hero-success   { --accent-rgb: var(--bs-success-rgb); }
+        .consent-page .consent-hero-warning   { --accent-rgb: var(--bs-warning-rgb); }
+        .consent-page .consent-hero-secondary { --accent-rgb: var(--bs-secondary-rgb); }
+
+        .consent-page .consent-hero-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            flex-shrink: 0;
+            border-radius: 14px;
+            font-size: 1.75rem;
+            background: rgba(var(--accent-rgb), .16);
+            box-shadow: 0 6px 16px rgba(var(--accent-rgb), .18);
+        }
+
+        /* ===== Info tiles ===== */
+        .consent-page .info-tile {
+            display: flex;
+            align-items: flex-start;
+            gap: .75rem;
+            padding: .75rem .85rem;
+            height: 100%;
+            border: 1px solid var(--bs-border-color);
+            border-radius: .5rem;
+            background: var(--bs-body-bg);
+            transition: border-color .2s ease, background-color .2s ease;
+        }
+        .consent-page .info-tile:hover { border-color: rgba(var(--bs-primary-rgb), .4); }
+        .consent-page .info-tile-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
+            border-radius: 9px;
+            font-size: 1.15rem;
+            color: var(--bs-primary);
+            background: rgba(var(--bs-primary-rgb), .1);
+        }
+        .consent-page .info-tile-label { font-size: .68rem; letter-spacing: .04em; margin-bottom: .1rem; }
+        .consent-page .min-w-0 { min-width: 0; }
+
+        /* ===== What happens next ===== */
+        .consent-page .next-step { text-align: center; }
+        .consent-page .next-step-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            font-size: 1.4rem;
+            line-height: 1;
+        }
+        .consent-page .next-step-success { color: var(--bs-success); background: rgba(var(--bs-success-rgb), .12); }
+        .consent-page .next-step-info    { color: var(--bs-info);    background: rgba(var(--bs-info-rgb), .12); }
+        .consent-page .next-step-warning { color: var(--bs-warning); background: rgba(var(--bs-warning-rgb), .12); }
+
+        /* ===== Timeline ===== */
+        .consent-page .consent-timeline { position: relative; list-style: none; margin: 0; padding: 0; }
+        .consent-page .consent-timeline::before {
+            content: "";
+            position: absolute;
+            left: 11px;
+            top: 4px;
+            bottom: 4px;
+            width: 2px;
+            background: var(--bs-border-color);
+        }
+        .consent-page .consent-timeline .tl-item {
+            position: relative;
+            padding-left: 2.25rem;
+            padding-bottom: 1.25rem;
+        }
+        .consent-page .consent-timeline .tl-item:last-child { padding-bottom: 0; }
+        .consent-page .consent-timeline .tl-dot {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .9rem;
+            background: var(--bs-card-bg);
+            border: 2px solid currentColor;
+        }
+
+        /* ===== Questions card ===== */
+        .consent-page .consent-help {
+            border: 1px solid rgba(var(--bs-primary-rgb), .4);
+            background: rgba(var(--bs-primary-rgb), .06);
+        }
+
+        /* ===== Motion — mirrors the employee portal card animation ===== */
+        @@media (prefers-reduced-motion: no-preference) {
+            .consent-page .reveal {
+                animation: consentFadeUp .5s cubic-bezier(.16, 1, .3, 1) both;
+                animation-delay: var(--d, 0s);
+            }
+            @@keyframes consentFadeUp {
+                from { opacity: 0; transform: translateY(16px); }
+                to   { opacity: 1; transform: none; }
+            }
+            .consent-page .card.hoverable { transition: transform .2s ease, box-shadow .2s ease; }
+            .consent-page .card.hoverable:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .08), 0 4px 6px -4px rgba(0, 0, 0, .08);
+            }
+        }
+    </style>
+}

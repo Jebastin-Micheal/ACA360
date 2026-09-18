@@ -1,0 +1,798 @@
+/* =====================================================================
+   Employer Filing-Year Comparison
+   Additive styles. Loaded from Views/Employer/Index.cshtml.
+   ===================================================================== */
+
+/* =====================================================================
+   Aligned single-grid comparison layout (_EmployerCompareGrid.cshtml).
+   One row per field, current + reference values paired and diff-highlighted.
+   Colours come from Sneat/Bootstrap CSS variables so light & dark just work.
+   ===================================================================== */
+.cmpgrid {
+    --cg-accent: var(--bs-primary, #696cff);
+    --cg-accent-soft: var(--bs-primary-bg-subtle, #edeeff);
+    --cg-ref: var(--bs-secondary-bg, #f0f1f7);
+    --cg-ref-head: var(--bs-tertiary-bg, #e7e8f1);
+    --cg-line: var(--bs-border-color, #e5e7f0);
+    --cg-ink: var(--bs-body-color, #282a3a);
+    --cg-soft: var(--bs-secondary-color, #666a80);
+    --cg-diff: var(--bs-warning, #cd8b1a);
+    --cg-diff-ink: var(--bs-warning-text-emphasis, #8a5410);
+    --cg-diff-bg: var(--bs-warning-bg-subtle, #fff6e8);
+    --cg-diff-line: var(--bs-warning-border-subtle, #f0c684);
+    --cg-match: var(--bs-success-text-emphasis, #12996b);
+    --cg-match-bg: var(--bs-success-bg-subtle, #e7f6ef);
+    font-size: 14px;
+}
+
+/* control bar above the grid */
+.cmpgrid-bar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 4px 2px 12px;
+}
+.cmpgrid-summary {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-weight: 700; font-size: 13px; padding: 5px 12px; border-radius: 20px;
+    border: 1px solid transparent;
+}
+.cmpgrid-summary .cg-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.cmpgrid-summary.is-diff  { color: var(--cg-diff-ink); background: var(--cg-diff-bg); border-color: var(--cg-diff-line); }
+.cmpgrid-summary.is-match { color: var(--cg-match); background: var(--cg-match-bg); border-color: var(--cg-match-bg); }
+.cmpgrid-summary.is-empty { color: var(--cg-soft); background: var(--cg-ref); border-color: var(--cg-line); }
+.cmpgrid-jump { display: flex; border: 1px solid var(--cg-line); border-radius: 8px; overflow: hidden; }
+.cmpgrid-jump button { border: 0; background: var(--bs-body-bg, #fff); color: var(--cg-soft); padding: 5px 9px; cursor: pointer; line-height: 1; }
+.cmpgrid-jump button:hover { background: var(--cg-accent-soft); color: var(--cg-accent); }
+.cmpgrid-only { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; user-select: none;
+    font-size: 12.5px; font-weight: 600; color: var(--cg-soft); margin: 0; }
+.cmpgrid-only input { position: absolute; opacity: 0; }
+.cmpgrid-only .cg-track { width: 34px; height: 19px; border-radius: 20px; background: var(--cg-line); position: relative; transition: background .18s; }
+.cmpgrid-only .cg-track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 15px; height: 15px;
+    border-radius: 50%; background: #fff; transition: transform .18s; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.cmpgrid-only input:checked + .cg-track { background: var(--cg-accent); }
+.cmpgrid-only input:checked + .cg-track::after { transform: translateX(15px); }
+
+/* the table */
+.cmpgrid-table { border: 1px solid var(--cg-line); border-radius: 12px; overflow: hidden; }
+.cmpgrid-head {
+    display: grid; grid-template-columns: minmax(150px, 1.1fr) 1fr 1fr;
+    background: var(--bs-tertiary-bg, #f6f7fb); border-bottom: 1px solid var(--cg-line);
+    position: sticky; top: 0; z-index: 3;
+}
+.cmpgrid-head > div { padding: 12px 16px; }
+.cmpgrid-head .cg-field { align-self: center; color: var(--cg-soft); font-size: 11px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; }
+.cg-yr { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cg-yr .cg-y { font-weight: 800; font-size: 16px; letter-spacing: -.01em; }
+.cg-yr small { display: block; font-weight: 600; font-size: 10.5px; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--cg-soft); margin-top: 1px; }
+.cg-cur { border-left: 3px solid var(--cg-accent); }
+.cg-cur .cg-y { color: var(--cg-accent); }
+.cg-ref { background: var(--cg-ref); }
+.cg-ref .cg-y { color: var(--cg-soft); }
+.cg-pill { font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 20px;
+    letter-spacing: .03em; text-transform: uppercase; display: inline-flex; gap: 4px; align-items: center; white-space: nowrap; }
+.cg-pill.cg-edit { background: var(--cg-accent-soft); color: var(--cg-accent); }
+.cg-pill.cg-lock { background: var(--cg-ref-head); color: var(--cg-soft); }
+
+/* section divider */
+.cg-sec {
+    display: flex; align-items: center; gap: 9px; padding: 10px 16px;
+    background: var(--bs-tertiary-bg, #f6f7fb);
+    border-top: 1px solid var(--cg-line); border-bottom: 1px solid var(--cg-line);
+    font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--cg-soft);
+}
+.cg-sec i { color: var(--cg-accent); font-size: 15px; }
+
+/* rows */
+.cg-row { display: grid; grid-template-columns: minmax(150px, 1.1fr) 1fr 1fr; }
+.cg-cell { padding: 11px 16px; border-bottom: 1px solid var(--cg-line); min-width: 0; }
+.cg-flabel { align-self: center; color: var(--cg-soft); font-weight: 600; font-size: 12.5px;
+    display: flex; align-items: center; gap: 8px; }
+.cg-ref { background: var(--cg-ref); }
+.cg-val { display: block; font-size: 13.5px; color: var(--cg-ink);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cg-cell.cg-ref .cg-val { color: var(--cg-soft); }
+.cg-val.empty { color: var(--bs-tertiary-color, #9599ad); font-style: italic; }
+.cg-val.data { font-family: var(--bs-font-monospace, ui-monospace, Menlo, monospace);
+    font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* changed-row treatment */
+.cg-row.diff .cg-cell { background: var(--cg-diff-bg); border-bottom-color: var(--cg-diff-line); }
+.cg-row.diff .cg-flabel { color: var(--cg-diff-ink); }
+.cg-row.diff .cg-cur { box-shadow: inset 3px 0 0 var(--cg-diff); }
+.cg-row.diff .cg-val { color: var(--cg-diff-ink); font-weight: 600; }
+.cg-chg { margin-left: auto; font-size: 10px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--cg-diff-ink); border: 1px solid var(--cg-diff-line); border-radius: 20px; padding: 1px 7px; }
+.cg-row.cg-flash .cg-cur { animation: cgFlash 1.1s ease; }
+@keyframes cgFlash {
+    0%, 100% { box-shadow: inset 3px 0 0 var(--cg-diff); }
+    35% { box-shadow: inset 0 0 0 2px var(--cg-diff), 0 0 0 4px var(--cg-diff-bg); }
+}
+.cg-row.cg-hidden { display: none; }
+
+/* no-record + legend */
+.cg-noref { display: flex; align-items: center; gap: 10px; padding: 18px 16px; color: var(--cg-soft); }
+.cg-noref i { font-size: 22px; color: var(--bs-tertiary-color, #9599ad); }
+.cmpgrid-legend { display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    padding: 12px 2px 0; color: var(--cg-soft); font-size: 12px; }
+.cmpgrid-legend strong { color: var(--cg-ink); }
+.cg-key { display: inline-flex; align-items: center; gap: 7px; }
+.cg-sw { width: 13px; height: 13px; border-radius: 4px; border: 1px solid var(--cg-line); }
+.cg-sw.cur { border-left: 3px solid var(--cg-accent); }
+.cg-sw.ref { background: var(--cg-ref); }
+.cg-sw.diff { background: var(--cg-diff-bg); border-color: var(--cg-diff-line); }
+
+@media (max-width: 820px) {
+    .cmpgrid-head, .cg-row { grid-template-columns: minmax(110px, .9fr) 1fr 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .cg-row.cg-flash .cg-cur { animation: none; } }
+
+/* Toolbar that hosts the "Compare filing" year picker + change summary */
+.cmp-toolbar {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    flex-wrap: wrap;
+    padding: .5rem .75rem;
+    margin-bottom: .75rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: .5rem;
+    background: var(--bs-body-bg);
+}
+
+.cmp-toolbar .cmp-toolbar-label {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Inline variant: docked into the top command bar's center slot. Strip the
+   card-like chrome so it reads as part of the bar, not a separate strip. */
+.cmp-toolbar.cmp-toolbar-inline {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    gap: .5rem;
+}
+/* In the bar the summary sits right after the picker (no auto-push-right, which
+   would slam it against the view-mode icons). */
+.cmp-toolbar.cmp-toolbar-inline .cmp-summary {
+    margin-left: .25rem;
+    font-size: .8125rem;
+}
+.cmp-toolbar.cmp-toolbar-inline .cmp-toolbar-label {
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+/* ---- restyled compare toolbar controls ---------------------------------- */
+.cmp-toolbar, .cmp-right-controls {
+    --tb-line: var(--bs-border-color, #e5e7f0);
+    --tb-soft: var(--bs-secondary-color, #666a80);
+    --tb-ink: var(--bs-body-color, #384551);
+    --tb-accent: var(--bs-primary, #696cff);
+    --tb-accent-soft: var(--bs-primary-bg-subtle, #edeeff);
+    --tb-surface: var(--bs-body-bg, #fff);
+    --tb-diff-bg: var(--bs-warning-bg-subtle, #fff6e8);
+    --tb-diff-ink: var(--bs-warning-text-emphasis, #8a5410);
+    --tb-diff-line: var(--bs-warning-border-subtle, #f0c684);
+    --tb-diff-dot: var(--bs-warning, #cd8b1a);
+    --tb-ok-bg: var(--bs-success-bg-subtle, #e7f6ef);
+    --tb-ok-ink: var(--bs-success-text-emphasis, #12996b);
+}
+
+/* compare-mode right-side controls (diff pill / only-differences / return) */
+.cmp-right-controls { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+
+/* round list-collapse button */
+.cmp-icon-btn {
+    width: 34px; height: 34px; border-radius: 8px;
+    border: 1px solid var(--tb-line); background: var(--tb-surface); color: var(--tb-soft);
+    display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 17px; padding: 0;
+    transition: border-color .15s, color .15s, background .15s;
+}
+.cmp-icon-btn:hover { border-color: var(--tb-accent); color: var(--tb-accent); background: var(--tb-accent-soft); }
+
+/* record nav — bordered buttons that read as enabled (like filter/refresh) */
+.cmp-nav { display: inline-flex; align-items: center; border: 1px solid var(--tb-line); border-radius: 8px; overflow: hidden; background: var(--tb-surface); }
+/* Table view has no record-by-record nav — hide Prev/Next, keep the compare picker. */
+.cmp-toolbar.cmp-table-mode .cmp-nav { display: none; }
+.cmp-nav button {
+    border: 0; background: transparent; color: var(--tb-ink);
+    font-weight: 600; font-size: 12.5px; padding: 7px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px;
+    transition: background .15s, color .15s;
+}
+.cmp-nav button:hover:not(:disabled) { background: var(--tb-accent-soft); color: var(--tb-accent); }
+.cmp-nav button:disabled { color: var(--tb-soft); opacity: .55; cursor: default; }
+.cmp-nav .cmp-nav-count {
+    padding: 0 12px; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--tb-soft);
+    border-left: 1px solid var(--tb-line); border-right: 1px solid var(--tb-line); align-self: stretch;
+    display: inline-flex; align-items: center; white-space: nowrap;
+}
+
+/* difference summary pill */
+.cmp-summary {
+    font-size: 12.5px; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px;
+    border: 1px solid transparent;
+}
+.cmp-summary:empty { display: none; }
+.cmp-summary.cmp-has-changes {
+    color: var(--tb-diff-ink); background: var(--tb-diff-bg); border-color: var(--tb-diff-line);
+}
+.cmp-summary.cmp-has-changes::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--tb-diff-dot);
+}
+.cmp-summary.cmp-no-changes { color: var(--tb-ok-ink); background: var(--tb-ok-bg); border-color: var(--tb-ok-bg); }
+
+/* "show only differences" switch */
+.cmp-onlydiff { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; user-select: none;
+    font-size: 12.5px; font-weight: 600; margin: 0; }
+.cmp-onlydiff input { position: absolute; opacity: 0; width: 0; height: 0; }
+.cmp-onlydiff .cmp-switch { width: 34px; height: 19px; border-radius: 20px; background: var(--tb-line); position: relative; transition: background .18s; flex: none; }
+.cmp-onlydiff .cmp-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 15px; height: 15px;
+    border-radius: 50%; background: #fff; transition: transform .18s; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.cmp-onlydiff input:checked + .cmp-switch { background: var(--tb-accent); }
+.cmp-onlydiff input:checked + .cmp-switch::after { transform: translateX(15px); }
+
+/* "only differences" hides unchanged field cells in the two-pane layout */
+.cmp-hide-same { display: none !important; }
+
+/* ===== "Show only differences" — modern card view ========================== */
+.cmp-difflist {
+    --cd-line: var(--bs-border-color, #e6e8f0);
+    --cd-soft: var(--bs-secondary-color, #6b7180);
+    --cd-ink: var(--bs-body-color, #2f3542);
+    --cd-surface: var(--bs-card-bg, #fff);   /* card colour, NOT the grey page bg */
+    --cd-accent: var(--bs-primary, #696cff);
+    --cd-accent-soft: var(--bs-primary-bg-subtle, #edeeff);
+    --cd-amber: var(--bs-warning, #cd8b1a);
+    --cd-amber-bg: var(--bs-warning-bg-subtle, #fff6e8);
+    --cd-amber-ink: var(--bs-warning-text-emphasis, #8a5410);
+    --cd-amber-line: var(--bs-warning-border-subtle, #f0c684);
+    --cd-muted-bg: var(--bs-secondary-bg, #eef0f5);
+    display: flex; flex-direction: column; gap: 14px; margin-top: .25rem;
+}
+
+/* summary strip */
+.cmp-diff-summary {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    padding: 2px 2px 0;
+}
+.cmp-diff-count {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 800; font-size: 15px; color: var(--cd-ink); letter-spacing: -.01em;
+}
+.cmp-diff-count .cmp-diff-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--cd-amber); box-shadow: 0 0 0 4px var(--cd-amber-bg); }
+.cmp-diff-legend { display: inline-flex; align-items: center; gap: 8px; }
+.cmp-lg { font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+.cmp-lg-cur { background: var(--cd-amber-bg); color: var(--cd-amber-ink); border: 1px solid var(--cd-amber-line); }
+.cmp-lg-cmp { background: var(--cd-muted-bg); color: var(--cd-soft); }
+
+/* section card */
+.cmp-diffcard {
+    background: var(--cd-surface); border: 1px solid var(--cd-line);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 1px 2px rgba(30,34,60,.04), 0 10px 26px -18px rgba(30,34,60,.20);
+}
+.cmp-diffcard-head {
+    display: flex; align-items: center; gap: 9px;
+    padding: 12px 16px; border-bottom: 1px solid var(--cd-line);
+    background: var(--cd-surface);
+    font-weight: 800; font-size: 13.5px; color: var(--cd-ink); letter-spacing: -.01em;
+}
+.cmp-diffcard-head i { font-size: 17px; color: var(--cd-accent); }
+.cmp-diffcard-badge {
+    margin-left: auto; min-width: 22px; height: 22px; padding: 0 7px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--cd-accent-soft); color: var(--cd-accent);
+    border-radius: 20px; font-size: 12px; font-weight: 800;
+}
+.cmp-diffcard-body { padding: 4px 0; }
+
+/* field diff item */
+.cmp-diffitem {
+    display: grid; grid-template-columns: minmax(120px, 220px) 1fr; gap: 12px; align-items: center;
+    padding: 11px 16px;
+}
+.cmp-diffitem + .cmp-diffitem { border-top: 1px solid var(--bs-border-color, #f0f2f7); }
+.cmp-diffitem-label { font-size: 12px; min-width: 0; }
+.cmp-diffitem-vals { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cmp-chip {
+    padding: 5px 11px; border-radius: 9px; font-size: 13px; font-weight: 600;
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cmp-chip-cur { background: var(--cd-amber-bg); color: var(--cd-amber-ink); border: 1px solid var(--cd-amber-line); }
+.cmp-chip-cmp { background: var(--cd-muted-bg); color: var(--cd-soft); }
+.cmp-chip-empty { background: transparent; border: 1px dashed var(--cd-line); color: var(--bs-tertiary-color, #9599ad); font-style: italic; font-weight: 500; }
+
+/* empty (in sync) state */
+.cmp-diff-empty {
+    display: flex; align-items: center; gap: 12px;
+    padding: 22px 18px; border: 1px solid var(--cd-line); border-radius: 14px;
+    background: var(--bs-success-bg-subtle, #e7f6ef);
+}
+.cmp-diff-empty i { font-size: 26px; color: var(--bs-success, #12996b); }
+.cmp-diff-empty strong { display: block; color: var(--bs-success-text-emphasis, #0f7a54); }
+.cmp-diff-empty span { color: var(--cd-soft); font-size: 13px; }
+
+/* ---- 1094-C ALE matrix (modern, both years side by side) ------------------ */
+.cmp-ale-block { padding: 6px 16px 16px; }
+.cmp-ale-title {
+    display: flex; align-items: center; gap: 7px; margin: 4px 0 10px;
+    font-size: 11.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--cd-soft);
+}
+.cmp-ale-title i { color: var(--cd-accent); font-size: 15px; }
+.cmp-ale-wrap { display: flex; gap: 16px; flex-wrap: wrap; }
+.cmp-ale-pane { flex: 1 1 320px; min-width: 0; overflow-x: auto; }
+.cmp-ale-head { font-weight: 800; font-size: 12.5px; padding: 0 2px 8px; color: var(--cd-soft); }
+.cmp-ale-head.cmp-ale-cur { color: var(--cd-accent); }
+.cmp-ale-tbl {
+    width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12.5px;
+    border: 1px solid var(--cd-line); border-radius: 10px; overflow: hidden;
+}
+.cmp-ale-tbl th, .cmp-ale-tbl td {
+    padding: 7px 9px; text-align: center; white-space: nowrap;
+    font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--bs-border-color, #eef0f7);
+}
+.cmp-ale-tbl tr:last-child td { border-bottom: 0; }
+.cmp-ale-tbl thead th {
+    background: var(--bs-tertiary-bg, #f7f8fb);
+    font-weight: 700; font-size: 10.5px; text-transform: uppercase; letter-spacing: .03em;
+}
+.cmp-ale-tbl .cmp-ale-mo { text-align: left; }
+.cmp-ale-tbl td.cmp-ale-diff {
+    background: var(--cd-amber-bg); color: var(--cd-amber-ink); font-weight: 800;
+}
+@media (max-width: 575.98px) {
+    .cmp-diffitem { grid-template-columns: 1fr; gap: 5px; }
+}
+
+/* Audit Logs + Notes cards hidden during comparison */
+.cmp-hidden-section { display: none !important; }
+
+/* A service that exists in only ONE of the two years (matched by name). */
+.cmp-shell .service-item.svc-only {
+    opacity: .72;
+    border-left: 3px solid var(--bs-warning, #cd8b1a) !important;
+    background: var(--bs-warning-bg-subtle, #fff6e8);
+}
+.cmp-shell .service-item.svc-only::after {
+    content: "only this year";
+    display: block; margin-top: 3px;
+    font-size: .6rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--bs-warning-text-emphasis, #8a5410);
+}
+
+
+/* Tabs that contain year-over-year differences get a small amber dot. */
+.cmp-shell .nav-link.cmp-tab-changed { position: relative; }
+.cmp-shell .nav-link.cmp-tab-changed::after {
+    content: ""; position: absolute; top: 5px; right: 6px;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--bs-warning, #cd8b1a);
+    box-shadow: 0 0 0 2px var(--bs-body-bg, #fff);
+}
+
+.cmp-toolbar select.cmp-year-select {
+    width: auto;
+    min-width: 8rem;
+}
+
+/* Summary badge: "N fields differ" */
+.cmp-summary {
+    margin-left: auto;
+    font-weight: 600;
+}
+
+.cmp-summary.cmp-has-changes {
+    color: var(--bs-warning-text-emphasis, #997404);
+}
+
+.cmp-summary.cmp-no-changes {
+    color: var(--bs-success-text-emphasis, #0f5132);
+}
+
+/* ---- Split layout: left (active year) | right (compare year) ---- */
+.cmp-shell {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.cmp-pane {
+    flex: 1 1 0;
+    min-width: 0; /* allow flex children to shrink instead of overflow */
+}
+
+.cmp-pane-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .4rem .75rem;
+    margin-bottom: .5rem;
+    border-radius: .5rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+
+.cmp-left .cmp-pane-header {
+    background: var(--bs-primary-bg-subtle);
+    color: var(--bs-primary-text-emphasis, var(--bs-primary));
+}
+
+.cmp-right .cmp-pane-header {
+    background: var(--bs-secondary-bg, #e9ecef);
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+.cmp-right .cmp-readonly-tag {
+    font-size: .75rem;
+    font-weight: 600;
+    opacity: .8;
+}
+.cmp-head-right {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+/* ---- Changed-field highlight (mirrors the K-system yellow) ---- */
+.cmp-changed-cell {
+    background: var(--bs-warning-bg-subtle, #fff3cd);
+    border-radius: .375rem;
+    outline: 1px solid var(--bs-warning-border-subtle, #ffe69c);
+    outline-offset: 2px;
+    transition: background .2s ease;
+}
+/* When the changed cell is a table cell (e.g. the 1094 ALE matrix), Bootstrap's
+   own td background otherwise wins — force the amber highlight and drop the
+   floating outline (looks wrong on grid cells). */
+.cmp-shell td.cmp-changed-cell,
+.cmp-shell th.cmp-changed-cell {
+    background: var(--bs-warning-bg-subtle, #fff3cd) !important;
+    outline: none;
+    box-shadow: inset 0 0 0 1px var(--bs-warning-border-subtle, #ffe69c);
+    border-radius: 0;
+}
+
+.cmp-changed-field,
+.cmp-changed-field.form-control,
+.cmp-changed-field.form-select {
+    border-color: var(--bs-warning, #ffc107) !important;
+    background-color: var(--bs-warning-bg-subtle, #fff9e6) !important;
+}
+
+/* Brief pulse when jumping to a changed field with Up/Down */
+.cmp-jump-flash {
+    animation: cmpJumpFlash 1s ease;
+    border-radius: .375rem;
+}
+@keyframes cmpJumpFlash {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,0,0,0); }
+    25% { box-shadow: 0 0 0 3px var(--bs-warning, #ffc107); }
+}
+
+/* Empty state when the compare year has no record for this employer */
+.cmp-empty {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+/* When comparing, tighten card gutters so two panes fit the column */
+.cmp-active .cmp-pane .card {
+    margin-bottom: 1rem !important;
+}
+
+/* Compare mode reads as two lightweight columns, not two heavy dashboards:
+   flatten the inner cards and tighten padding so both panes fit without the
+   shadows/gutters fighting for space. */
+.cmp-active .cmp-pane .card {
+    box-shadow: none !important;
+    border: 1px solid var(--bs-border-color) !important;
+}
+.cmp-active .cmp-pane .card .card-body {
+    padding: 1rem !important;
+}
+/* The compare (read-only) pane is a reference copy — mute it a touch so the
+   editable current-year pane stays the visual focus. */
+.cmp-right .cmp-pane-body {
+    opacity: .92;
+}
+.cmp-right .cmp-pane-body .card {
+    background: var(--bs-body-bg);
+}
+
+/* Each compare pane is only ~half width, so the 4-across text-field rows
+   (col-md-3) crush every field — labels wrap and values truncate. Halve just
+   those to 2-across. Leave col-md-4 (the Foreign/Call-Center/Corrected toggles)
+   and col-md-6 (address, 1094 certifications) at their native widths so those
+   rows stay side-by-side like the normal view. */
+.cmp-pane .row > [class*="col-md-3"] { flex: 0 0 50% !important; max-width: 50% !important; }
+
+/* Give labels room to sit on one line and stop values being clipped. */
+.cmp-pane .form-label { white-space: normal; }
+.cmp-pane .form-control,
+.cmp-pane .form-select { text-overflow: ellipsis; }
+
+/* Keep everything inside the (narrow) compare card — no content spilling past the
+   right edge. The DETAILED INFORMATION tabs wrap instead of overflowing, and the
+   toggle/section bars can't push wider than the card. */
+.cmp-pane, .cmp-pane .card, .cmp-pane .card-body,
+.cmp-pane .tab-content, .cmp-pane .tab-pane { min-width: 0; max-width: 100%; }
+.cmp-pane .card { overflow: hidden; }
+.cmp-pane .nav.nav-pills { flex-wrap: wrap !important; }
+.cmp-pane .nav.nav-pills .nav-link { padding-left: .5rem !important; padding-right: .5rem !important; }
+.cmp-pane .row { margin-left: 0; margin-right: 0; }
+
+/* Record navigation buttons keep their width when disabled at list ends */
+#empNavPrev:disabled,
+#empNavNext:disabled {
+    opacity: .5;
+}
+
+/* On narrow widths let the two compare panes stack instead of squashing */
+@media (max-width: 991.98px) {
+    .cmp-shell {
+        flex-direction: column;
+    }
+}
+
+/* ---- List shrink / collapse when comparing ---------------------------- */
+/* Comparing: don't stretch the list to match the very tall detail panes
+   (that left a huge empty column). Let each column take its own height, and
+   keep the short list pinned in view while the long comparison scrolls. */
+.cmp-mode {
+    align-items: flex-start !important;
+}
+.cmp-mode #mainListColumn {
+    width: 24% !important;
+    max-width: 24% !important;
+    flex: 0 0 24% !important;
+    position: sticky;
+    top: 74px; /* clear the fixed top navbar */
+    align-self: flex-start;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+}
+.cmp-mode #mainDetailColumn {
+    width: 76% !important;
+    max-width: 76% !important;
+    flex: 0 0 76% !important;
+}
+/* Toggle: collapse the list down to a vertical rail (styled like the Tracker
+   notes tab) instead of hiding it — click the rail to re-open. */
+.cmp-list-collapsed #mainListColumn {
+    flex: 0 0 34px !important;
+    width: 34px !important;
+    max-width: 34px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    /* Full-length rail: fill the viewport height and stay in view while scrolling. */
+    display: flex !important;
+    position: sticky;
+    top: 74px;
+    align-self: flex-start !important;
+    height: calc(100vh - 90px) !important;
+    max-height: calc(100vh - 90px) !important;
+}
+.cmp-list-collapsed #employerListContainer { display: none !important; }
+.cmp-list-collapsed #mainDetailColumn {
+    flex: 1 1 auto !important;
+    max-width: calc(100% - 40px) !important;
+}
+.cmp-list-toggle i { transition: transform .2s ease; }
+
+/* Vertical collapsed-list rail (mirrors .notes-collapsed-tab from the Tracker dashboard) */
+.emp-list-rail {
+    display: none;
+    flex-direction: column; align-items: center; justify-content: flex-start;
+    width: 34px; cursor: pointer; user-select: none;
+    border-radius: 6px; transition: filter .15s;
+}
+.emp-list-rail:hover { filter: brightness(1.06); }
+/* Fill the full-height column so the rail bar runs the whole length. */
+.cmp-list-collapsed .emp-list-rail { display: flex; flex: 1; align-self: stretch; }
+.emp-list-rail .vs-tab {
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    width: 100%; padding: 14px 0; gap: 10px; flex: 1;
+    border-left: 2px solid rgba(255,255,255,.35);
+}
+.emp-list-rail .vs-tab i { font-size: .9rem; flex-shrink: 0; }
+.emp-list-rail .vs-tab .vs-tab-label {
+    font-size: .62rem; font-weight: 600; color: #fff;
+    letter-spacing: .05em; text-transform: uppercase; line-height: 18px; text-align: center;
+}
+
+/* ---- Draggable resizer between the two compare panes ------------------ */
+.cmp-resizer {
+    flex: 0 0 12px;
+    cursor: col-resize;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+}
+.cmp-resizer::before {
+    content: "";
+    position: absolute;
+    inset: 0 5px;
+    background: var(--bs-border-color);
+    border-radius: 2px;
+    transition: background .15s;
+}
+.cmp-resizer::after {
+    content: "";
+    position: relative;
+    z-index: 1;
+    width: 4px;
+    height: 36px;
+    border-radius: 3px;
+    background: var(--bs-secondary-color, #adb5bd);
+    transition: background .15s, height .15s;
+}
+.cmp-resizer:hover::after,
+.cmp-resizer.dragging::after {
+    background: var(--bs-primary);
+    height: 56px;
+}
+.cmp-resizer:hover::before { background: var(--bs-primary-bg-subtle); }
+body.cmp-resizing { cursor: col-resize; user-select: none; }
+@media (max-width: 991.98px) { .cmp-resizer { display: none; } }
+
+/* ---- Close / return control on the compare pane ----------------------- */
+.cmp-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--compare-ink, var(--bs-secondary-color, #6c757d));
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+}
+.cmp-close:hover {
+    background: var(--bs-danger-bg-subtle, #f8d7da);
+    color: var(--bs-danger-text-emphasis, #b02a37);
+    border-color: var(--bs-danger-border-subtle, #f1aeb5);
+}
+.cmp-close i { font-size: 1.1rem; }
+
+/* =====================================================================
+   ER Info responsiveness — the tab uses Bootstrap col-md-* grids, which
+   key off the VIEWPORT, so inside a narrow compare pane or the split-view
+   detail column the fields stay 4-up / 2-up and their values get clipped.
+   Container queries make the ER Info grid respond to ITS OWN width instead,
+   so it re-flows and every field value stays readable in any width.
+   Selector uses [id$="formUpdateTracker"] so it also matches the compare
+   clone (ids there are prefixed "cmp__").
+   ===================================================================== */
+[id$="formUpdateTracker"] { container-type: inline-size; container-name: erinfo; }
+
+/* Medium container (e.g. split-view detail): 4-up manager row -> 2-up. */
+@container erinfo (max-width: 900px) {
+    [id$="formUpdateTracker"] .col-md-3 { flex: 0 0 50%; max-width: 50%; }
+}
+
+/* Narrow container (e.g. a compare pane): each section takes the FULL row, but the
+   inner two-up pairs (Over Proposed Count|Price, Contact/Billing phone|email) stay
+   side by side — the section spanning the whole row gives them room to look right. */
+@container erinfo (max-width: 560px) {
+    [id$="formUpdateTracker"] [class*="col-md-"] { flex: 0 0 100%; max-width: 100%; }
+}
+
+/* Let flex children shrink and never clip a value to zero width. */
+[id$="formUpdateTracker"] .form-control,
+[id$="formUpdateTracker"] .form-select { min-width: 0; }
+
+/* Browsers without container-query support: fall back to stacking ER Info
+   inside a compare pane (panes are always narrow). */
+@supports not (container-type: inline-size) {
+    .cmp-pane [id$="formUpdateTracker"] [class*="col-md-"] { flex: 0 0 100%; max-width: 100%; }
+}
+
+/* ER Info "stat" inputs (Waiting Period, Banding Type, Over Proposed Count/Price):
+   large centered number boxes whose value was clipping (e.g. "$ 0...") because the
+   number spinner arrows + heavy padding ate the width. Reclaim that space so the
+   value always fits, even in a narrow compare pane. */
+[id$="formUpdateTracker"] .form-control-lg {
+    padding-left: .45rem;
+    padding-right: .45rem;
+    font-size: 1rem;
+}
+[id$="formUpdateTracker"] .input-group-text {
+    padding-left: .45rem;
+    padding-right: .3rem;
+}
+/* Drop the native number spinners (they steal ~20px and aren't needed here). */
+[id$="formUpdateTracker"] input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+[id$="formUpdateTracker"] input[type="number"]::-webkit-outer-spin-button,
+[id$="formUpdateTracker"] input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* =====================================================================
+   Service detail in COMPARE mode — the service workspace is a fixed 320px
+   navigator (inline style) + detail. In a half-width compare pane that
+   leaves the detail ~180px, so every label wraps. In a compare pane we
+   instead STACK: the service list becomes a short strip on top and the
+   detail takes the FULL pane width, then its inner columns stack when
+   still narrow. [id$="…"] matches the compare clone (cmp__ prefixed ids).
+   ===================================================================== */
+.cmp-pane [id$="main-workspace"] { flex-direction: column !important; }
+
+.cmp-pane [id$="left-navigator"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--bs-border-color, #e5e7eb);
+}
+/* Service list becomes a single horizontal CHIP strip so it stays short and the
+   detail gets the room. Chips scroll sideways when there are many services. */
+.cmp-pane [id$="left-navigator"] .service-list-container {
+    display: flex; flex-flow: row nowrap; align-items: stretch; gap: .5rem;
+    max-height: none; overflow-x: auto; overflow-y: hidden;
+    padding: .6rem .75rem;
+}
+.cmp-pane [id$="left-navigator"] .service-item {
+    flex: 0 0 auto; max-width: 220px;
+    border: 1px solid var(--bs-border-color, #e5e7eb) !important;
+    border-radius: 10px; padding: .4rem .7rem !important;
+    background: var(--bs-body-bg, #fff);
+}
+.cmp-pane [id$="left-navigator"] .service-item.active {
+    border-color: var(--bs-primary, #696cff) !important;
+    box-shadow: 0 0 0 1px var(--bs-primary, #696cff);
+}
+.cmp-pane [id$="left-navigator"] .service-item .avatar { display: none; }   /* save width */
+.cmp-pane [id$="left-navigator"] .service-item .d-flex { gap: .4rem !important; }
+.cmp-pane [id$="left-navigator"] .service-item h6 { font-size: .78rem; margin-bottom: .1rem !important; }
+    .cmp-pane [id$="left-navigator"] .service-item small {
+        font-size: .62rem;
+    }
+    /* A service that exists in only ONE year: keep the amber highlight (the chip's own
+   white background would otherwise clobber it) and keep "only this year" compact. */
+    .cmp-pane [id$="left-navigator"] .service-item.svc-only {
+        background: var(--bs-warning-bg-subtle, #fff6e8) !important;
+        border-color: var(--bs-warning, #cd8b1a) !important;
+    }
+
+        .cmp-pane [id$="left-navigator"] .service-item.svc-only::after {
+            margin-top: 1px;
+            font-size: .55rem;
+        }
+/* The rail collapse toggle is meaningless once stacked. */
+.cmp-pane [id$="btn-toggle-rail"] { display: none !important; }
+
+/* Detail now fills the pane; let it re-flow to its own width. */
+.cmp-pane [id$="serviceDetailContainer"] { container-type: inline-size; container-name: svcdetail; }
+@container svcdetail (max-width: 470px) {
+    [id$="formServiceDetailEdit"] [class*="col-md-"] { flex: 0 0 100%; max-width: 100%; }
+}
+/* Never let a field clip its value in the detail. */
+[id$="formServiceDetailEdit"] .form-control,
+[id$="formServiceDetailEdit"] .form-select { min-width: 0; }
+/* =====================================================================
+   Employer list — compare mode only. The list column is fixed at 24%, but
+   the employer name (.emp-name-wrapper / .text-truncate3) caps at a fixed
+   300px, so in the shrunk card the name overflows. Scope truncation to the
+   actual column width ONLY in compare mode (.cmp-mode) via table-layout:fixed.
+   ===================================================================== */
+.cmp-mode #employerTable {
+    table-layout: fixed;
+    width: 100%;
+}
+
+    .cmp-mode #employerTable .emp-name-wrapper {
+        display: block;
+        max-width: 100% !important;
+    }

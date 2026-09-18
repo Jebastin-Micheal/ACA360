@@ -1,0 +1,83 @@
+﻿@model ACA360.Web.Models.BreadcrumbViewModel
+<style>
+    /* ==========================================================================
+       PAGE HEADER TYPOGRAPHY
+       ========================================================================== */
+
+    .ui-page-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+        margin-bottom: 0;
+        line-height: 1.2;
+        /* 1. The Gradient Effect */
+        background: linear-gradient(135deg, #080aa0 0%, #3b82f6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        /* Remove the text shadow so the gradient stays crisp */
+        text-shadow: none;
+    }
+
+    /* Dark Mode Support */
+    [data-bs-theme="dark"] .ui-page-title {
+        /* A beautiful silver-to-white gradient for dark mode */
+        background: linear-gradient(135deg, #FFFFFF 0%, #94A3B8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: none;
+    }
+</style>
+<div class="card mb-2">
+    <div class="card-body d-flex justify-content-between align-items-center breadcrumb-arrow-wrapper">
+
+        <div style="width: 33%;">
+            <ul class="breadcrumb-arrow breadcrumb-custom-icon mb-0 ps-0">
+                <li class="breadcrumb-item">
+                    <a href="@Url.Action("Index", "Home")"><i class="icon-base bx bx-home bx-align-right"></i></a>
+                    @if (Model.Items != null && Model.Items.Any())
+                    {
+                        <i class="breadcrumb-icon icon-base bx bx-chevron-right bx-align-right"></i>
+                    }
+                </li>
+
+                @if (Model.Items != null)
+                {
+                    foreach (var item in Model.Items)
+                    {
+                        <li class="breadcrumb-item pt-1 @(item.IsActive ? "active" : "")">
+                            @if (!item.IsActive && !string.IsNullOrWhiteSpace(item.Url))
+                            {
+                                <a href="@item.Url">@item.Title</a>
+                            }
+                            else
+                            {
+                                <span>@item.Title</span>
+                            }
+
+                            @if (item != Model.Items.Last())
+                            {
+                                <i class="breadcrumb-icon icon-base bx bx-chevron-right bx-align-right"></i>
+                            }
+                        </li>
+                    }
+                }
+            </ul>
+        </div>
+
+        <div class="text-center" style="width: 33%;">
+            @if (!string.IsNullOrWhiteSpace(Model.PageTitle))
+            {
+                <h4 class="ui-page-title text-uppercase">@Model.PageTitle</h4>
+            }
+        </div>
+
+        <div class="text-end" style="width: 33%;">
+            <button class="btn btn-sm btn-outline-secondary refresh-btn" onclick="location.reload()">
+                <i class="icon-base bx bx-refresh bx-align-right"></i> Refresh
+            </button>
+        </div>
+
+    </div>
+</div>

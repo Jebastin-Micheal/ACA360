@@ -1,0 +1,236 @@
+﻿@{
+    ViewData["Title"] = "System Flags";
+    @* Hide Filter and ViewMode toggle buttons - not needed for Flags *@
+    ViewBag.ShowFilterButton = false;
+    ViewBag.ShowViewModeToggle = false;
+}
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "System Flags",
+    items = new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Title = "Employer", Url = Url.Action("Index", "Employer"), IsActive = false },
+    new BreadcrumbItem { Title = "Master Settings", Url = "", IsActive = false },
+    new BreadcrumbItem { Title = "Employee Flags", Url = "", IsActive = true }
+}
+})
+
+<div id="FlagsListContainerWrapper" style="position:relative;">
+
+    <div class="card mb-6">
+        <div class="card-body">
+            @{
+                ViewBag.ShowFilterButton = false;
+                ViewBag.ShowViewModeToggle = false;
+            }
+            @await Html.PartialAsync("_GridToolbarCommon", new
+            {
+                IsEmployerPage = false,
+                        CustomButtons = @"
+                        <div class=""dropdown grid-export-wrapper""
+                        data-export-url=""/Flags/Export""
+                        data-file-base-name=""SystemFlags"">
+                        <button class=""btn btn-outline-secondary dropdown-toggle""
+                        type=""button""
+                        data-bs-toggle=""dropdown"">
+                        <span class=""d-flex align-items-center gap-2"">
+                        <i class=""icon-base bx bx-upload icon-sm""></i>
+                        <span>Export</span>
+                        </span>
+                        </button>
+                        <ul class=""dropdown-menu grid-export-menu"">
+                        <li><a class=""dropdown-item grid-export-action"" href=""#"" data-format=""print""><i class=""bx bx-printer me-2""></i> Print</a></li>
+                        <li><a class=""dropdown-item grid-export-action"" href=""#"" data-format=""csv""><i class=""bx bx-file me-2""></i> CSV</a></li>
+                        <li><a class=""dropdown-item grid-export-action"" href=""#"" data-format=""excel""><i class=""bx bxs-file-export me-2""></i> Excel</a></li>
+                        <li><a class=""dropdown-item grid-export-action"" href=""#"" data-format=""pdf""><i class=""bx bxs-file-pdf me-2""></i> PDF</a></li>
+                        </ul>
+                        </div>
+                        <button class=""btn create-new btn-primary"" type=""button"" onclick=""openModal(0)"">
+                        <span class=""d-flex align-items-center gap-2"">
+                        <i class=""icon-base bx bx-plus icon-sm""></i>
+                        <span class=""d-none d-sm-inline-block"">Add New Flag</span>
+                        </span>
+                        </button>"
+                        })
+
+            <div class="row">
+                <div id="gridContainer">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="manageModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold" id="manageModalTitle">
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body" id="manageModalBody">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function () {
+            loadGrid();
+            bindToolbarEvents();
+        });
+
+        // ── Grid State ──────────────────────────────────────────────
+        let currentState = {
+            page: 1,
+            pageSize: 10,
+            sortCol: 'FlagCode',
+            sortOrder: 'ASC'
+        };
+
+        // ── Bind Common Toolbar Controls ────────────────────────────
+        function bindToolbarEvents() {
+
+            // Search (live key-up)
+            $('#mainGridSearch').on('keyup', function () {
+                toggleClearBtn();
+                currentState.page = 1;
+                loadGrid();
+            });
+
+            // Clear (X) button
+            $('#clearSearchBtn').on('click', function () {
+                $('#mainGridSearch').val('').focus();
+                $(this).addClass('d-none');
+                currentState.page = 1;
+                loadGrid();
+            });
+
+            // Refresh button
+            $('.grid-refresh-btn').on('click', function () {
+                $('#mainGridSearch').val('');
+                $('#clearSearchBtn').addClass('d-none');
+                 $('.grid-pagesize-select').val('10');
+                currentState.pageSize = 10;
+                currentState.page = 1;
+                loadGrid();
+            });
+
+            // Page size dropdown
+            $('.grid-pagesize-select').on('change', function () {
+                currentState.pageSize = parseInt($(this).val());
+                currentState.page = 1;
+                loadGrid();
+            });
+
+            // Pagination click (data-page attribute from _GridPagination partial)
+            $(document).on('click', '.grid-page-link', function (e) {
+                e.preventDefault();
+                var page = $(this).data('page');
+                if (page && !$(this).closest('.page-item').hasClass('disabled')) {
+                    currentState.page = page;
+                    loadGrid();
+                }
+            });
+        }
+
+        function toggleClearBtn() {
+            var val = $('#mainGridSearch').val();
+            val ? $('#clearSearchBtn').removeClass('d-none') : $('#clearSearchBtn').addClass('d-none');
+        }
+
+        // ── Core Grid Functions ─────────────────────────────────────
+        function loadGrid() {
+            $.get('/Flags/GetFlagList', {
+                search: $('#mainGridSearch').val(),
+                sortCol: currentState.sortCol,
+                sortOrder: currentState.sortOrder,
+                page: currentState.page,
+                pageSize: currentState.pageSize
+            }).done(function (html) {
+                $('#gridContainer').html(html);
+            }).fail(function () {
+                $('#gridContainer').html('<div class="alert alert-danger m-3">Failed to load data.</div>');
+            });
+        }
+
+        function changePage(page) {
+            currentState.page = page;
+            loadGrid();
+        }
+
+        function sortGrid(col) {
+            if (currentState.sortCol === col) {
+                currentState.sortOrder = currentState.sortOrder === 'ASC' ? 'DESC' : 'ASC';
+            } else {
+                currentState.sortCol = col;
+                currentState.sortOrder = 'ASC';
+            }
+            loadGrid();
+        }
+
+        // ── Modal Functions ─────────────────────────────────────────
+        function openModal(id) {
+            $('#manageModalTitle').text(id > 0 ? 'Edit Flag Rule' : 'Create New Flag Rule');
+            $.get('/Flags/Manage/' + id).done(function (html) {
+                $('#manageModalBody').html(html);
+                new bootstrap.Modal(document.getElementById('manageModal')).show();
+
+                // Force the dropdown logic to run immediately after the HTML is loaded
+                // so the correct sections show up based on the database value.
+                $('#ddlLogicType').trigger('change');
+            }).fail(function () {
+                $('#manageModalBody').html('<div class="alert alert-danger text-center">Failed to load the form. Please try again.</div>');
+            });
+        }
+
+        // ── Edit button click (event delegation, works after AJAX reload) ──
+        $(document).on('click', '.edit-flag-btn', function (e) {
+            e.preventDefault();
+            $('#manageModalTitle').text('Edit Flag Rule');
+            var url = $(this).data('url');
+
+            $('#manageModalBody').html('<div class="text-center p-5"><div class="spinner-border text-primary" role="status"></div><h5 class="mt-3">Loading...</h5></div>');
+            $('#manageModal').modal('show');
+
+            $.get(url, function (data) {
+                $('#manageModalBody').html(data);
+                $('#ddlLogicType').trigger('change');
+            }).fail(function () {
+                $('#manageModalBody').html('<div class="alert alert-danger text-center">Failed to load the form. Please try again.</div>');
+            });
+        });
+
+        // ── Logic Type dropdown toggle (event delegation for dynamic content) ──
+        $('#manageModalBody').on('change', '#ddlLogicType', function () {
+            var type = $(this).val();
+
+            $('#section-standard-logic').hide();
+            $('#section-compound-logic').hide();
+            $('#section-custom-sql').hide();
+
+            if (type === 'Simple') {
+                $('#section-standard-logic').show();
+            }
+            else if (type === 'CodeCombination') {
+                $('#section-standard-logic').show();
+                $('#section-compound-logic').show();
+            }
+            else if (type === 'CustomSQL') {
+                $('#section-custom-sql').show();
+            }
+        });
+    </script>
+}

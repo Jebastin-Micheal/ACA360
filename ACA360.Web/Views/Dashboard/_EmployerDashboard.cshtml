@@ -1,0 +1,204 @@
+﻿@model ACA360.Core.Models.DashboardViewModel
+@{
+    var e360 = Model.Employer360;
+}
+
+@if (e360 == null)
+{
+    <div class="alert alert-warning shadow-sm">
+        <h5><i class='bx bx-error-circle me-2'></i>No employer data found.</h5>
+        <p class="mb-0">Your account may not be linked to an employer yet. Please contact support.</p>
+    </div>
+}
+else
+{
+    @* MonthlyCoverage is Dictionary<int, string> — keys are month numbers *@
+    var monthsWithData = e360.MonthlyCoverage?.Count ?? 0;
+    bool isOnTrack = monthsWithData >= 10 && e360.ReadinessScore >= 80;
+
+    @* ── Status banner ── *@
+    <div class="glass-card p-5 mb-4 position-relative overflow-hidden
+                    @(isOnTrack ? "bg-gradient-primary text-white" : "bg-label-warning")">
+        <div class="position-relative" style="z-index:1;">
+            @if (isOnTrack)
+            {
+                <h1 class="fw-bold @(isOnTrack ? "text-white" : "text-dark")">
+                    <i class='bx bx-check-shield'></i> You are On Track!
+                </h1>
+                <p class="fs-5 mb-0 opacity-75 @(isOnTrack ? "text-white" : "text-dark")">
+                    All data for the @e360.FilingYear filing year has been received.
+                    No action is needed from you right now.
+                </p>
+            }
+            else
+            {
+                <h1 class="fw-bold text-dark">
+                    <i class='bx bx-time-five'></i> Action Required
+                </h1>
+                <p class="fs-5 mb-0 text-dark">
+                    We have data for <strong>@monthsWithData of 12 months</strong>
+                    for the @e360.FilingYear filing year. Please upload the missing months.
+                </p>
+            }
+        </div>
+        <i class='bx bx-shield-quarter position-absolute'
+           style="font-size:300px;right:-50px;top:-50px;opacity:0.06;z-index:0;"></i>
+    </div>
+
+    @* ── Stats row ── *@
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card text-center h-100 border-start border-4 border-primary">
+                <div class="card-body">
+                    <h2 class="fw-bold text-primary mb-0">@e360.TotalEmployees</h2>
+                    <small class="text-muted fw-semibold">Total Employees</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100 border-start border-4 border-info">
+                <div class="card-body">
+                    <h2 class="fw-bold text-info mb-0">@e360.FullTimeCount</h2>
+                    <small class="text-muted fw-semibold">Full-Time</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100 border-start border-4 border-warning">
+                <div class="card-body">
+                    <h2 class="fw-bold text-warning mb-0">
+                        @monthsWithData <small class="fs-6 fw-normal">/ 12</small>
+                    </h2>
+                    <small class="text-muted fw-semibold">Months with Data</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            @{
+                var (scoreColor, scoreIcon) = e360.ReadinessScore switch
+                {
+                    >= 80 => ("success", "bx-check-circle"),
+                    >= 50 => ("warning", "bx-error-circle"),
+                    _ => ("secondary", "bx-minus-circle")
+                };
+            }
+            <div class="card text-center h-100 border-start border-4 border-@scoreColor">
+                <div class="card-body">
+                    <i class="bx @scoreIcon fs-2 text-@scoreColor d-block mb-1"></i>
+                    <span class="fw-bold text-@scoreColor fs-4">@e360.ReadinessScore<small class="fs-6">/100</small></span><br />
+                    <small class="text-muted">Readiness Score</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── Monthly coverage calendar ── *@
+    @if (e360.MonthlyCoverage != null && e360.MonthlyCoverage.Any())
+    {
+        <div class="card mb-4">
+            <div class="card-header border-bottom py-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class='bx bx-calendar-check me-2 text-primary'></i>
+                    @e360.FilingYear Coverage Calendar
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    @foreach (var month in Enumerable.Range(1, 12))
+                    {
+                        bool hasData = e360.MonthlyCoverage.ContainsKey(month);
+                        var status = hasData ? e360.MonthlyCoverage[month] : "Missing";
+                        var (bg, icon) = status switch
+                        {
+                            "Complete" => ("success", "bx-check-circle"),
+                            "Partial" => ("warning", "bx-minus-circle"),
+                            _ => ("secondary", "bx-x-circle")
+                        };
+                        var monthName = System.Globalization.CultureInfo.CurrentCulture
+                        .DateTimeFormat.GetAbbreviatedMonthName(month);
+                        <div class="col-1" style="min-width:72px;">
+                            <div class="text-center p-2 rounded border border-@bg bg-label-@bg"
+                                 title="@monthName: @status">
+                                <i class="bx @icon text-@bg d-block mb-1" style="font-size:1.2rem;"></i>
+                                <div style="font-size:.65rem;font-weight:600;text-transform:uppercase;color:var(--bs-@bg);">
+                                    @monthName
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="d-flex gap-3 mt-3" style="font-size:.75rem;">
+                    <span><i class="bx bx-check-circle text-success me-1"></i>Complete</span>
+                    <span><i class="bx bx-minus-circle text-warning me-1"></i>Partial</span>
+                    <span><i class="bx bx-x-circle text-secondary me-1"></i>Missing</span>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* ── Recent files + help ── *@
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header border-bottom p-4">
+                    <h5 class="mb-0 fw-bold">Recent Files</h5>
+                </div>
+                @if (e360.RecentFiles != null && e360.RecentFiles.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var f in e360.RecentFiles.Take(5))
+                        {
+                            <div class="list-group-item d-flex align-items-center p-3">
+                                <i class='bx bxs-file-doc text-secondary fs-4 me-3'></i>
+                                <div class="flex-grow-1">
+                                    <div class="fw-medium" style="font-size:.85rem;">@f.OriginalFileName</div>
+                                    <small class="text-muted">@f.UploadedAt.ToString("MMM dd, yyyy")</small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="card-body text-center text-muted py-4">
+                        <i class='bx bx-folder-open bx-lg mb-2'></i>
+                        <p class="mb-0">No files uploaded yet.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header border-bottom p-4">
+                    <h5 class="mb-0 fw-bold">Workforce Breakdown</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Full-Time</span>
+                        <span class="fw-semibold">@e360.FullTimeCount</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Part-Time</span>
+                        <span class="fw-semibold">@e360.PartTimeCount</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">Variable Hours</span>
+                        <span class="fw-semibold">@e360.VariableHoursCount</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted">COBRA</span>
+                        <span class="fw-semibold">@e360.COBRACount</span>
+                    </div>
+                    @if (e360.LastImportDate.HasValue)
+                    {
+                        <div class="mt-3 pt-3 border-top text-muted" style="font-size:.78rem;">
+                            <i class='bx bx-time me-1'></i>
+                            Last import: @e360.LastImportDate.Value.ToString("MMMM dd, yyyy")
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}

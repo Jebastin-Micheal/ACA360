@@ -1,0 +1,242 @@
+﻿@{
+    ViewData["Title"] = "System Logs";
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="container-fluid mt-4">
+    <h3 class="mb-3">
+        <i class="fa fa-database text-primary"></i> System Logs
+    </h3>
+    <hr />
+
+    <!-- FILTERS -->
+    <div class="card p-3 shadow-sm">
+        <div class="row g-3">
+
+            <div class="col-md-3">
+                <label class="form-label">Search Text</label>
+                <input type="text" id="txtSearch" class="form-control" placeholder="Message / Exception / Stack">
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">Log Level</label>
+                <select id="ddlLevel" class="form-select">
+                    <option value="">All</option>
+                    <option>Error</option>
+                    <option>Warning</option>
+                    <option>Info</option>
+                    <option>Critical</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">From Date</label>
+                <input type="date" id="startDate" class="form-control">
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">To Date</label>
+                <input type="date" id="endDate" class="form-control">
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">User Name</label>
+                <input type="text" id="txtUser" class="form-control" placeholder="Username">
+            </div>
+
+            <div class="col-md-12 mt-2 text-end">
+                <button id="btnFilter" class="btn btn-primary">
+                    <i class="fa fa-filter"></i> Apply
+                </button>
+                <button id="btnReset" class="btn btn-secondary ms-2">
+                    <i class="fa fa-undo"></i> Reset
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ACTION BUTTONS -->
+    <div class="mt-3 d-flex justify-content-between">
+        <button class="btn btn-danger" id="btnDeleteOld">
+            <i class="fa fa-trash"></i> Delete Logs Older Than
+        </button>
+
+        <select id="ddlDays" class="form-select w-auto">
+            <option value="30">30 Days</option>
+            <option value="60">60 Days</option>
+            <option value="90" selected>90 Days</option>
+            <option value="180">180 Days</option>
+            <option value="365">1 Year</option>
+        </select>
+    </div>
+
+
+    <!-- ANALYTICS -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card p-3 shadow-sm">
+                <h5>Log Count by Type</h5>
+                <canvas id="chartLevels"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-3 shadow-sm">
+                <h5>Error Trend (Last Days)</h5>
+                <canvas id="chartTrend"></canvas>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- LOG TABLE -->
+    <div class="card mt-4 shadow-sm p-3">
+        <h5><i class="fa fa-table"></i> Logs</h5>
+
+        <table class="table table-bordered table-striped mt-3" id="logTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Level</th>
+                    <th>Message</th>
+                    <th>Type</th>
+                    <th>User</th>
+                    <th>IP</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="d-flex justify-content-between mt-3">
+            <span id="resultCount"></span>
+
+            <div>
+                <button class="btn btn-outline-secondary" id="btnPrev">Prev</button>
+                <span class="mx-2" id="currentPage">1</span>
+                <button class="btn btn-outline-secondary" id="btnNext">Next</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- SCRIPTS -->
+@section Scripts {
+    <script>
+        let page = 1;
+        const pageSize = 25;
+        let totalCount = 0;
+
+        function loadLogs() {
+            $.get("/System/GetLogs", {
+                page,
+                pageSize,
+                search: $("#txtSearch").val(),
+                level: $("#ddlLevel").val(),
+                username: $("#txtUser").val(),
+                startDate: $("#startDate").val(),
+                endDate: $("#endDate").val(),
+            }, function (res) {
+
+                totalCount = res.totalCount;
+                $("#resultCount").html(`Showing ${res.records.length} / ${totalCount}`);
+
+                let html = "";
+                res.records.forEach(x => {
+                    html += `
+                        <tr>
+                            <td>${new Date(x.loggedOnDate).toLocaleString()}</td>
+                            <td>${x.level}</td>
+                            <td>${x.message}</td>
+                            <td>${x.type}</td>
+                            <td>${x.userName ?? ""}</td>
+                            <td>${x.userIp}</td>
+                        </tr>`;
+                });
+
+                $("#logTable tbody").html(html);
+                $("#currentPage").html(page);
+            });
+        }
+
+        $("#btnFilter").click(() => { page = 1; loadLogs(); });
+
+        $("#btnReset").click(() => {
+            $("#txtSearch,#txtUser,#startDate,#endDate").val("");
+            $("#ddlLevel").val("");
+            page = 1;
+            loadLogs();
+        });
+
+        $("#btnNext").click(() => {
+            if (page * pageSize < totalCount) {
+                page++;
+                loadLogs();
+            }
+        });
+
+        $("#btnPrev").click(() => {
+            if (page > 1) {
+                page--;
+                loadLogs();
+            }
+        });
+
+
+        ///// DELETE OLD LOGS /////
+        $("#btnDeleteOld").click(function () {
+            Swal.fire({
+                title: "Confirm Cleanup?",
+                text: "This action permanently deletes old logs.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Delete"
+            }).then(result => {
+                if (result.isConfirmed) {
+                    $.post("/SystemSettings/CleanupOldLogs",
+                        { days: $("#ddlDays").val() },
+                        res => Swal.fire(res.success ? "Done!" : "Error", res.message, res.success ? "success" : "error")
+                    );
+                }
+            });
+        });
+
+
+        ///// LOAD CHARTS /////
+        function loadAnalytics() {
+            $.get("/System/GetLogStats", function (stats) {
+
+                let levelStats = stats.levelStats;
+                let trendStats = stats.trendStats;
+
+                new Chart(document.getElementById("chartLevels"), {
+                    type: "pie",
+                    data: {
+                        labels: levelStats.map(x => x.label),
+                        datasets: [{ data: levelStats.map(x => x.value) }]
+                    }
+                });
+
+                new Chart(document.getElementById("chartTrend"), {
+                    type: "line",
+                    data: {
+                        labels: trendStats.map(x => x.label),
+                        datasets: [{
+                            label: "Logs",
+                            data: trendStats.map(x => x.value)
+                        }]
+                    }
+                });
+            });
+        }
+
+
+        $(document).ready(() => {
+            loadLogs();
+            loadAnalytics();
+        });
+    </script>
+}

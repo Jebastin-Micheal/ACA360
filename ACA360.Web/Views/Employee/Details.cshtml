@@ -1,0 +1,210 @@
+﻿@model ACA360.Core.Models.Employee1095ViewModel
+
+@{
+    ViewData["Title"] = "1095-C Preview";
+    bool hasCodes = Model.Codes != null;
+}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+
+    @* --- HEADER --- *@
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold py-3 mb-0">
+                <span class="text-muted fw-light">Compliance /</span> 1095-C Preview
+            </h4>
+            <div class="text-muted small">Filing Year: @Model.FilingYear • Employer: @(Model.Employer?.Name ?? "Unknown")</div>
+        </div>
+        <a asp-action="Index" asp-route-employerId="@Model.Employer?.Id" class="btn btn-secondary">
+            <i class="bx bx-arrow-back me-1"></i> Back to List
+        </a>
+    </div>
+
+    @* --- EMPLOYEE CARD --- *@
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center border-bottom">
+            <div class="d-flex align-items-center">
+                <div class="avatar avatar-md me-3">
+                    <span class="avatar-initial rounded-circle bg-label-primary">
+                        @(Model.Employee.FirstName?.Substring(0, 1))@(Model.Employee.LastName?.Substring(0, 1))
+                    </span>
+                </div>
+                <div>
+                    <h5 class="mb-0">@Model.Employee.FirstName @Model.Employee.LastName</h5>
+                    <small class="text-muted">SSN: @(User.CanViewFullPii() ? Model.Employee.SSN : DataMasker.MaskSSN(Model.Employee.SSN))</small>
+                </div>
+            </div>
+            <div>
+                @if (hasCodes)
+                {
+                    <span class="badge bg-label-success"><i class="bx bx-check me-1"></i>Codes Generated</span>
+                }
+                else
+                {
+                    <span class="badge bg-label-warning"><i class="bx bx-error me-1"></i>Pending Calculation</span>
+                }
+            </div>
+        </div>
+
+        <div class="card-body pt-4">
+            @if (!hasCodes)
+            {
+                <div class="alert alert-warning d-flex align-items-center" role="alert">
+                    <i class="bx bx-error-circle me-2"></i>
+                    <div>
+                        No ACA codes found for this employee in @Model.FilingYear.
+                        Please go to the <strong>Employer Dashboard</strong> and click <u>Generate 1095-C Codes</u>.
+                    </div>
+                </div>
+            }
+            else
+            {
+                @* --- PART II: EMPLOYEE OFFER AND COVERAGE --- *@
+                <h6 class="fw-bold text-uppercase text-muted mb-3">Part II: Employee Offer and Coverage</h6>
+
+                <div class="table-responsive border rounded">
+                    <table class="table table-bordered text-center align-middle mb-0 table-striped-columns">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-start bg-light" style="width: 250px; min-width: 200px;">Line Description</th>
+                                <th style="width: 60px;">All 12</th>
+                                <th>Jan</th>
+                                <th>Feb</th>
+                                <th>Mar</th>
+                                <th>Apr</th>
+                                <th>May</th>
+                                <th>Jun</th>
+                                <th>Jul</th>
+                                <th>Aug</th>
+                                <th>Sep</th>
+                                <th>Oct</th>
+                                <th>Nov</th>
+                                <th>Dec</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @* LINE 14: Offer of Coverage *@
+                            <tr>
+                                <td class="text-start fw-bold">
+                                    <span class="badge bg-label-secondary me-2">14</span> Offer of Coverage
+                                </td>
+                                <td class="fw-bold text-primary bg-white">@Model.Codes.ALLM_COC</td>
+                                <td>@Model.Codes.JAN_COC</td>
+                                <td>@Model.Codes.FEB_COC</td>
+                                <td>@Model.Codes.MAR_COC</td>
+                                <td>@Model.Codes.APR_COC</td>
+                                <td>@Model.Codes.MAY_COC</td>
+                                <td>@Model.Codes.JUN_COC</td>
+                                <td>@Model.Codes.JUL_COC</td>
+                                <td>@Model.Codes.AUG_COC</td>
+                                <td>@Model.Codes.SEP_COC</td>
+                                <td>@Model.Codes.OCT_COC</td>
+                                <td>@Model.Codes.NOV_COC</td>
+                                <td>@Model.Codes.DEC_COC</td>
+                            </tr>
+
+                            @* LINE 15: Employee Share *@
+                            <tr>
+                                <td class="text-start fw-bold">
+                                    <span class="badge bg-label-secondary me-2">15</span> Employee Required Contrib.
+                                </td>
+                                <td class="text-muted bg-white">@FormatMoney(Model.Codes.ALLM_LCMP)</td>
+                                <td>@FormatMoney(Model.Codes.JAN_LCMP)</td>
+                                <td>@FormatMoney(Model.Codes.FEB_LCMP)</td>
+                                <td>@FormatMoney(Model.Codes.MAR_LCMP)</td>
+                                <td>@FormatMoney(Model.Codes.APR_LCMP)</td>
+                                <td>@FormatMoney(Model.Codes.MAY_LCMP)</td>
+                                <td>@FormatMoney(Model.Codes.JUN_LCMP)</td>
+                                <td>@FormatMoney(Model.Codes.JUL_LCMP)</td>
+                                <td>@FormatMoney(Model.Codes.AUG_LCMP)</td>
+                                <td>@FormatMoney(Model.Codes.SEP_LCMP)</td>
+                                <td>@FormatMoney(Model.Codes.OCT_LCMP)</td>
+                                <td>@FormatMoney(Model.Codes.NOV_LCMP)</td>
+                                <td>@FormatMoney(Model.Codes.DEC_LCMP)</td>
+                            </tr>
+
+                            @* LINE 16: Safe Harbor *@
+                            <tr>
+                                <td class="text-start fw-bold">
+                                    <span class="badge bg-label-secondary me-2">16</span> §4980H Safe Harbor
+                                </td>
+                                <td class="fw-bold text-info bg-white">@Model.Codes.ALLM_SHC</td>
+                                <td>@Model.Codes.JAN_SHC</td>
+                                <td>@Model.Codes.FEB_SHC</td>
+                                <td>@Model.Codes.MAR_SHC</td>
+                                <td>@Model.Codes.APR_SHC</td>
+                                <td>@Model.Codes.MAY_SHC</td>
+                                <td>@Model.Codes.JUN_SHC</td>
+                                <td>@Model.Codes.JUL_SHC</td>
+                                <td>@Model.Codes.AUG_SHC</td>
+                                <td>@Model.Codes.SEP_SHC</td>
+                                <td>@Model.Codes.OCT_SHC</td>
+                                <td>@Model.Codes.NOV_SHC</td>
+                                <td>@Model.Codes.DEC_SHC</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                @* --- LOGIC EXPLAINER (Optional but helpful) --- *@
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card bg-label-secondary border-0">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="bx bx-info-circle me-1"></i> Calculation Factors</h6>
+                                <ul class="list-unstyled mb-0">
+                                    <li class="mb-2">
+                                        <strong>Full Time Status:</strong>
+                                        @if (Model.Employee.Status == 1)
+                                        {
+                                            <span class="text-success">Full-Time</span>
+                                        }
+                                        else
+                                        {
+
+                                            <span class="text-warning">Part-Time</span>
+                                        }
+                                    </li>
+                                    <li class="mb-2">
+                                        <strong>Dates Employed:</strong>
+                                        @(Model.Employee.HireDate?.ToShortDateString() ?? "N/A")
+                                        to
+                                        @(Model.Employee.TerminationDate?.ToShortDateString() ?? "Present")
+                                    </li>
+                                    <li class="mb-2">
+                                        <strong>Coverage Elected:</strong>
+                                        @(Model.Employee.CoverageElected ? "Yes" : "No")
+                                    </li>
+                                    <li>
+                                        <strong>Lowest Cost Plan:</strong>
+                                        @(Model.Employee.LowestCostPlanOffered ?? "None Found")
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-label-secondary border-0">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="bx bx-wrench me-1"></i> Manual Override</h6>
+                                <p class="small text-muted mb-2">Need to change these codes manually?</p>
+                                <button class="btn btn-sm btn-outline-primary" disabled title="Coming Soon: Manual Edit Mode">
+                                    <i class="bx bx-edit me-1"></i> Edit Codes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string FormatMoney(decimal? amount)
+    {
+        if (!amount.HasValue) return "";
+        // Format as currency, remove decimals if .00
+        return amount.Value.ToString("0.00");
+    }
+}

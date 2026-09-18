@@ -1,0 +1,114 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+/* --- Futuristic Grid Styles --- */
+
+/* 1. Pulse Animation for Processing Status */
+@keyframes pulse-blue {
+    0% {
+        box-shadow: 0 0 0 0 rgba(13, 202, 240, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(13, 202, 240, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(13, 202, 240, 0);
+    }
+}
+
+.processing-pulse {
+    animation: pulse-blue 2s infinite;
+}
+
+/* 2. Critical Priority Row Styling */
+.table-danger.border-start {
+    border-left-width: 5px !important;
+}
+
+/* 3. Avatar & Text Styling */
+.avatar-initial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+}
+
+.text-heading {
+    color: #566a7f;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+    .text-heading:hover {
+        color: #696cff; /* Brand Primary */
+    }
+/* Tracker Kanban Styles */
+.kanban-wrapper {
+    /* Horizontal Scroll container */
+    overflow-x: auto;
+    padding-bottom: 20px;
+}
+
+.kanban-column {
+    background-color: #f5f5f9; /* Light grey background for column */
+    border-radius: 0.5rem;
+    padding: 1rem;
+    height: 100%; /* Full height */
+}
+
+.kanban-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    background: #fff;
+}
+
+    .kanban-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.25rem 1rem rgba(0,0,0,0.1) !important;
+    }
+
+/* Make avatars smaller for the card footer */
+.text-xs {
+    font-size: 0.65rem;
+}
+
+/* Receipt modal — make it pop above any underlying modal */
+#receiptIdModal {
+    z-index: 1070;
+}
+
+    #receiptIdModal .modal-content {
+        border: 2px solid var(--bs-primary, #696cff);
+        box-shadow: 0 0 0 4px rgba(105, 108, 255, 0.15), 0 20px 60px rgba(0, 0, 0, 0.35);
+        border-radius: 14px;
+    }
+
+    /* Backdrop above service modal */
+    #receiptIdModal ~ .modal-backdrop,
+    .modal-backdrop.show:last-of-type {
+        z-index: 1065;
+        background-color: rgba(0, 0, 0, 0.6);
+    }

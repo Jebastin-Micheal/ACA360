@@ -1,0 +1,57 @@
+﻿@model ACA360.Web.Models.AddEmployerViewModel
+@using Newtonsoft.Json
+
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>User</th>
+                <th>Operation</th>
+                <th>Old Value</th>
+                <th>New Value</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model?.AuditLogView.Entries != null && Model.AuditLogView.Entries.Any())
+            {
+                foreach (var entry in Model.AuditLogView.Entries)
+                {
+                    var oldValues = JsonConvert.DeserializeObject<Dictionary<string, object>>(entry.OldValue ?? "{}");
+                    var newValues = JsonConvert.DeserializeObject<Dictionary<string, object>>(entry.NewValue ?? "{}");
+
+                    <tr>
+                        <td>@entry.UserName</td>
+                        <td>@entry.Operation</td>
+
+                        <td>
+                            @if (oldValues?.Any() == true)
+                            {
+                                foreach (var item in oldValues)
+                                {
+                                    <div><strong>@item.Key:</strong> @item.Value</div>
+                                }
+                            }
+                        </td>
+
+                        <td>
+                            @if (newValues?.Any() == true)
+                            {
+                                foreach (var item in newValues)
+                                {
+                                    <div><strong>@item.Key:</strong> @item.Value</div>
+                                }
+                            }
+                        </td>
+
+                        <td>@entry.Date?.ToString("g")</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="5" class="text-center">No audit log data found.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

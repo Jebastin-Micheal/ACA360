@@ -1,0 +1,114 @@
+﻿@using ACA360.Core.Extensions
+@using ACA360.Web.ViewComponents
+@model ACA360.Web.Models.FilingYearViewModel
+@{
+    var metadata = Model.Metadata;
+    int countIndex = metadata != null ? ((metadata.CurrentPage - 1) * metadata.PageSize) + 1 : 1;
+
+    var customButtons = "";
+    if (User.HasPermission("Menu", "Add"))
+    {
+        customButtons += "<button class='btn create-new btn-primary' type='button' id='add_FilingYear_controls'><span class='d-flex align-items-center gap-2'><i class='icon-base bx bx-plus icon-sm'></i><span class='d-none d-sm-inline-block'>Add New </span></span></button>";
+    }
+
+    var toolbarConfig = new
+    {
+        IsEmployerPage = false,
+        CustomButtons = customButtons
+    };
+}
+
+<div id="FilingYearListContainerWrapper" style="position:relative;">
+    <div id="loader" class="loader" style="display:none;"><div class="spinner"></div></div>
+
+    <div>
+        <h5 class="fw-bold text-primary mb-0">Filing Year & IRS Penalty Rates</h5>
+        <hr />
+        @{
+            ViewBag.ShowFilterButton = false; ViewBag.ShowViewModeToggle = false; ViewBag.SearchString = Model.Search;
+        }
+        @await Html.PartialAsync("_GridToolbarCommon", toolbarConfig)
+
+        <div class="row">
+            <div id="FilingYearListContainer">
+                <div class="table-responsive ui-table-responsive">
+                    <table class="table table-bordered table-hover mb-0 ui-table">
+                        <thead>
+                            <tr class="align-middle">
+                                <th>#</th>
+                                <th>@await Html.PartialAsync("_SortableHeader", new { Title = "Filing Year", Column = 0, SortColumn = Model.SortColumn, SortOrder = Model.SortOrder })</th>
+                                <th>FPG Premium</th>
+                                <th>FPG Percent</th>
+                                <th>ROP Hours</th>
+                                <th>Offer Percent</th>
+                                <th>Status</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.FilingYears != null && Model.FilingYears.Count > 0)
+                            {
+                                foreach (var item in Model.FilingYears)
+                                {
+                                    <tr>
+                                        <td class="text-muted">@(countIndex++)</td>
+                                        <td>@item.Year</td>
+                                        <td>@item.FpgPremium.ToString("C")</td>
+                                        <td>@item.FpgPercent%</td>
+                                        <td>@item.RopHours</td>
+                                        <td>@item.OfferPercent%</td>
+                                        <td>
+                                            <span class="badge bg-label-@(item.IsActive ? "success" : "danger")">
+                                                @(item.IsActive ? "Active" : "Inactive")
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn p-1 me-1 edit-filingyear-btn" data-id="@item.Id" title="Edit">
+                                                <i class="icon-base bx bx-edit bg-info icon-sm fs-4 text-secondary"></i>
+                                            </button>                                                                                 
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-center text-danger">No filing year items found.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+            
+        
+    </div>
+</div>
+
+@await Html.PartialAsync("_GridPagination", Model.Metadata)
+
+<script>
+    setTimeout(function() {
+        // 1. Preserve the Search Term
+        var searchTerm = '@Html.Raw(Model.Search)';
+        if (searchTerm) {
+            var searchInput = $('#FilingYearListContainerWrapper').find('input[type="search"], input[placeholder*="Search"]');
+            if (searchInput.length && !searchInput.val()) {
+                searchInput.val(searchTerm);
+                var val = searchInput.val();
+                searchInput.focus().val('').val(val);
+            }
+        }
+
+        // 2. Preserve the Page Size Dropdown
+        var pageSize = '@(Model.Metadata?.PageSize ?? 10)';
+        if (pageSize) {
+            // Target the <select> element inside the toolbar
+            var pageSizeSelect = $('#FilingYearListContainerWrapper').find('select');
+            if (pageSizeSelect.length) {
+                pageSizeSelect.val(pageSize);
+            }
+        }
+    }, 50);
+</script>

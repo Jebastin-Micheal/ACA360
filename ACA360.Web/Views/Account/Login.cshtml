@@ -1,0 +1,136 @@
+﻿@model ACA360.Web.Models.LoginViewModel
+
+@{
+    ViewBag.Title = "Login";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ACA360 Login</title>
+    <link rel="stylesheet" href="~/css/material-icons.css">
+    <link rel="stylesheet" href="~/css/CommonStyle.css">
+    <link rel="stylesheet" href="~/css/fonts.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link href="~/css/loginstyle.css" rel="stylesheet" />
+
+    <style>
+        .floating-group {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            z-index: 10;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="login-form">
+            <h1>Welcome to <span class="text-warning">ACA360</span></h1>
+            <h5>Enter your credentials to access your account</h5>
+            </br>
+            <form method="POST" asp-controller="Account" asp-action="Login">
+                <div class="mb-3">
+                    <div class="floating-group">
+                        <input type="text"
+                               name="Username"
+                               id="username"
+                               asp-for="Username"
+                               autofocus
+                               class="form-control"
+                               placeholder=" "
+                               value="@Context.Request.Cookies["Username"]"
+                               required />
+
+                        <label asp-for="Username" class="form-label">Username</label>
+                    </div>
+
+                    @if (ViewData.ModelState.ContainsKey("Username") && ViewData.ModelState["Username"]?.Errors.Any() == true)
+                    {
+                        <div class="error-message">@ViewData.ModelState["Username"]?.Errors[0]?.ErrorMessage</div>
+                    }
+                </div>
+                <div class="mb-3 form-password-toggle">
+
+                    <div class="floating-group">
+
+                        <input type="password"
+                               name="Password"
+                               asp-for="Password"
+                               id="password"
+                               class="form-control"
+                               placeholder=" "
+                               required />
+
+                        <label asp-for="Password" class="form-label">Password</label>
+
+                        <span id="togglePasswordBtn" class="material-icons toggle-password">visibility_off</span>
+
+                    </div>
+
+                    @if (ViewData.ModelState.ContainsKey("Password") && ViewData.ModelState["Password"]?.Errors.Any() == true)
+                    {
+                        <div class="error-message">@ViewData.ModelState["Password"]?.Errors[0]?.ErrorMessage</div>
+                    }
+
+                </div>
+                <div class="mb-3 form-password-toggle">
+                    <div class="d-flex justify-content-between">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="RememberMe" asp-for="RememberMe" id="rememberMe" />
+                            <label class="form-check-label" for="rememberMe">Remember Me</label>
+                        </div>
+                        <a href="auth-forgot-password-basic.html">
+                            <small>Forgotten Password?</small>
+                        </a>
+                    </div>
+                </div>
+                <button type="submit" class="btn css-rsbo1m w-100 mb-2">  <span class="material-icons">login</span>&nbsp Log in</button>
+
+
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="text-success mt-3">@TempData["SuccessMessage"]</div>
+                }
+
+                @if (ViewData["ValidateMessage"] != null)
+                {
+                    <div class="text-warning mt-3">@ViewData["ValidateMessage"]</div>
+                }
+            </form>
+
+
+        </div>
+
+        <div class="right-image d-none d-md-block"></div>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const passwordInput = document.getElementById('password');
+        const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+
+        togglePasswordBtn.addEventListener('click', function () {
+            //  (password / text)
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+
+            //  (visibility / visibility_off)
+            this.textContent = type === 'password' ? 'visibility_off' : 'visibility';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+﻿@model ACA360.Web.Models.EmployeeListViewModel
+
+@Html.AntiForgeryToken()
+
+<div class="col-12 mb-4">
+    <div class="card" id="section_basic">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-primary"><i class="bx bx-user-plus me-2"></i>Add New Employee</h5>
+            <div class="card-header-actions">
+                <a href="/Employee" class="btn btn-sm btn-label-secondary">Cancel</a>
+                <button type="button" class="btn btn-sm btn-success" id="btnSaveNewEmployee">
+                    <i class="bx bx-save me-1"></i> Save Employee
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <form id="form_section_basic">
+                <input type="hidden" id="FilingYear" value="@Model.SelectedEmployeeDetails?.FilingYear" />
+                <input type="hidden" id="EmployeeID" value="0" />
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label">Employer Name</label>
+                        <select class="form-select" id="employerDropdown" name="EmployerId" data-selected-id="@Model.SelectedEmployeeDetails?.EmployerId">
+                            <option value="">-- Select Employer --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <div class="form-check ms-3">
+                            <input class="form-check-input text-uppercase" type="checkbox" id="chkCorrected" value="1">
+                            <label class="form-check-label" for="chkCorrected">Corrected Indicator</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">First Name<span class="text-danger">*</span></label>
+                        <input type="text" class="form-control text-uppercase" id="FirstName" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Middle Name</label>
+                        <input type="text" class="form-control text-uppercase" id="MiddleName" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Last Name<span class="text-danger">*</span></label>
+                        <input type="text" class="form-control text-uppercase" id="LastName" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">SSN<span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="SSN" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'').replace(/^(\d{3})(\d)/,'$1-$2').replace(/^(\d{3}-\d{2})(\d)/,'$1-$2')" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Suffix</label>
+                        <input type="text" class="form-control text-uppercase" id="Suffix" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Date of Birth<span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="Birthday" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        <div class="invalid-feedback">Date of Birth cannot be a future date.</div>
+                    </div>
+                    <div class="col-md-12"><label class="form-label">Email Address</label><input type="text" class="form-control text-uppercase" id="Email" /></div>
+
+                    <div class="col-12"><hr class="my-1"></div>
+                    <div class="col-md-12">
+                        <label class="form-label">Address</label>
+                        <input type="text" class="form-control text-uppercase" id="Address" />
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Address 2</label>
+                        <input type="text" class="form-control text-uppercase" id="Address2" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">City</label>
+                        <input type="text" class="form-control" id="City" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">State</label>
+                        <select class="form-select text-uppercase" id="StateId">
+                            <option value="">-- Select State --</option>
+                            @if (ViewBag.States != null)
+                            {
+                                foreach (var item in (IEnumerable<SelectListItem>)ViewBag.States)
+                                {
+                                    <option value="@item.Value" selected="@(Model.SelectedEmployeeDetails?.StateId?.ToString() == item.Value ? "selected" : null)">
+                                        @item.Text
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Zip</label>
+                        <input type="text" class="form-control" id="Zip" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Country</label>
+                        <select class="form-select text-uppercase" id="CountryId">
+                            <option value="">-- Select Country --</option>
+                            @if (ViewBag.CountryDropdown != null)
+                            {
+                                foreach (var item in (IEnumerable<SelectListItem>)ViewBag.CountryDropdown)
+                                {
+                                    <option value="@item.Value" selected="@(Model.SelectedEmployeeDetails?.CountryId?.ToString() == item.Value ? "selected" : null)">
+                                        @item.Text
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Will employee receive 1095 Form?</label>
+                        <select class="form-select" id="getForm">
+                            <option value="0" selected>No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Reside outside of the US?</label>
+                        <select class="form-select" id="IsForeign">
+                            <option value="0" selected>No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Will Employee ExPatriot?</label>
+                        <select class="form-select" id="IsExPatriot">
+                            <option value="0" selected>No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Consented To Electronic</label>
+                        <select class="form-select" id="ConsentedToElectronic">
+                            <option value="0" selected>No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+
+        // Use event delegation to attach to dynamically loaded elements
+        $(document).on('click', '#btnSaveNewEmployee', function (e) {
+            e.preventDefault();
+
+            var $btn = $(this);
+            var originalText = $btn.html();
+
+            // Scope all field lookups to THIS add form. The split-view detail
+            // panel reuses ids like EmployeeID/FilingYear/EmployerId, and a
+            // global $('#id') would read the panel's values (turning the Add
+            // into a silent UPDATE of the selected employee).
+            var $card = $btn.closest('.card');
+            function F(id) { return $card.find('#' + id); }
+
+            // 1. Prevent double clicks
+            if ($btn.prop('disabled')) return;
+            $btn.prop('disabled', true).html('<i class="bx bx-loader bx-spin me-1"></i> Saving...');
+
+            // 2. Gather form data & Validate by ID
+            var isValid = true;
+
+            // Array of required element IDs
+            var requiredIDs = ['FirstName', 'LastName', 'SSN', 'Birthday'];
+
+            // Clear any previous validation errors
+            $card.find('.is-invalid').removeClass('is-invalid');
+
+            // Check each required field directly by ID
+            $.each(requiredIDs, function (index, id) {
+                var $input = F(id);
+                var val = $input.val() ? $input.val().trim() : "";
+
+                if (val === "") {
+                    $input.addClass('is-invalid');
+                    isValid = false;
+                }
+            });
+
+            // ── DOB cannot be a future date ────────────────────────────────
+            var $dob = F('Birthday');
+            var dobVal = $dob.val();
+            if (dobVal) {
+                var dobDate = new Date(dobVal + 'T00:00:00');
+                var today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (dobDate > today) {
+                    $dob.addClass('is-invalid');
+                    isValid = false;
+                }
+            }
+
+            // Halt execution if validation failed
+            if (!isValid) {
+                $btn.prop('disabled', false).html(originalText);
+                return;
+            }
+
+            // 3. Build Payload Explicitly by ID (scoped to this form)
+            var payload = {
+                FilingYear: parseInt(F('FilingYear').val()) || 0,
+                EmployeeID: parseInt(F('EmployeeID').val()) || 0,
+                EmployerId: parseInt(F('employerDropdown').val()) || 0,
+                EmployerName: F('EmployerName').val() || null,
+                IsCorrected: F('chkCorrected').is(':checked') ? 1 : 0,
+                FirstName: F('FirstName').val() || null,
+                MiddleName: F('MiddleName').val() || null,
+                LastName: F('LastName').val() || null,
+                SSN: F('SSN').val() || null, // Sent as string per project requirements
+                Suffix: F('Suffix').val() || null,
+                Birthday: F('Birthday').val() || null, // Empty date is sent as null to avoid C# DateTime crashes
+                Address: F('Address').val() || null,
+                Email: F('Email').val() || null,
+                Address2: F('Address2').val() || null,
+                City: F('City').val() || null,
+                StateId: F('StateId').val() ? parseInt(F('StateId').val()) : null,
+                State: F('StateId').find('option:selected').text(),
+                Zip: F('Zip').val() || null,
+                Country: F('CountryId').val() ? parseInt(F('CountryId').val()) : null,
+                Country: F('CountryId').find('option:selected').text(),
+                IsForeign: parseInt(F('IsForeign').val()) || 0,
+                IsExPatriot: parseInt(F('IsExPatriot').val()) || 0,
+                getForm: parseInt(F('getForm').val()) || 0,
+                ConsentedToElectronic: parseInt(F('ConsentedToElectronic').val()) || 0
+
+            };
+
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            // 4. Send AJAX POST
+            $.ajax({
+                url: '/Employee/EmployeedetailSave',
+                type: 'POST',
+                contentType: 'application/json',
+                headers: { 'RequestVerificationToken': token },
+                data: JSON.stringify(payload),
+                success: function (response) {
+                    $btn.prop('disabled', false).html(originalText);
+
+                    if (response.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Employee added successfully.',
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = '/Employee';
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: response.message || 'Failed to add employee.',
+                            icon: 'error'
+                        });
+                    }
+                },
+                error: function (xhr) {
+                    $btn.prop('disabled', false).html(originalText);
+                    console.error("Save Error: ", xhr.responseText);
+                    alert('System error saving data. Check console for details.');
+                }
+            });
+        });
+
+    });
+</script>

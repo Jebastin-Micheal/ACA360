@@ -1,0 +1,85 @@
+﻿@using ACA360.Core.Models;
+@using ACA360.Core.Extensions;
+@using Newtonsoft.Json;
+@using ACA360.Core.Constants;
+@using System.Security.Claims
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    var FilingYear = HttpContextAccessor.HttpContext?.Session.GetObject<List<FilingYearModel>>("FilingYear") ?? new List<FilingYearModel>();
+    var selectedEmployer = HttpContextAccessor.HttpContext?.Session.GetString("SelectedEmployerName") ?? "";
+    var selectedEmployerId = HttpContextAccessor.HttpContext?.Session.GetString("SelectedEmployerId") ?? "";
+    var employerFamily = HttpContextAccessor.HttpContext?.Session.GetObject<List<Employer>>("EmployerFamily") ?? new List<Employer>();
+    var isPrimaryEmployer = HttpContextAccessor.HttpContext?.Session.GetString("IsPrimaryEmployer") == "True";
+}
+
+
+<!-- Select Employer -->
+@if (User.IsInRole(UserRoles.Employer))
+{
+    if (isPrimaryEmployer)
+    {
+        <!-- Primary Employer: switch between self and affiliates -->
+        <li class="nav-item dropdown-employerfamily dropdown me-2 me-xl-0">
+            <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                <i class="icon-base bx bx-buildings icon-md"></i>
+                <span class="med_employerfamily employerfamily" title="@(string.IsNullOrEmpty(selectedEmployer) ? "No Employer Selected" : selectedEmployer)">
+                    @(string.IsNullOrEmpty(selectedEmployer) ? "No Employer Selected" : selectedEmployer)
+                </span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+                @foreach (var member in employerFamily)
+                {
+                    <li>
+                        <a class="dropdown-item @(member.Id == selectedEmployerId ? "active" : "")" href="javascript:void(0);" data-employerid="@member.Id" data-employername="@member.Name">
+                            <span>@member.Name</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </li>
+    }
+    else
+    {
+        <!-- Affiliate Employer: display-only, no switching -->
+        <li class="nav-item">
+            <a class="nav-link disabled text-muted" href="javascript:void(0);" aria-disabled="true">
+                <i class="icon-base bx bx-buildings icon-md"></i>
+                <span class="med_employerfamily" title="@selectedEmployer">
+                    @selectedEmployer
+                </span>
+            </a>
+        </li>
+    }
+}
+else if (!User.IsInRole(UserRoles.DataAnalyst))
+{
+    <!-- Select Employer -->
+    <li class="nav-item">
+        <a class="nav-link selectemployer_text text-primary" href="javascript:void(0);" onclick="openSelectEmployerModal()">
+            <i class="icon-base bx bx-buildings icon-md"></i>
+            <span class="med_selectemployer selectemployer" title="@(string.IsNullOrEmpty(selectedEmployer) ? "No Employer Selected" : selectedEmployer)">
+                @(string.IsNullOrEmpty(selectedEmployer) ? "No Employer Selected" : selectedEmployer)
+            </span>
+        </a>
+    </li>
+}
+
+<!-- Filing Year -->
+<li class="nav-item dropdown-fillingyear dropdown me-2 me-xl-0">
+    <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+        <i class="icon-base bx bx-calendar-check icon-md"></i>
+        <span class="med_fillingyear fillingyear">
+            @(HttpContextAccessor.HttpContext?.Session.GetString("SelectedFilingYear")?.ToString() ?? DateTime.Now.Year.ToString())
+        </span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end">
+        @foreach (var year in FilingYear)
+        {
+            <li>
+                <a class="dropdown-item" href="javascript:void(0);" data-fillingyear="@year.FilingYear">
+                    <span>@year.FilingYear</span>
+                </a>
+            </li>
+        }
+    </ul>
+</li>

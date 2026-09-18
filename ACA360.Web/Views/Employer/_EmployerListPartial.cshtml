@@ -1,0 +1,167 @@
+﻿@using ACA360.Core.Extensions
+@using ACA360.Core.Models;
+@using ACA360.Web.Helpers;
+@model ACA360.Web.Models.EmployerListViewModel
+
+@* 1. Display Active Filters (Optional Modern Touch) *@
+@if (!string.IsNullOrEmpty(Model.Search) && Model.SearchFields != "all")
+{
+    <div class="mb-2 px-3">
+        <small class="text-muted">Searching in: </small>
+        @foreach (var field in Model.SearchFields.Split(','))
+        {
+            <span class="badge bg-label-info text-capitalize me-1">@field</span>
+        }
+    </div>
+}
+
+<div class="table-responsive text-nowrap ui-table-responsive">
+    <table class="table table-bordered mb-0 ui-table" id="employerTable">
+        <thead>
+            <tr class="align-middle">
+                <th>#</th>
+                <th>
+                    @await Html.PartialAsync("_SortableHeader", new
+                    {
+                        Title = "Name",
+                                        Column = "0",
+                                        SortColumn = Model.SortColumn,
+                                        SortOrder = Model.SortOrder
+                                        })
+                </th>
+                <th>Type</th>
+                <th>Tax ID</th>
+                <th>City</th>
+                <th>State</th> @* Added State column to match your SP updates *@
+                <th class="text-center">Action</th>
+            </tr>
+        </thead>
+
+        @{
+            int pageNum = Model.Metadata.CurrentPage < 1 ? 1 : Model.Metadata.CurrentPage;
+            int count_index = ((pageNum - 1) * Model.Metadata.PageSize) + 1;
+        }
+
+        <tbody>
+            @if (Model.Employers != null && Model.Employers.Count > 0)
+            {
+                foreach (var employer in Model.Employers)
+                {
+                    <tr class="employer-item">
+                        <td>@count_index</td>
+                        <td>
+                            <a href="#" class="edit-emp-btn"
+                               data-employer-id="@employer.Id"
+                               data-ein="@(CanViewSSNorEIN? employer.TaxId: DataMasker.MaskEIN(employer.TaxId))"
+                               data-filingyear="@employer.FilingYear">
+                                @employer.Name
+                            </a>
+                        </td>
+                        <td>
+                            @if (employer.CompanyId == null)
+                            {
+                                <span class="badge bg-primary">Primary</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Affiliate</span>
+                            }
+                        </td>
+                        @* <td class="font-monospace">@employer.TaxId</td> *@
+                        <td class="font-monospace">@(CanViewSSNorEIN? employer.TaxId: DataMasker.MaskEIN(employer.TaxId))</td>
+
+                        <td>@(string.IsNullOrEmpty(employer.City) ? "--" : employer.City)</td>
+                        <td>@employer.State</td> @* Added State display *@
+
+                        <td class="text-center align-middle">
+                            <div class="d-inline-flex align-items-center gap-2">
+                                <!-- Edit -->
+                                @if (User.HasPermission("Employer", "Edit"))
+                                {
+                                    <button class="btn btn-sm btn-icon edit-emp-btn text-primary" data-employer-id="@employer.Id"
+                                            data-ein="@(CanViewSSNorEIN? employer.TaxId: DataMasker.MaskEIN(employer.TaxId))"
+                                            data-filingyear="@employer.FilingYear" title="Edit">
+                                        <i class="bx bx-edit icon-sm fs-4"></i>
+                                    </button>
+                                }
+                                <!-- Review Codes -->
+                                <a asp-controller="ACA"
+                                   asp-action="CodeReview"
+                                   asp-route-employerId="@employer.Id"
+                                   asp-route-year="@employer.FilingYear"
+                                   class="btn btn-md p-1"
+                                   title="Review Codes">
+                                    <i class="bx bx-list-check icon-md fs-4 text-warning"></i>
+                                </a>
+                                <!-- Dashboard -->
+                                <a asp-controller="Employer"
+                                   asp-action="Dashboard"
+                                   asp-route-id="@employer.Id"
+                                   asp-route-year="@employer.FilingYear"
+                                   class="btn btn-sm p-1"
+                                   title="Dashboard">
+                                    <i class="bx bxs-dashboard icon-sm fs-4 text-info"></i>
+                                </a>
+                                <!-- Re-Calculate Codes -->
+                                <form class="recalculateForm" asp-controller="ACA" asp-action="GenerateCodes" method="post" autocomplete="off">
+                                    <input type="hidden" name="employerId" value="@employer.Id" />
+                                    <input type="hidden" name="year" value="@employer.FilingYear" />
+                                    <button type="submit" class="btn btn-sm text-secondary ps-1" title="Re-Calculate Codes">
+                                        <i class='bx bx-calculator icon-sm fs-4'></i>
+                                    </button>
+                                </form>
+                                <!-- Notes -->
+                                <button class="btn btn-sm p-1" onclick="openNotes('Employer', @employer.Id)"><i class="bx bx-message-square-dots icon-sm fs-4 text-success" title="Notes"></i></button>
+
+                                <!-- Single Action Dropdown (Contains Delete + Form Generation) -->
+                                <div class="dropdown d-inline-block">
+                                    <a href="javascript:;" class="btn btn-icon dropdown-toggle hide-arrow action-dots-btn" data-bs-toggle="dropdown" aria-expanded="false" title="Actions">
+                                        <i class="icon-base bx bx-dots-vertical-rounded icon-md"></i>
+                                    </a>
+
+                                    <div class="dropdown-menu dropdown-menu-end m-0 shadow-sm" style="min-width: 200px; padding-bottom: 8px;">
+
+                                        <!-- Delete Option -->
+                                        @if (User.HasPermission("Employer", "Delete"))
+                                        {
+                                            <a href="javascript:;" class="dropdown-item" data-id="@employer.Id">
+                                                <i class="bx bx-trash text-danger me-1"></i> Delete
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                        }
+
+                                        <!-- Generate Form Header -->
+                                        <div class="px-3 py-1">
+                                            <span class="fw-bold text-muted" style="font-size: 11px; text-transform: uppercase;">Generate Form</span>
+                                        </div>
+
+                                        <!-- Form Types -->
+                                        <a href="javascript:void(0);" class="dropdown-item form-gen-btn" data-employer-id="@employer.Id" data-year="@employer.FilingYear" data-form-type="1094-C">
+                                            <i class="bx bxs-file-pdf text-danger me-1"></i> 1094-C
+                                        </a>
+                                        <a href="javascript:void(0);" class="dropdown-item form-gen-btn" data-employer-id="@employer.Id" data-year="@employer.FilingYear" data-form-type="1094-B">
+                                            <i class="bx bxs-file-pdf text-danger me-1"></i> 1094-B
+                                        </a>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    count_index++;
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center p-5 text-muted">
+                        @*   <i class="bx bx-search-alt-2 fs-1 d-block mb-2"></i> *@
+                        No employers found matching your criteria.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@await Html.PartialAsync("_GridPagination", Model.Metadata)

@@ -1,0 +1,133 @@
+﻿@using ACA360.Core.Models
+@model UserAccounts
+
+<div class="card shadow-none border-0">
+    <div class="card-body p-0">
+        <div class="row g-0">
+
+            <div class="col-md-5 d-flex flex-column align-items-center justify-content-center border-end p-4 bg-light bg-opacity-10">
+                <div class="mb-3 position-relative">
+                    @{
+                        var hasValidImage = !string.IsNullOrEmpty(Model.ProfilePicture) &&
+                        System.Text.RegularExpressions.Regex.IsMatch(Model.ProfilePicture, @"\.(png|jpg|jpeg|gif|bmp|webp)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    }
+
+                    @if (hasValidImage)
+                    {
+                        <img src="~/uploads/profile-pictures/@Model.ProfilePicture"
+                             alt="Profile"
+                             class="rounded-circle img-thumbnail shadow-sm"
+                             style="width: 140px; height: 140px; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <div class="rounded-circle bg-@DesingHelpers.GetInitialColor(@Model.UserAccounts_FName.Substring(0, 1)) bg-opacity-10 d-flex align-items-center justify-content-center text-@DesingHelpers.GetInitialColor(@Model.UserAccounts_FName.Substring(0, 1)) fw-bold fs-1 shadow-sm"
+                             style="width: 140px; height: 140px; border: 4px solid #fff;">
+                            @Model.UserAccounts_FName.Substring(0, 1)@Model.UserAccounts_LName.Substring(0, 1)
+                        </div>
+                    }
+                </div>
+
+                <h4 class="fw-bold mb-1 text-dark">@Model.UserAccounts_FName @Model.UserAccounts_LName</h4>
+                <p class="text-muted mb-3"><i class="icon-base bx @DesingHelpers.GetRoleIcon(@Model.UserAccounts_Role) me-2"></i>@Model.UserAccounts_Role_Name</p>
+
+                @switch (Model.UserAccounts_Status)
+                {
+                    case 1:
+                        <span class="badge rounded-pill bg-label-success fs-6 px-3 py-2">
+                            <i class='bx bx-check-shield me-1'></i> Active
+                        </span>
+                        break;
+
+                    case 2:
+                        <span class="badge rounded-pill bg-label-secondary fs-6 px-3 py-2">
+                            <i class='bx bx-user-x me-1'></i> Inactive
+                        </span>
+                        break;
+
+                    case 3:
+                        <span class="badge rounded-pill bg-label-danger fs-6 px-3 py-2">
+                            <i class='bx bx-block me-1'></i> Terminated
+                        </span>
+                        break;
+
+                    default:
+                        <span class="badge rounded-pill bg-label-primary fs-6 px-3 py-2">
+                            <i class='bx bx-question-mark me-1'></i> Unknown
+                        </span>
+                        break;
+                }
+            </div>
+
+            <div class="col-md-7 p-4">
+                <h6 class="text-uppercase text-muted mb-4 fw-bold">
+                    <i class='bx bx-id-card me-1 align-middle fs-5'></i> Account Details
+                </h6>
+
+                <div class="vstack gap-3">
+
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-sm me-3">
+                            <span class="avatar-initial rounded bg-label-primary">
+                                <i class='bx bx-envelope fs-4'></i>
+                            </span>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block">Email Address</small>
+                            <span class="fw-medium text-heading">@Model.UserAccounts_Email</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-sm me-3">
+                            <span class="avatar-initial rounded bg-label-success">
+                                <i class='bx bx-phone fs-4'></i>
+                            </span>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block">Phone Number</small>
+                            <span class="fw-medium text-heading">@Model.UserAccounts_Phone</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-sm me-3">
+                            <span class="avatar-initial rounded bg-label-info">
+                                <i class='bx bx-map fs-4'></i>
+                            </span>
+                        </div>
+                        <div>
+                            <small class="text-muted d-block">Location</small>
+                            <span class="fw-medium text-heading">
+                                @Model.UserAccounts_Addr1
+                                @(!string.IsNullOrEmpty(Model.UserAccounts_Addr2) ? ", " + Model.UserAccounts_Addr2 : "")
+                            </span>
+                            <div class="text-muted small">@Model.UserAccounts_Zip</div>
+                        </div>
+                    </div>
+
+                    <hr class="my-2 border-light">
+
+                    <div class="d-flex align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar avatar-sm me-3">
+                                <span class="avatar-initial rounded bg-label-warning">
+                                    <i class='bx bx-lock-alt fs-4'></i>
+                                </span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Security</small>
+                                <span class="fw-medium text-heading">MFA Authentication</span>
+                            </div>
+                        </div>
+
+                        <span class="badge @(Model.IsMFA == 1 ? "bg-success" : "bg-danger") rounded-pill mx-5">
+                            @(Model.IsMFA == 1 ? "Enabled" : "Disabled")
+                        </span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

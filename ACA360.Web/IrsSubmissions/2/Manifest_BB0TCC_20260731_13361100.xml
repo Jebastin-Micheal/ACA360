@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<irs:ACAUIBusinessHeader xmlns:irs="urn:us:gov:treasury:irs:common" xmlns:urn="urn:us:gov:treasury:irs:ext:aca:air:7.0">
+  <urn:ACATransmitterManifestReqDtl>
+    <urn:PaymentYr>2026</urn:PaymentYr>
+    <urn:PriorYearDataInd>0</urn:PriorYearDataInd>
+    <urn:EIN>123456789</urn:EIN>
+    <urn:TransmissionTypeCd>C</urn:TransmissionTypeCd>
+    <urn:TestFileCd>P</urn:TestFileCd>
+    <urn:TransmitterForeignEntityInd>0</urn:TransmitterForeignEntityInd>
+    <urn:TransmitterControlCd>BB0TCC</urn:TransmitterControlCd>
+    <urn:CompanyNm>ACA360 Software</urn:CompanyNm>
+    <urn:TransmitterContactGrp>
+      <urn:ContactNm>Support Team</urn:ContactNm>
+      <urn:ContactPhoneNum>555-123-4567</urn:ContactPhoneNum>
+    </urn:TransmitterContactGrp>
+    <urn:VendorGrp>
+      <urn:VendorCd>I</urn:VendorCd>
+      <urn:ContactNm>Support Team</urn:ContactNm>
+      <urn:ContactPhoneNum>555-123-4567</urn:ContactPhoneNum>
+    </urn:VendorGrp>
+    <urn:TotalPayeeRecordCnt>20</urn:TotalPayeeRecordCnt>
+    <urn:TotalPayerRecordCnt>1</urn:TotalPayerRecordCnt>
+    <urn:SoftwareId>2300000000</urn:SoftwareId>
+    <urn:FormTypeCd>1094/1095C</urn:FormTypeCd>
+    <urn:BinaryFormatCd>application/xml</urn:BinaryFormatCd>
+    <urn:ChecksumAugmentationNum>46e8c164c3436f59353987a9c686c9b4c574c838fd0ed066db033d1aae5b7150</urn:ChecksumAugmentationNum>
+    <urn:AttachmentByteSizeNum>18996</urn:AttachmentByteSizeNum>
+    <urn:DocumentSystemFileNm>1094C_Request_BB0TCC_20260731T080611000Z.xml</urn:DocumentSystemFileNm>
+  </urn:ACATransmitterManifestReqDtl>
+</irs:ACAUIBusinessHeader>

@@ -1,0 +1,49 @@
+/* =====================================================================
+   Plan filing-year comparison — MODULE-UNIQUE styles.
+   The shared split/diff chrome lives in compare-core.css; this file only
+   tunes the Plan detail form so it reads cleanly inside the narrow,
+   half-width compare panes. Scoped to .cmp-active .cmp-pane .plan-field-grid
+   (a class, so it matches BOTH panes — the compare clone renames ids).
+   ===================================================================== */
+
+/* Each field is normally a horizontal grid (label.col-sm-* + control.col-sm-*).
+   At half pane width that grid can't hold long labels, so the label text
+   overlapped the control. In compare, stack every field: label on top,
+   control full-width below — tidy and overlap-proof. */
+.cmp-active .cmp-pane .plan-field-grid { --bs-gutter-y: 1rem; --bs-gutter-x: 1rem; }
+.cmp-active .cmp-pane .plan-field-grid > [class*="col-"] { margin-left: 0 !important; margin-right: 0 !important; }
+
+.cmp-active .cmp-pane .plan-field-grid .row > label.col-form-label,
+.cmp-active .cmp-pane .plan-field-grid .row > [class*="col-sm-"] {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+}
+.cmp-active .cmp-pane .plan-field-grid .row > label.col-form-label {
+    padding: 0 0 .2rem;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .01em;
+    line-height: 1.3;
+    white-space: normal;
+    color: var(--bs-secondary-color, #6b7180);
+}
+.cmp-active .cmp-pane .plan-field-grid .form-control,
+.cmp-active .cmp-pane .plan-field-grid .form-select {
+    width: 100%;
+    font-size: 13px;
+}
+
+/* Checkbox rows: keep the box + label on one line, wrap long text under it. */
+.cmp-active .cmp-pane .plan-field-grid .form-check { margin-bottom: .15rem; padding-left: 1.6rem; }
+.cmp-active .cmp-pane .plan-field-grid .form-check-label { font-size: 12.5px; line-height: 1.3; }
+
+/* Inner cards (Disable Codes / ICHRA) sit flush and compact in the pane. */
+.cmp-active .cmp-pane .plan-field-grid .card { margin-bottom: 0 !important; }
+.cmp-active .cmp-pane .plan-field-grid .card > .card-header {
+    font-size: .85rem; font-weight: 700; padding: .5rem .75rem;
+}
+.cmp-active .cmp-pane .plan-field-grid .card > .card-body { padding: .75rem; }
+
+/* The small helper note under ICHRA shouldn't crowd the fields. */
+.cmp-active .cmp-pane .plan-field-grid small.text-muted { display: block; margin-top: .5rem; font-size: 11px; line-height: 1.35; }

@@ -1,0 +1,168 @@
+﻿@model ACA360.Core.Models.EditRowViewModel
+
+@{
+    // Column name sets for smart input rendering
+    var dateColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "EmployeeBirthdate","HireDate","TerminationDate","StatusStartDate","StatusEndDate",
+        "CoverageStartDate","CoverageEndDate","DateEligibleForCoverage",
+        "DateEmployerFirstPaysToUnionBenefits","DateEmployerLastPaysToUnionBenefits",
+        "COBRACoverageEffectiveDate","COBRACoverageEndDate",
+        "RetireePlanStartDate","RetireePlanEndDate",
+        "DependentBirthdate","DependentCoverageStartDate","DependentCoverageEndDate",
+        "Start","End","StartDate","EndDate"
+    };
+
+    var boolColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "OfferedToSpouse","OfferedToDependents","EligibleFirstOfTheMonth",
+        "PlanTerminatesOnDateOfTermination","MinimumValue","ForeignAddressInd",
+        "ForeignAddress","UnionEmployee","Expatriate",
+        "COBRABenefitsElected","RetireeBenefitsElected"
+    };
+
+    var numericColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "W2IncomeAnnualSalary","AdditionalIncome","HourlyRate",
+        "EEMonthlyContribution","PremiumCap","WaitingPeriodNumberOfDays"
+    };
+
+    // Columns to skip entirely — internal system fields
+    var skipColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "FileLogId","RowNumber","IsValid","ErrorMessages"
+    };
+}
+
+@* ── Error summary alert ──────────────────────────────────────────────────── *@
+@if (Model.AllErrorsForThisRow.Any())
+{
+    <div class="alert alert-danger d-flex align-items-start mb-3" role="alert">
+        <i class="bx bx-error fs-5 me-2 mt-1 flex-shrink-0"></i>
+        <div>
+            <div class="fw-semibold mb-1">
+                @Model.AllErrorsForThisRow.Count
+                issue@(Model.AllErrorsForThisRow.Count == 1 ? "" : "s") detected on this row
+            </div>
+            <ul class="mb-0 ps-3">
+                @foreach (var error in Model.AllErrorsForThisRow)
+                {
+                    <li class="small">
+                        <span class="fw-semibold text-danger">@error.TargetColumn:</span>
+                        @error.ErrorMessage
+                        @if (!string.IsNullOrEmpty(error.HelpText))
+                        {
+                            <span class="text-muted"> — @error.HelpText</span>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+}
+
+<form id="editRowForm" autocomplete="off">
+    @Html.AntiForgeryToken()
+    <input type="hidden" id="hdn_FileLogId" value="@Model.FileLogId" />
+    <input type="hidden" id="hdn_TableName" value="@Model.TableName" />
+    <input type="hidden" id="hdn_RowId" value="@Model.RowId" />
+
+    <div class="row g-3">
+        @foreach (var field in Model.RowData)
+        {
+            // ── All variables for this field computed at the top of the loop ──
+            // Razor loses @{ } scope when nested inside @if/@else if blocks,
+            // so everything must be declared here before any HTML is emitted.
+            var name = field.Key;
+            var value = field.Value?.ToString() ?? "";
+
+            // Skip internal system columns
+            if (skipColumns.Contains(name)) continue;
+            if (name.StartsWith("Staging") && name.EndsWith("Id")) continue;
+
+            bool isInvalid = Model.AllErrorsForThisRow.Any(
+            e => e.TargetColumn.Equals(name, StringComparison.OrdinalIgnoreCase));
+            string baseClass = "form-control" + (isInvalid ? " is-invalid border-danger" : "");
+            string autofocusAttr = isInvalid ? "autofocus" : "";
+            var label = System.Text.RegularExpressions.Regex
+            .Replace(name, "([A-Z])", " $1").Trim();
+
+            // Bool select state — computed here so Razor can see them in sibling HTML
+            bool isYes = value.Equals("Yes", StringComparison.OrdinalIgnoreCase)
+            || value == "1"
+            || value.Equals("true", StringComparison.OrdinalIgnoreCase);
+            bool isNo = value.Equals("No", StringComparison.OrdinalIgnoreCase)
+            || value == "0"
+            || value.Equals("false", StringComparison.OrdinalIgnoreCase);
+            bool isBlank = !isYes && !isNo;
+
+            <div class="col-12">
+                <label class="form-label small text-uppercase fw-semibold text-muted mb-1">
+                    @label
+                    @if (isInvalid)
+                    {
+                        <span class="badge bg-label-danger ms-1" style="font-size:.6rem;">Error</span>
+                    }
+                </label>
+
+                @if (dateColumns.Contains(name))
+                {
+                    // Date input — tries to parse and format as yyyy-MM-dd for the browser
+                    string dateVal = "";
+                    if (DateTime.TryParse(value, out var dt))
+                        dateVal = dt.ToString("yyyy-MM-dd");
+                    <input type="date" name="@name" class="@baseClass"
+                           value="@dateVal" @autofocusAttr />
+                }
+                else if (boolColumns.Contains(name))
+                {
+                    <select name="@name" class="@baseClass" @autofocusAttr>
+                        @if (isBlank)
+                        {
+                            <option value="" selected>— Select —</option>
+                        }
+                        else
+                        {
+                            <option value="">— Select —</option>
+                        }
+                        @if (isYes)
+                        {
+                            <option value="Yes" selected>Yes</option>
+                        }
+                        else
+                        {
+                            <option value="Yes">Yes</option>
+                        }
+                        @if (isNo)
+                        {
+                            <option value="No" selected>No</option>
+                        }
+                        else
+                        {
+                            <option value="No">No</option>
+                        }
+                    </select>
+                }
+                else if (numericColumns.Contains(name))
+                {
+                    <input type="number" name="@name" class="@baseClass"
+                           value="@value" step="0.01" @autofocusAttr />
+                }
+                else
+                {
+                    <input type="text" name="@name" class="@baseClass"
+                           value="@value" @autofocusAttr />
+                }
+
+                @if (isInvalid)
+                {
+                    var errMsg = Model.AllErrorsForThisRow
+                    .FirstOrDefault(e => e.TargetColumn.Equals(
+                    name, StringComparison.OrdinalIgnoreCase))?.ErrorMessage
+                    ?? "This field contains an error.";
+                    <div class="invalid-feedback">@errMsg</div>
+                }
+            </div>
+        }
+    </div>
+</form>

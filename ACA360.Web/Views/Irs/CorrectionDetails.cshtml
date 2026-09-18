@@ -1,0 +1,97 @@
+﻿@model List<ACA360.Core.Models.IrsSubmissionErrorDto>
+
+@{
+    ViewData["Title"] = "IRS Corrections";
+}
+
+<div class="card">
+    <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-1 text-danger">Correction Workspace</h5>
+            <small class="text-muted">Fixing Errors for Receipt ID: <strong>@ViewBag.ReceiptId</strong></small>
+        </div>
+        <a href="@Url.Action("Index", "Irs")" class="btn btn-outline-secondary">
+            <i class='bx bx-arrow-back me-1'></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card-body pt-4">
+        @if (!Model.Any())
+        {
+            <div class="alert alert-success">
+                <i class='bx bx-check-circle me-2'></i> No specific record errors found. If the file was rejected, check the global error message in the dashboard.
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning">
+                <i class='bx bx-error me-2'></i>
+                The IRS identified <strong>@Model.Count</strong> records with errors.
+                <br>1. Click "Fix Data" to correct the employee record.
+                <br>2. Once all are fixed, click "Generate Correction XML" to create a transmission for <strong>only these employees</strong>.
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Record / Emp ID</th>
+                            <th>Error Code</th>
+                            <th>IRS Message</th>
+                            <th class="text-center" style="width: 150px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var err in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="fw-bold">@err.EmployeeName</span><br />
+                                    <small class="text-muted">ID: @err.RecordId</small>
+                                </td>
+                                <td><span class="badge bg-label-danger">@err.ErrorCode</span></td>
+                                <td class="text-wrap">@err.ErrorMessage</td>
+                                <td class="text-center">
+                                    <a href="@Url.Action("CreateOrEdit", "Employee", new { id = err.RecordId })"
+                                       target="_blank" class="btn btn-sm btn-primary">
+                                        <i class='bx bx-edit'></i> Fix Data
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <div class="card-footer text-end border-top bg-light">
+        <button id="btnGenerateCorrection" class="btn btn-danger btn-lg">
+            <i class='bx bxs-file-xml me-2'></i> Generate Correction XML
+        </button>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $('#btnGenerateCorrection').click(function() {
+            if(!confirm("Have you finished fixing the data for all employees listed above?\n\nThis will generate a Correction File containing ONLY these records.")) return;
+
+            var btn = $(this);
+            btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin"></i> Processing...');
+
+            $.post('@Url.Action("GenerateCorrectionBatch", "Irs")',
+                   { originalSubmissionId: @ViewBag.SubmissionId },
+                   function(res) {
+                       if(res.success) {
+                           toastr.success(res.message);
+                           // Redirect back to dashboard to see the new "Ready" batch
+                           setTimeout(() => window.location.href = '@Url.Action("Index", "Irs")', 1500);
+                       } else {
+                           toastr.error(res.message);
+                           btn.prop('disabled', false).html('<i class="bx bxs-file-xml me-2"></i> Generate Correction XML');
+                       }
+                   });
+        });
+    </script>
+}

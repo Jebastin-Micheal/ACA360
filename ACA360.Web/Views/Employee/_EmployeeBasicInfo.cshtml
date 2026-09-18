@@ -1,0 +1,132 @@
+﻿@model ACA360.Web.Models.EmployeeListViewModel
+
+
+<div class="col-12 mb-4">
+    <div class="card" id="section_basic">
+        <div class="card-header d-flex justify-content-between align-items-center border-bottom">
+            <h5 class="mb-0 text-primary text-uppercase"><i class="bx bx-user me-2"></i>Employee Details</h5>
+            <span id="empNavCounter" class="badge bg-label-primary rounded-pill fs-tiny d-none mx-2"></span>
+            <div class="card-header-actions">
+                <button type="button" class="btn btn-sm btn-outline-primary btn-edit" onclick="toggleSection('section_basic', true)">
+                    <i class="bx bx-pencil me-1"></i> Edit
+                </button>
+                <div class="action-buttons d-none">
+                    <button type="button" class="btn btn-sm btn-label-secondary" onclick="toggleSection('section_basic', false)">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-success" onclick="saveGeneric('section_basic', '/Employee/EmployeedetailSave', null, event)"><i class="bx bx-save me-1"></i> Save</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body mt-3 EmployeeDetailsScrollsize perfectscroller_bottom">
+            <input type="hidden" name="FilingYear" value="@Model.SelectedEmployeeDetails?.FilingYear" />
+            <input type="hidden" name="EmployeeID" value="@Model.SelectedEmployeeDetails?.EmployeeID" />
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Employer Name</label>
+                    <select class="form-select" id="employerDropdown" name="EmployerId" data-selected-id="@Model.SelectedEmployeeDetails?.EmployerId" disabled>
+                        <option value="">-- Select Employer --</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check ms-3">
+                        <input class="form-check-input" type="checkbox" name="IsCorrected" id="chkCorrected" @(Model.SelectedEmployeeDetails?.IsCorrected == 1 ? "checked" : "") disabled>
+                        <label class="form-check-label" for="chkCorrected">Corrected Indicator</label>
+                    </div>
+                </div>
+                <div class="col-md-4"><label class="form-label">First Name<span class="text-danger">*</span></label><input type="text" class="form-control text-uppercase" name="FirstName" value="@Model.SelectedEmployeeDetails?.FirstName" oninput="this.value=this.value.replace(/[^A-Za-z .'-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" maxlength="100" disabled /></div>
+                <div class="col-md-4"><label class="form-label">Middle Name</label><input type="text" class="form-control text-uppercase" name="MiddleName" value="@Model.SelectedEmployeeDetails?.MiddleName" oninput="this.value=this.value.replace(/[^A-Za-z .'-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" maxlength="100" disabled /></div>
+                <div class="col-md-4"><label class="form-label">Last Name<span class="text-danger">*</span></label><input type="text" class="form-control text-uppercase" name="LastName" value="@Model.SelectedEmployeeDetails?.LastName" oninput="this.value=this.value.replace(/[^A-Za-z .'-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" maxlength="100" disabled /></div>
+                <div class="col-md-4">
+                    <label class="form-label">SSN<span class="text-danger">*</span></label>
+                    @if (CanViewSSNorEIN)
+                    {
+                        <input type="text" class="form-control" name="SSN" value="@Model.SelectedEmployeeDetails?.SSN" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'').replace(/^(\d{3})(\d)/,'$1-$2').replace(/^(\d{3}-\d{2})(\d)/,'$1-$2')" disabled />
+
+                    }
+                    else
+                    {
+                        <input type="text" class="form-control mask-ssn" name="SSN" value="@DataMasker.MaskSSN(Model.SelectedEmployeeDetails?.SSN)" disabled readonly />
+                        @* <input type="hidden" name="SSN" value="@Model.SelectedEmployeeDetails?.SSN" /> *@
+
+                    }
+
+                </div>
+
+                <div class="col-md-4"><label class="form-label">Suffix</label><input type="text" class="form-control text-uppercase" name="Suffix" value="@Model.SelectedEmployeeDetails?.Suffix" oninput="this.value=this.value.replace(/[^A-Za-z0-9.]/g,'').replace(/\.{2,}/g,'.')" maxlength="50" disabled /></div>
+                <div class="col-md-4">
+                    <label class="form-label">Date of Birth</label><span class="text-danger">*</span>
+                    <input type="date" class="form-control text-uppercase" name="Birthday"
+                           value="@(Model.SelectedEmployeeDetails?.Birthday?.ToString("yyyy-MM-dd"))"
+                           max="@DateTime.Today.ToString("yyyy-MM-dd")"
+                           disabled />
+                </div>
+                <div class="col-12"><hr class="my-1"></div>
+                <div class="col-md-12"><label class="form-label">Email Address</label><input type="text" class="form-control text-uppercase" name="Email" value="@Model.SelectedEmployeeDetails?.Email" maxlength="150" oninput="this.value=this.value.replace(/\s/g,'')" disabled /></div>
+                <div class="col-md-12"><label class="form-label">Address</label><input type="text" class="form-control text-uppercase" name="Address" value="@Model.SelectedEmployeeDetails?.Address" oninput="this.value=this.value.replace(/[^A-Za-z0-9 #&'(),.\/-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" maxlength="150" disabled /></div>
+                <div class="col-md-8"><label class="form-label">Address 2</label><input type="text" class="form-control text-uppercase" name="Address2" value="@Model.SelectedEmployeeDetails?.Address2" oninput="this.value=this.value.replace(/[^A-Za-z0-9 #&'(),.\/-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" maxlength="150" disabled /></div>
+                <div class="col-md-4"><label class="form-label">City</label><input type="text" class="form-control text-uppercase" name="City" value="@Model.SelectedEmployeeDetails?.City" oninput="this.value=this.value.replace(/[^A-Za-z .'-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" maxlength="100" disabled /></div>
+                <div class="col-md-4">
+                    <label class="form-label">State</label>
+                    <select class="form-select text-uppercase" name="State" disabled>
+                        <option value="">-- Select State --</option>
+                        @if (ViewBag.States != null)
+                        {
+                            foreach (var item in (IEnumerable<SelectListItem>)ViewBag.States)
+                            {
+                                // Razor will render selected="selected" if true, and omit the attribute entirely if null
+                                <option value="@item.Value" selected="@(Model.SelectedEmployeeDetails?.StateId?.ToString() == item.Value ? "selected" : null)">
+                                    @item.Text
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4"><label class="form-label">Zip</label><input type="text" class="form-control" name="Zip" value="@Model.SelectedEmployeeDetails?.Zip" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'').slice(0,9).replace(/^(\d{5})(\d)/,'$1-$2')" disabled /></div>
+                <div class="col-md-4">
+                    <label class="form-label">Country</label>
+                    <select class="form-select text-uppercase" name="Country" disabled>
+                        <option value="">-- Select Country --</option>
+                        @if (ViewBag.CountryDropdown != null)
+                        {
+                            foreach (var item in (IEnumerable<SelectListItem>)ViewBag.CountryDropdown)
+                            {
+                                // Razor will render selected="selected" if true, and omit the attribute entirely if null
+                                <option value="@item.Value" selected="@(Model.SelectedEmployeeDetails?.CountryId?.ToString() == item.Value ? "selected" : null)">
+                                    @item.Text
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Will Employee Receive 1095 Form?</label>
+                    <select class="form-select" name="GetForm" disabled>
+                        <option value="1" selected="@(Model.SelectedEmployeeDetails?.MonthlyCodes?.GetForm == 1)">Yes</option>
+                        <option value="0" selected="@(Model.SelectedEmployeeDetails?.MonthlyCodes?.GetForm != 1)">No</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Reside outside of the US?</label>
+                    <select class="form-select" name="IsForeign" disabled>
+                        <option value="1" selected="@(Model.SelectedEmployeeDetails?.IsForeign == 1)">Yes</option>
+                        <option value="0" selected="@(Model.SelectedEmployeeDetails?.IsForeign != 1)">No</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Will Employee ExPatriot?</label>
+                    <select class="form-select" name="IsExPatriot" disabled>
+                        <option value="1" selected="@(Model.SelectedEmployeeDetails?.IsExPatriot == 1)">Yes</option>
+                        <option value="0" selected="@(Model.SelectedEmployeeDetails?.IsExPatriot != 1)">No</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Consented To Electronic</label>
+                    <select class="form-select" name="ConsentedToElectronic" disabled>
+                        <option value="1" selected="@(Model.SelectedEmployeeDetails?.ConsentedToElectronic == 1)">Yes</option>
+                        <option value="0" selected="@(Model.SelectedEmployeeDetails?.ConsentedToElectronic != 1)">No</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

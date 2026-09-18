@@ -1,0 +1,48 @@
+﻿@using ACA360.Core.Models
+@model EmployerDashboardPageViewModel
+
+@* Rendered only when the server says this actor has somewhere to go. An
+   Employer user gets nothing here, and the endpoints refuse them as well. *@
+@if (Model.ViewAs.AnyAvailable && !Model.Context.IsImpersonating)
+{
+    <div class="field">
+        <label for="viewAs">View as</label>
+        <select id="viewAs">
+            <option value="">Myself — @Model.Context.ActorRole</option>
+
+            @if (Model.ViewAs.CanViewAsBroker && Model.ViewAs.Brokers.Any())
+            {
+                <optgroup label="Broker">
+                    @foreach (var b in Model.ViewAs.Brokers)
+                    {
+                        <option value="Broker:@b.Id">@b.DisplayName — @b.Detail</option>
+                    }
+                </optgroup>
+            }
+
+            @if (Model.ViewAs.CanViewAsEmployer && Model.ViewAs.Employers.Any())
+            {
+                <optgroup label="Employer">
+                    @foreach (var e in Model.ViewAs.Employers)
+                    {
+                        <option value="Employer:@e.Id">@e.DisplayName</option>
+                    }
+                </optgroup>
+            }
+        </select>
+    </div>
+}
+
+@if (Model.Context.IsImpersonating)
+{
+    <div class="impersonation on" id="impBanner">
+        <div class="impersonation-in">
+            <span class="ro">Read only</span>
+            <span id="impText">@Model.Context.BannerText</span>
+            <span style="font-weight:500;opacity:.85">
+                Changes are disabled and this session is recorded against your account.
+            </span>
+            <button type="button" class="exit" id="impExit">Return to my view</button>
+        </div>
+    </div>
+}

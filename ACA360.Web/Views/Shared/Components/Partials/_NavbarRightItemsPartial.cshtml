@@ -1,0 +1,14 @@
+﻿@using ACA360.Core.Constants
+
+<ul class="navbar-nav flex-row align-items-center ms-md-auto">
+    @* @await Html.PartialAsync("Components/Partials/_EmployerFilingPartial") *@
+    @* @if (!User.IsInRole(UserRoles.SuperAdmin))
+    {
+        @await Component.InvokeAsync("EmployerFiling")
+    } *@
+    @await Component.InvokeAsync("EmployerFiling")
+    @await Component.InvokeAsync("StyleSwitcher")
+    @await Component.InvokeAsync("QuickLinks")
+    @await Component.InvokeAsync("Notifications")
+    @await Component.InvokeAsync("UserProf")
+</ul>

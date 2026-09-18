@@ -1,0 +1,76 @@
+﻿@using ACA360.Core.Models
+@model IEnumerable<AutomationJobDto>
+
+<h5 class="fw-bold mb-3"><i class="fa fa-robot text-primary"></i> Automation Jobs</h5>
+
+<table class="table table-bordered" id="automationTable">
+    <thead class="table-light">
+        <tr>
+            <th>Job</th>
+            <th>Cron Expression</th>
+            <th>Enabled</th>
+            <th>Last Run</th>
+            <th>Next Run</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var job in Model)
+        {
+            <tr>
+                <td>@job.DisplayName</td>
+
+                <td>
+                    <input class="form-control cron-input"
+                           value="@job.CronExpression"
+                           data-job="@job.JobKey" />
+                </td>
+
+                <td>
+                    <input type="checkbox"
+                           class="form-check-input enable-toggle"
+                           data-job="@job.JobKey"
+                           @(job.IsEnabled ? "checked" : "") />
+                </td>
+
+                <td>@(job.LastRun?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                <td>@(job.NextRun?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+
+                <td>
+                    <button class="btn btn-sm btn-primary run-now"
+                            data-job="@job.JobKey">
+                        Run Now
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+    <script src="@(Url.Content("~/assets/vendor/libs/jquery/jquery.js"))"></script>
+    <script>
+        $(document).on("change", ".cron-input, .enable-toggle", function () {
+            const jobKey = $(this).data("job");
+            const cron = $(`.cron-input[data-job='${jobKey}']`).val();
+            const enabled = $(`.enable-toggle[data-job='${jobKey}']`).is(":checked");
+
+            $.ajax({
+                url: "/System/UpdateJob",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ jobKey, cronExpression: cron, isEnabled: enabled }),
+                success: () =>
+                    Swal.fire("Updated", "Job settings updated successfully", "success")
+            });
+        });
+
+        $(document).on("click", ".run-now", function () {
+            const jobKey = $(this).data("job");
+
+            $.post("/System/RunJobNow", { jobKey }, () =>
+                Swal.fire("Triggered", "Job has been queued.", "success"));
+        });
+    </script>
+
+

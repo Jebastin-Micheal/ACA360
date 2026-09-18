@@ -1,0 +1,431 @@
+﻿@model ACA360.Web.Models.AddEmployerViewModel
+
+<form id="formEmployerTracker" method="post" autocomplete="off">
+    <input type="hidden" id="Employer_TrackerIdhdn" class="Employer_TrackerIdhdn" name="employer_trackerinfo.EmployerId" value="@Model.employer_trackerinfo.EmployerId" />
+    @* <input type="hidden" id="hdnFormTrackerId" name="employer_trackerinfo.EmployerId" value="@Model.employer_trackerinfo.EmployerId" /> *@
+    <div id="employerIdError" class="alert alert-danger d-none mb-3" role="alert">
+        <i class="bx bx-error-circle me-1"></i>
+        <strong>Action Required:</strong> Please save the Employer details first to generate an ID before adding records.
+    </div>
+    <div class="">
+        <div class="row mb-6">
+            <div class="col-12">
+                <label class="form-label">Firm</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base bx bx-building"></i></span>
+                    <select id="ddlFirm" asp-for="employer_trackerinfo.FirmId"
+                            asp-items="@(new SelectList(Model.Dropdowns.Firms, "Key", "Value"))"
+                            class="form-select tracker_Firm ps-3">
+                        <option value="">-- Select Firm --</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-6">
+            <div class="col-4">
+                <label class="form-label">Broker</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base bx bx-trending-up"></i></span>
+                    <select id="ddlBroker" asp-for="employer_trackerinfo.BrokerId"
+                            asp-items="@(new SelectList(Model.Dropdowns.Brokers, "Key", "Value"))"
+                            class="form-select tracker_Broker ps-3">
+                        <option value="">-- Select Broker --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-4">
+                <label class="form-label">Phone</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base bx bx-mobile-alt"></i></span>
+                    <input asp-for="employer_trackerinfo.Phone" class="form-control" readonly />
+                </div>
+            </div>
+            <div class="col-4">
+                <label class="form-label">Email</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base bx bx-envelope"></i></span>
+                    <input asp-for="employer_trackerinfo.Email" class="form-control" readonly />
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-6">
+            <div class="col-12">
+                <label class="form-label">Affiliates</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="icon-base bx bx-network-chart"></i></span>
+
+                    <select asp-for="employer_trackerinfo.AffiliateId"
+                            class="form-select ps-3"
+                            id="affiliateSelect">
+                        <option value="">-- Select Affiliate --</option>
+                        @foreach (var item in Model.Dropdowns.Affiliates)
+                        {
+                            <option value="@item.Key">@item.Value</option>
+                        }
+                    </select>
+
+                    <button type="button" class="btn btn-outline-primary" onclick="openAffiliateModal()">
+                        <i class="bx bx-plus"></i> Add
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-6">
+           
+                <div class="col-md-6">
+                    <label class="form-label">Contact</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="icon-base bx bx-user"></i></span>
+
+                        <select asp-for="employer_trackerinfo.ContactId"
+                                class="form-select ps-3"
+                                id="ddlContact"
+                                onchange="contact_Changed(this)">
+                            <option value="">-- Select Contact --</option>
+                            @foreach (var item in Model.Dropdowns.Contacts)
+                            {
+                                <option value="@item.Key" data-phone="@item.Phone" data-email="@item.Email">@item.Value</option>
+                            }
+                        </select>
+
+                        <button type="button" class="btn btn-outline-primary" onclick="openContactModal()">
+                            <i class="bx bx-plus"></i> Add
+                        </button>
+                    </div>
+
+                    <div id="pnlContactInfo" class="row mt-3 d-none">
+                        <div class="col-6">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control val-phone" readonly />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Email</label>
+                            <input type="text" class="form-control val-email" readonly />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Billing Contact</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="icon-base bx bx-receipt"></i></span>
+
+                        <select asp-for="employer_trackerinfo.BillingContactId"
+                                class="form-select ps-3"
+                                id="ddlBilling"
+                                onchange="billing_Changed(this)">
+                            <option value="">-- Select Billing Contact --</option>
+                            @foreach (var item in Model.Dropdowns.BillingContacts)
+                            {
+                                <option value="@item.Key" data-phone="@item.Phone" data-email="@item.Email">@item.Value</option>
+                            }
+                        </select>
+
+                        <button type="button" class="btn btn-outline-primary" onclick="openBillingModal()">
+                            <i class="bx bx-plus"></i> Add
+                        </button>
+                    </div>
+
+                    <div id="pnlBillingInfo" class="row mt-3 d-none">
+                        <div class="col-6">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control val-phone" readonly />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Email</label>
+                            <input type="text" class="form-control val-email" readonly />
+                        </div>
+                    </div>
+                </div>
+        </div>
+
+        <div class="row mb-6">
+            <div class="col-6">
+                <label class="form-label">Account Manager</label>
+                <div class="input-group input-group-merge">
+                   
+                    <span class="input-group-text emp-assignment-history-btn d-none" style="cursor: pointer;"
+                          title="View Account Manager history" onclick="openEmpTabAssignmentHistory('AM')">
+                        <i class="icon-base bx bx-time-five"></i>
+                    </span>
+                    <select asp-for="employer_trackerinfo.AccountManagerId"
+                            asp-items="@(new SelectList(Model.Dropdowns.AccountManagers, "Key", "Value"))"
+                            class="form-select ps-3 tracker_Firm">
+                        <option value="">-- Select Account Manager --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-6">
+                <label class="form-label">Sales Representative</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base bx bx-card"></i></span>
+                    <select asp-for="employer_trackerinfo.SalesRepId"
+                            asp-items="@(new SelectList(Model.Dropdowns.SalesReps, "Key", "Value"))"
+                            class="form-select ps-3 tracker_Firm">
+                        <option value="">-- Select Sales Representative --</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-6">
+            <div class="col-6">
+                <label class="form-label">Data Analyst</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text emp-assignment-history-btn d-none" style="cursor: pointer;"
+                          title="View Data Analyst history" onclick="openEmpTabAssignmentHistory('DA')">
+                        <i class="icon-base bx bx-time-five"></i>
+                    </span>
+                    <select asp-for="employer_trackerinfo.DataAnalyst"
+                            asp-items="@(new SelectList(Model.Dropdowns.DataAnalysts, "Key", "Value"))"
+                            class="form-select ps-3 tracker_Firm">
+                        <option value="">-- Select Data Analyst --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-6">
+                <label class="form-label">Vendor</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base bx bx-package"></i></span>
+                    <input asp-for="employer_trackerinfo.Vendor" class="form-control" placeholder="Enter vendor name" />
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-6">
+            <div class="col-6">
+                <label class="form-label">Waiting Period</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base bx bx-hourglass"></i></span>
+                    <input asp-for="employer_trackerinfo.WaitingPeriod" class="form-control" placeholder="Enter waiting period" />
+                </div>
+            </div>
+            <div class="col-6">
+                <label class="form-label">Banding Type</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base bx bx-category"></i></span>
+                    <input asp-for="employer_trackerinfo.BandingType" class="form-control" placeholder="Enter banding type" />
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-6">
+            <div class="col-6">
+                <label class="form-label">20% Over Proposed Form Count</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base bx bx-bar-chart-alt"></i></span>
+                    <input asp-for="employer_trackerinfo.OverProposedFormCount" class="form-control" placeholder="Enter count" />
+                </div>
+            </div>
+            <div class="col-6">
+                <label class="form-label">20% Over Proposed Form Count Price</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base bx bx-purchase-tag-alt"></i></span>
+                    <input asp-for="employer_trackerinfo.OverProposedFormCountPrice" class="form-control" placeholder="Enter price" />
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12 text-end">
+                <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button type="button" class="btn btn-success dependent-save-btn me-2" onclick="saveTracker(false)">
+                    <i class="bx bx-save"></i> Save
+                </button>
+
+                <button type="button" class="btn btn-primary dependent-save-btn px-4" onclick="saveTracker(true)">
+                    Save & Continue <i class="bx bx-right-arrow-alt"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="modal fade" id="addAffiliateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Add New Affiliate</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="mb-3"><label>Name</label><input id="aff_name" class="form-control" /></div>
+                <div class="mb-3"><label>EIN</label><input id="aff_ein" class="form-control mask-ein" /></div>
+                <div class="mb-3"><label>Address</label><input id="aff_address" class="form-control" /></div>
+                <div class="mb-3"><label>City</label><input id="aff_city" class="form-control" /></div>
+                <div class="mb-3"><label>State</label><input id="aff_state" class="form-control" /></div>
+                <div class="mb-3"><label>Zip</label><input id="aff_zip" class="form-control" /></div>
+                <div class="mb-3"><label>No. of Employees</label><input id="aff_empcount" type="number" class="form-control" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" /></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary" onclick="saveAffiliate()">Save</button></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal_Contact" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Contact</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3"><label>Contact Name</label><input id="c_name" class="form-control" /></div>
+                <div class="mb-3"><label>Phone</label><input id="c_phone" class="form-control" /></div>
+                <div class="mb-3"><label>Email</label><input id="c_email" class="form-control" /></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" onclick="saveContact()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal_Billing" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Billing Contact</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3"><label>Billing Contact Name</label><input id="b_name" class="form-control" /></div>
+                <div class="mb-3"><label>Phone</label><input id="b_phone" class="form-control mask-us-phone" /></div>
+                <div class="mb-3"><label>Email</label><input id="b_email" class="form-control" /></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" onclick="saveBilling()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    // Helper: Check ID before opening modals
+    function checkEmployerId() {
+        var empId = $("#Employer_TrackerIdhdn").val();
+        if (!empId || empId === "0") {
+            $("#employerIdError").removeClass("d-none");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return false;
+        }
+        $("#employerIdError").addClass("d-none");
+        return true;
+    }
+     $(document).on('change', '#ddlFirm', function () {
+            var firmId = $(this).val();
+            var $brokerSelect = $('#ddlBroker');
+            $brokerSelect.empty().append('<option value="">-- Select Broker --</option>');
+            $('#txtBrokerPhone').val('');
+            $('#txtBrokerEmail').val('');
+
+            if (firmId) {
+                $.ajax({
+                    url: '/Employer/GetBrokersByFirm',
+                    type: 'GET',
+                    data: { firmId: firmId },
+                    success: function (data) {
+                        $.each(data, function (i, item) {
+                            $brokerSelect.append($('<option>', { value: item.value, text: item.text }));
+                        });
+                    }
+                });
+            }
+        });
+
+        // Broker Change
+        $(document).on('change', '#ddlBroker', function () {
+            var brokerId = $(this).val();
+            if (brokerId) {
+                $.ajax({
+                    url: '/Employer/GetBrokerContactDetails',
+                    type: 'GET',
+                    data: { brokerId: brokerId },
+                    success: function (data) {
+                        if (data.found) {
+                            $('#txtBrokerPhone').val(data.phone);
+                            $('#txtBrokerEmail').val(data.email);
+                        } else {
+                            $('#txtBrokerPhone').val('');
+                            $('#txtBrokerEmail').val('');
+                        }
+                    }
+                });
+            } else {
+                $('#txtBrokerPhone').val('');
+                $('#txtBrokerEmail').val('');
+            }
+        });
+      // ==============================================================
+        //  Employer_Tracker Info SAVE HANDLERS (For the tabs)
+        // ==============================================================
+                function saveTracker(isNext) {
+            var formData = $("#formEmployerTracker").serialize();
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '/Employer/SaveEmployerTrackerTab',
+                type: 'POST',
+                data: formData,
+                headers: {
+                  "RequestVerificationToken": token   // ✅ Add this
+                },
+                success: function (res) {
+                    if (res && res.success) {
+                        if (isNext) {
+                            // Switch to next tab if "Save & Continue" was clicked
+                            window.switchToNextTab();
+                        } else {
+                            alert('Tracker Info saved successfully!');
+                        }
+                    } else {
+                        alert('Failed to save Tracker info.');
+                    }
+                },
+                error: function (xhr) {
+                    alert('Error occurred while saving employer.');
+                }
+            });
+    }
+    // Init
+    $(document).ready(function() {
+        if($("#ddlContact").val()) $("#ddlContact").trigger("change");
+        if($("#ddlBilling").val()) $("#ddlBilling").trigger("change");
+        toggleEmpTabHistoryButtons();
+    });
+    // ── AM / DA assignment history popup ──────────────────────────────
+    // Icons are hidden until the employer has an ID (a brand-new employer
+    // has no history until the details tab is saved).
+    function toggleEmpTabHistoryButtons() {
+        var id = parseInt($('.Employer_TrackerIdhdn').val() || '0', 10);
+        $('.emp-assignment-history-btn').toggleClass('d-none', !(id > 0));
+    }
+
+    function openEmpTabAssignmentHistory(section) {
+        var id = parseInt($('.Employer_TrackerIdhdn').val() || '0', 10);
+        if (!(id > 0)) return;
+        $.get('/Assignment/AssignmentHistory', { employerId: id, section: section || '' }, function (html) {
+            $('#EmpTabAssignmentHistoryModal').html(html);
+            new bootstrap.Modal(document.getElementById('EmpTabAssignmentHistoryModal')).show();
+        }).fail(function () {
+            alert('Failed to load assignment history.');
+        });
+    }
+
+    // the employer modal stays open underneath - keep body scroll-locked when this popup closes
+    $(document).on('hidden.bs.modal', '#EmpTabAssignmentHistoryModal', function () {
+        $(this).empty();
+        if ($('.modal.show').length) document.body.classList.add('modal-open');
+    });
+
+    // re-evaluate when this tab is opened (add-flow: the hidden ID gets set after the details tab saves)
+    $(document).on('shown.bs.tab', 'button[data-bs-target="#tab-erinfo-modal"]', toggleEmpTabHistoryButtons);
+</script>
+<!-- AM / DA assignment history popup (content loaded on demand); sits above the employer modal -->
+<div class="modal fade" id="EmpTabAssignmentHistoryModal" tabindex="-1" aria-hidden="true" style="z-index: 1090;"></div>

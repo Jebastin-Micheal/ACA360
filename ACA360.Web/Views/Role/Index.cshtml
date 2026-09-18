@@ -1,0 +1,329 @@
+﻿@using ACA360.Core.Extensions
+@using ACA360.Web.ViewComponents
+@model ACA360.Web.Models.RoleViewModel
+
+@{
+    ViewBag.Title = "Role List";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // ✅ CONFIG: Toolbar Buttons for Role
+    var customButtons = "";
+    customButtons += @"
+<div class='dropdown grid-export-wrapper me-2'
+     data-export-url='/Role/Export'
+     data-file-base-name='RoleList'>
+    <button class='btn btn-outline-secondary dropdown-toggle hide-arrow'
+            type='button' data-bs-toggle='dropdown'>
+        <i class='bx bx-export me-1'></i> Export
+    </button>
+    <ul class='dropdown-menu dropdown-menu-end grid-export-menu'>
+        <li><a class='dropdown-item grid-export-action' href='#' data-format='print'><i class='bx bx-printer me-2'></i>Print</a></li>
+        <li><a class='dropdown-item grid-export-action' href='#' data-format='csv'><i class='bx bx-file me-2'></i>CSV</a></li>
+        <li><a class='dropdown-item grid-export-action' href='#' data-format='excel'><i class='bx bxs-file-export me-2'></i>Excel</a></li>
+        <li><a class='dropdown-item grid-export-action' href='#' data-format='pdf'><i class='bx bxs-file-pdf me-2'></i>PDF</a></li>
+    </ul>
+</div>";
+    if (User.HasPermission("Menu", "Add"))
+    {
+        customButtons += "<button class='btn create-new btn-primary' type='button' id='add_Role_controls'><span class='d-flex align-items-center gap-2'><i class='icon-base bx bx-plus icon-sm'></i><span class='d-none d-sm-inline-block'>Add New Role</span></span></button>";
+    }
+
+    var toolbarConfig = new
+    {
+        IsEmployerPage = false,
+        CustomButtons = customButtons
+    };
+}
+
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Role List",
+    items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem { Title = "Employer", Url = Url.Action("Index", "Employer"), IsActive = false },
+        new BreadcrumbItem { Title = "Master Settings", Url = "", IsActive = false },
+        new BreadcrumbItem { Title = "Roles", Url = "", IsActive = true }
+    }
+})
+
+
+<link href="~/assets/vendor/libs/select2/select2.css" rel="stylesheet" />
+
+<div id="RoleListContainerWrapper" style="position:relative;">
+
+    <div id="loader" class="loader" style="display:none;">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="card mb-6">
+        <div class="card-body">
+            @{
+                ViewBag.ShowFilterButton = false;
+                ViewBag.ShowViewModeToggle = false;
+            }
+            @await Html.PartialAsync("_GridToolbarCommon", toolbarConfig)
+
+            <div class="row">
+                <div id="RoleListContainer">
+                    @await Html.PartialAsync("_RoleListPartial", Model)
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="RoleFormModal" tabindex="-1" aria-labelledby="RoleFormModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="RoleFormModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body Role-body">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-3">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="RoleForm" class="btn btn-primary RoleForm_save">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="PermissionsFormModal" tabindex="-1" aria-labelledby="PermissionsFormModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="PermissionsFormModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/common-grid.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+
+            // 1. Initialize Common Grid Manager
+            GridManager.init({
+                url: '@Url.Action("RoleListPartial", "Role")',
+                container: '#RoleListContainer',
+                loadingContainer: '#loader',
+                cookieName: 'view_mode_roles',
+                state: {
+                    pageIndex: @(Model.Metadata?.CurrentPage ?? 1),
+                    pageSize: @(Model.Metadata?.PageSize ?? 10),
+                    search: '@Html.Raw(Model.Search ?? "")',
+                    sortColumn: '@Html.Raw(Model.SortColumn)',
+                    sortOrder: '@Html.Raw(Model.SortOrder ?? "")',
+                    viewMode: 'List'
+                }
+            });
+
+            // 2. Add Role Logic
+            $("#add_Role_controls").click(function () {
+                var add_url = '/Role/Add_New';
+                $.ajax({
+                    type: "POST",
+                    url: add_url,
+                    success: function (data) {
+                        $('#RoleFormModal .Role-body').html(data);
+                        $('#RoleFormModalLabel').text('Add Role');
+                        $('#Role_Id').val(0); // Ensure ID is initialized
+                        var modal = new bootstrap.Modal(document.getElementById('RoleFormModal'));
+                        modal.show();
+                    },
+                    error: function (xhr) {
+                        console.log("Error response:", xhr.responseText);
+                    }
+                });
+            });
+
+            // 3. Edit Role Logic
+            $(document).on('click', '.edit-Role-btn', function () {
+                var id = String($(this).data('id')); // Explicit string cast
+                $.ajax({
+                    type: 'GET',
+                    url: '/Role/GetRole_by_ID',
+                    data: { id: id },
+                    success: function (data) {
+                        $('#RoleFormModal .Role-body').html(data);
+                        $('#RoleFormModalLabel').text('Edit Role');
+                        var modal = new bootstrap.Modal(document.getElementById('RoleFormModal'));
+                        modal.show();
+                    },
+                    error: function (xhr) {
+                        console.log("Error response:", xhr.responseText);
+                    }
+                });
+            });
+
+            // 4. Permissions Button Logic
+            $(document).on('click', '.per-btn', function () {
+                var id = String($(this).data('id')); // Explicit string cast
+                $.ajax({
+                    type: 'GET',
+                    url: '/Permissions/GetByRole',
+                    data: { roleId: id },
+                    success: function (data) {
+                        $('#PermissionsFormModal .modal-body').html(data);
+                        $('#PermissionsFormModalLabel').text('Role Permissions');
+                        var modal = new bootstrap.Modal(document.getElementById('PermissionsFormModal'));
+                        modal.show();
+                    },
+                    error: function (xhr) {
+                        console.log("Error response:", xhr.responseText);
+                    }
+                });
+            });
+
+            // 5. Save Role Data Logic
+            $(document).on('click', '.RoleForm_save', function (e) {
+                e.preventDefault();
+
+                var $form = $(this).closest('form');
+                var $roleNameInput = $('#RoleName');
+                var isValid = true;
+
+                if ($form.length && $.isFunction($.fn.valid)) {
+                    if (!$form.valid()) {
+                        isValid = false;
+                    }
+                } else {
+                    if ($roleNameInput.val().trim() === '') {
+                        $roleNameInput.addClass('input-validation-error');
+                        isValid = false;
+                    }
+                }
+
+                if (!isValid) {
+                    $('.input-validation-error').addClass('border-danger');
+                    $('.input-validation-error').first().focus();
+                    return false;
+                }
+
+                $('.border-danger').removeClass('border-danger');
+
+                Swal.fire({
+                    title: 'Confirm Save?',
+                    text: "Do you want to save this Role?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Save it!',
+                    target: document.getElementById('RoleFormModal')
+                }).then((result) => {
+                    if (result.isConfirmed) {
+
+                        var formData = {
+                            Role: {
+                                Id: String($('#Role_Id').val()), // Standardize to string
+                                RoleName: $roleNameInput.val(),
+                                Description: $('#Description').val(),
+                                IsActive: $('#IsActive').prop('checked'),
+                            }
+                        };
+
+                        $.ajax({
+                            type: "POST",
+                            url: '/Role/AddOrUpdateMenu',
+                            data: formData,
+                            success: function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Success',
+                                        text: response.message,
+                                        timer: 2000,
+                                        showConfirmButton: false,
+                                        target: document.getElementById('RoleFormModal')
+                                    }).then(function () {
+                                        $('#RoleFormModal').modal('hide');
+                                        GridManager.reload(); // Replaces location.reload()
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: response.message,
+                                        target: document.getElementById('RoleFormModal')
+                                    });
+                                }
+                            },
+                            error: function (xhr) {
+                                console.error("Error:", xhr.responseText);
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Failed',
+                                    text: 'Failed to save role.',
+                                    target: document.getElementById('RoleFormModal')
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+            // 6. Delete Role Logic
+            $(document).on('click', '.delete-Role-btn', function () {
+                const id = String($(this).data('id')); // Explicit string cast
+
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'This role will be permanently deleted!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/Role/Delete',
+                            data: { id: id },
+                            success: function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Deleted!',
+                                        text: response.message,
+                                        timer: 2000,
+                                        showConfirmButton: false
+                                    }).then(function () {
+                                        GridManager.reload(); // Replaces location.reload()
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: response.message
+                                    });
+                                }
+                            },
+                            error: function (xhr) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Failed',
+                                    text: xhr.responseText
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+        });
+    </script>
+}

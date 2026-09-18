@@ -1,0 +1,664 @@
+﻿
+<div id="details-content">
+    <fieldset disabled>
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between border-bottom py-3">
+                <div class="d-flex align-items-center">
+                    <h5 class="mb-0 fw-bold">Employer Profile</h5>
+                </div>
+
+
+
+            </div>
+
+            @* Card one *@
+
+
+            <div class="card-body mt-4">
+                <form>
+                    <div class="row mb-6">
+                        <div class="col-3">
+                            <label class="form-label" for="basic-icon-default-fullname">Employer Name</label>
+                            <div class="input-group ">
+                               
+                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="EIN" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <label class="form-label" for="basic-icon-default-fullname">EIN</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="EIN" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <label for="defaultSelect" class="form-label">Type</label>
+                            <select id="defaultSelect" class="form-select">
+                                <option>Primary</option>
+                                <option value="1">Secondary</option>
+                            </select>
+                        </div>
+                        <div class="col-3">
+                            <label class="form-label" for="basic-icon-default-fullname">Filing Year</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Filing Year" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row mb-6">
+                        <div class="col-12">
+                            <label class="form-label" for="basic-icon-default-fullname">Address 1</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Address 1" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-6">
+                        <div class="col-8">
+                            <label class="form-label" for="basic-icon-default-fullname">Address 2</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Address 2" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label" for="basic-icon-default-fullname">City</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="City" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row mb-6">
+
+                        <div class="col-4">
+                            <label class="form-label" for="basic-icon-default-fullname">State</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="State" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label" for="basic-icon-default-fullname">Zip code</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Zip code" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label" for="basic-icon-default-fullname">Country</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Country" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row mb-6">
+
+                        <div class="col-4">
+                            <label class="form-label" for="basic-icon-default-fullname">Foreign Address</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Foreign Address" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label" for="basic-icon-default-fullname">Enable Call Center</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Enable Call Center" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label" for="basic-icon-default-fullname">Corrected</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Corrected" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                            </div>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @* Card two *@
+        <div class="card mb-3">
+            <div class="accordion stick-top course-content-fixed">
+                <div class="accordion-item mb-0 active">
+                    <div class="accordion-header" id="headingOtherDetails">
+                        <div class="d-flex justify-content-between align-items-center border-bottom">
+                            <div class="h5 card-header text-center m-0 text-nowrap flex-grow-1">EMPLOYER TRACKER INFORMATION</div>
+                            <button type="button" class="accordion-button" data-bs-toggle="collapse" data-bs-target="#otherDetailsAccordion" aria-expanded="true" aria-controls="otherDetailsAccordion">
+                            </button>
+                        </div>
+                    </div>
+                    <div id="otherDetailsAccordion" class="px-6 accordion-collapse collapse show" data-bs-parent="#courseContent">
+                        <!-- Tabs start here -->
+                        <div class="tab-scroll-wrapper position-relative overflow-hidden" id="tabsHorizontalScroll">
+                            <ul class="nav nav-pills nav-fill mt-4 flex-nowrap" id="otherdetailsTab" role="tablist">
+
+                                <li class="nav-item">
+                                    <a class="nav-link active" id="ER-tab" data-bs-toggle="tab" href="#erinfo" role="tab" aria-controls="erinfo" aria-selected="true">ER Info</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="Service-tab" data-bs-toggle="tab" href="#service" role="tab" aria-controls="service" aria-selected="false">Service Info</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="Form_1094-tab" data-bs-toggle="tab" href="#form_1094" role="tab" aria-controls="form_1094" aria-selected="false">1094 Details</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="Adit_log-tab" data-bs-toggle="tab" href="#aditlog" role="tab" aria-controls="aditlog" aria-selected="false">Audit Log</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="Other_Important_Info-tab" data-bs-toggle="tab" href="#otherimportantinfo" role="tab" aria-controls="otherimportantinfo" aria-selected="false">Other Important Information</a>
+                                </li>
+
+                            </ul>
+                        </div>
+
+                        <div class="tab-content" id="EmployerDetailsTabContent">
+                            <!-- ER Info Tab -->
+                            <div class="tab-pane fade show active" id="erinfo" role="tabpanel" aria-labelledby="ER-tab">
+                                <div class="row mb-6">
+                                    <div class="col-12">
+                                        <label class="form-label" for="basic-icon-default-fullname">Firm</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Firm" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+
+                                    <div class="col-4">
+                                        <label class="form-label" for="basic-icon-default-fullname">Broker</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Broker" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="form-label" for="basic-icon-default-fullname">Phone</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Phone" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="form-label" for="basic-icon-default-fullname">Email</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Email" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="row mb-6">
+
+                                    <div class="col-4">
+                                        <label class="form-label" for="basic-icon-default-fullname">Contact</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Contact" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="form-label" for="basic-icon-default-fullname">Phone</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Phone" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="form-label" for="basic-icon-default-fullname">Email</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Email" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="row mb-6">
+
+                                    <div class="col-4">
+                                        <label class="form-label" for="basic-icon-default-fullname">Billing Contact</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Billing Contact" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="form-label" for="basic-icon-default-fullname">Phone</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Phone" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="form-label" for="basic-icon-default-fullname">Email</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Email" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+                                    <div class="col-12">
+                                        <label class="form-label" for="basic-icon-default-fullname">Affiliates</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Affiliates" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Account Manager</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Account Manager" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Sales Representative</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Sales Representative" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Data Analyst</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Data Analyst" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Vendor</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Vendor" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Waiting Period</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Waiting Period" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">20% Over Proposed Form Count</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="  " aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Banding type</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Banding type" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">20% Over Proposed Form Count Price</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="  " aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <!-- Services Info Tab -->
+                            <div class="tab-pane fade" id="service" role="tabpanel" aria-labelledby="Service-tab">
+                                <div class="row mb-6">
+                                    <div class="col-12">
+                                        <label class="form-label" for="basic-icon-default-fullname">Services</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Services" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+                                    <div class="col-12">
+                                        <label class="form-label" for="basic-icon-default-fullname">Status</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Status" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-6">
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Proposal Sent</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Proposal Sent" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Contract Sent</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Contract Sent" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Proposal Signed</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Proposal Signed" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Contract Signed</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Contract Signed" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">1095 Process Step</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="1095 Process Step" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">FTE Tracking Step</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="FTE Tracking Step" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Last Updated</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Last Updated" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Last Updated</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Last Updated" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Next Follow-Up</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Next Follow-Up" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Next Follow-Up</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Next Follow-Up" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">State Filling Process Step</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="State Filling Process Step" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Extension Filed</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Extension Filed" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Last Updated</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Last Updated" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Audit By</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Audit By" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Next Follow-Up</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Next Follow-Up" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Receipt ID</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Receipt ID" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 1094 Details Tab -->
+                            <div class="tab-pane fade" id="form_1094" role="tabpanel" aria-labelledby="Form_1094-tab">
+                                <div class="row mb-2">
+                                    <div id="chapterThree" class="card-body accordion-collapse collapse show" data-bs-parent="#courseContent" style="margin-top: -24px;">
+                                        <!-- 🔹 Form Type & Origin Code -->
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Form Type</label>
+
+                                                <select class="form-select"></select>
+
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Origin Code</label>
+                                                <select class="form-select"></select>
+                                            </div>
+                                        </div>
+
+                                        <!-- 🔹 Certification of Eligibility -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Certification of Eligibility</label>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="CertA" value="true" ) />
+                                                        <label class="form-label">A. Qualifying Offer Method</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="CertC" value="true" ) />
+                                                        <label class="form-label">C. Reserved</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="CertB" value="true" ) />
+                                                        <label class="form-label">B. Reserved</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="CertD" value="true" ) />
+                                                        <label class="form-label">D. 98% Offer Method</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 🔹 ALE Information Table -->
+                                        <label class="form-label mb-2">ALE Information</label>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered text-center">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Month</th>
+                                                        <th>Minimum Coverage</th>
+                                                        <th>Full-Time</th>
+                                                        <th>Total</th>
+                                                        <th>Aggregate</th>
+                                                        <th>Sec4980H</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @{
+                                                        string[] months = { "All", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                                                                                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+                                                        for (int i = 0; i < 13; i++)
+                                                        {
+                                                            <tr>
+                                                                <td>@months[i]</td>
+                                                                <td>
+                                                                    <input type="checkbox" name="MinimumCoverage[@i]" value="true" />
+                                                                </td>
+                                                                <td>
+                                                                    <input type="number" name="FullTime[@i]" class="form-control form-control-sm" />
+                                                                </td>
+                                                                <td>
+                                                                    <input type="number" name="Total[@i]" class="form-control form-control-sm" />
+                                                                </td>
+                                                                <td>
+                                                                    <input type="checkbox" name="AggregateGroup[@i]" value="true" />
+                                                                </td>
+                                                                <td>
+                                                                    <input type="number" name="Sec4980H[@i]" class="form-control form-control-sm" />
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+
+                                        @*    <div class="table-responsive text-nowrap">
+                                                                <table class="table table-bordered">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Month</th>
+                                                                            <th>Minimum Coverage</th>
+                                                                            <th>Full-Time</th>
+                                                                            <th>Total</th>
+                                                                            <th>Aggregate</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        <tr>
+                                                                            <td><i class="icon-base fab fa-angular icon-md text-danger me-4"></i> <span></span></td>
+                                                                            <td><i class="icon-base fab fa-angular icon-md text-danger me-4"></i> <span></span></td>
+                                                                            <td><i class="icon-base fab fa-angular icon-md text-danger me-4"></i> <span></span></td>
+                                                                            <td><i class="icon-base fab fa-angular icon-md text-danger me-4"></i> <span></span></td>
+                                                                            <td><i class="icon-base fab fa-angular icon-md text-danger me-4"></i> <span></span></td>
+                                                                        </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div> *@
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Audit Log -->
+                            <div class="tab-pane fade" id="aditlog" role="tabpanel" aria-labelledby="Adit_log-tab">
+                                <div class="row mb-2">
+                                    <div id="chapterThree" class="card-body accordion-collapse collapse show" data-bs-parent="#courseContent" style="margin-top: -24px;">
+                                        <div class="table-responsive text-nowrap">
+                                            <table class="table table-bordered">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>User</th>
+                                                        <th>Operation</th>
+                                                        <th>Old Value</th>
+                                                        <th>New Value</th>
+                                                        <th>Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr><td colspan="5" class="text-center">No audit log data found.</td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--Other Important Info -->
+                            <div class="tab-pane fade" id="otherimportantinfo" role="tabpanel" aria-labelledby="Other_Important_Info-tab">
+                                <div>
+                                    <label for="exampleFormControlTextarea1" class="form-label">Mail Fulfillment Memo</label>
+                                    <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <h5>Most Recent Dates</h5>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Most Recent Hire Date</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Hire Date" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label" for="basic-icon-default-fullname">Most Recent Termination Date</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Termination Date" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <h5>Safe Harbor Count</h5>
+                                    </div>
+                                </div>
+                                <div class="row mb-6">
+                                    <div class="col-4">
+                                        <label class="form-label" for="basic-icon-default-fullname">2F</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="2F" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="form-label" for="basic-icon-default-fullname">2G</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="2G" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <label class="form-label" for="basic-icon-default-fullname">2H</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="2H" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @* Card Three *@
+        <div class="card mb-3">
+            <div class="accordion stick-top course-content-fixed">
+                <div class="accordion-item mb-0 active">
+                    <div class="accordion-header" id="headingThree">
+                        <div class="d-flex justify-content-between align-items-center border-bottom">
+                            <div class="h5 card-header text-center m-0 text-nowrap flex-grow-1">NOTES</div>
+                            <button type="button" class="accordion-button" data-bs-toggle="collapse" data-bs-target="#chapterThree" aria-expanded="true" aria-controls="chapterOne">
+                            </button>
+                        </div>
+
+                    </div>
+                    <div id="chapterThree" class="card-body accordion-collapse collapse show" data-bs-parent="#courseContent" style="margin-top: -6px;">
+                        <div class="table-responsive text-nowrap">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Note</th>
+                                        <th>Category</th>
+                                        <th>User</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+
+    </fieldset>
+</div>

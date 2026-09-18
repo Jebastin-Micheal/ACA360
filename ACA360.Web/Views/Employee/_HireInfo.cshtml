@@ -1,0 +1,35 @@
+﻿@model ACA360.Web.Models.EmployeeListViewModel
+<div id="section_hire">
+    <div class="section-header border-bottom">
+        <h6 class="fw-bold mb-0">Hire History</h6>
+        <div class="card-header-actions">
+            <button type="button" class="btn btn-sm btn-outline-primary btn-edit" onclick="toggleSection('section_hire', true)">Edit Hire Info</button>
+            <div class="action-buttons d-none">
+                <button type="button" class="btn btn-sm btn-primary" onclick="addDynamicRow('hire')"><i class="bx bx-plus"></i> Add</button>
+                <button type="button" class="btn btn-sm btn-label-secondary" onclick="toggleSection('section_hire', false)">Cancel</button>
+                <button type="button" class="btn btn-sm btn-success" onclick="saveGeneric('section_hire', '/Employee/EmployeeHireSave', 'EmployeeHireDetail', event)">Save</button>
+            </div>
+        </div>
+    </div>
+    <div id="container_hire">
+        @if (Model.SelectedEmployeeDetails?.EmployeeHireDetail != null)
+        {
+            foreach (var item in Model.SelectedEmployeeDetails.EmployeeHireDetail)
+            {
+                <div class="row g-3 mt-1 p-1 bg-label-secondary rounded dynamic-row align-items-end">
+                    <div class="text-end mb-n3 mt-0 ms-2">
+                        <button onclick="removeRow(this)" class="btn btn-sm bg-danger delete-btn float-end d-none" type="button">
+                            <i class="bx bx-trash fs-6 text-white"></i>
+                        </button>
+                    </div>
+                    <input type="hidden" class="data-field" data-key="Id" value="@item.Id" />
+                    <input type="hidden" class="data-field" data-key="EmployeeCodeId" value="@item.EmployeeCodeId" />
+                    <div class="col-md-6"><label class="form-label small">Hire Date</label><input type="date" class="form-control text-uppercase data-field start-date" data-key="Hire_StartDate" onchange="var end=this.closest('.dynamic-row').querySelector('.end-date');end.min=this.value;if(end.value&&end.value<this.value)end.value='';" value="@(item.Hire_StartDate?.ToString("yyyy-MM-dd"))" disabled /></div>
+                    <div class="col-md-6"><label class="form-label small">Termination Date</label><input type="date" class="form-control text-uppercase data-field end-date" data-key="Hire_EndDate" value="@(item.Hire_EndDate?.ToString("yyyy-MM-dd"))" disabled /></div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+

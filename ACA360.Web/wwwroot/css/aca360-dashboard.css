@@ -1,0 +1,1882 @@
+﻿/* =============================================================================
+   ACA360 — Dashboard stylesheet
+   Target: ACA360.Web/wwwroot/css/aca360-dashboard.css
+
+   Dashboard-only. This file deliberately styles NOTHING the site template
+   already owns — no body, no *, no bare h1-h4, no button, no bare table, and
+   nothing on Bootstrap's .btn. The template keeps control of typography,
+   spacing defaults and button styling; this file adds the dashboard components
+   on top.
+
+   Anything that needs an element selector is reached through a dashboard
+   container (.table-wrap table, .field select) so it cannot escape.
+
+   Token names were checked against every stylesheet in wwwroot — no collisions.
+   ============================================================================= */
+
+/* =============================================================================
+   1. TOKENS
+   One block per theme. Chrome neutrals carry a cool slate bias keyed to the
+   navy in the product nav; the --ac-* accents are the per-tile hues ported from
+   the previous dashboard; --ch-* are the chart series colours. UI accent and
+   chart series are kept separate on purpose.
+   ============================================================================= */
+:root {
+    /* surfaces + ink */
+    --paper: #f4f6f9;
+    --card: #ffffff;
+    --card-sunk: #fafbfd;
+    --rule: #dde3ec;
+    --rule-strong: #c4cede;
+    --ink: #0e1726;
+    --ink-2: #3a4757;
+    --ink-3: #6b788a;
+    --brand: #1b4b8f;
+    --brand-ink: #16407a;
+    --brand-wash: #eaf0f9;
+    /* status */
+    --good: #0f7a4a;
+    --good-wash: #e6f4ec;
+    --warn: #b26a00;
+    --warn-wash: #fdf1de;
+    --crit: #b3261e;
+    --crit-wash: #fceceb;
+    /* generic categorical series (donut + ALE line read these from JS) */
+    --s1: #2a78d6;
+    --s2: #eb6834;
+    --s3: #1baf7a;
+    --s4: #eda100;
+    --s5: #e87ba4;
+    --grid: #e6eaf1;
+    /* per-tile accents */
+    --ac-blue: #2563eb;
+    --ac-sky: #0ea5e9;
+    --ac-cyan: #0891b2;
+    --ac-indigo: #4f46e5;
+    --ac-navy: #1e3a8a;
+    --ac-warn: #d97706;
+    --ac-danger: #dc2626;
+    /* named chart series */
+    --ch-enrolled: #10b981;
+    --ch-waived: #FF9800;
+    --ch-ft: #1e3a8a;
+    --ch-total: #3b82f6;
+    --ch-cobra: #6366f1;
+    --ch-retiree: #0891b2;
+    --ch-union: #f59e0b;
+    /* countdown card */
+    --fd-wash-a: linear-gradient(135deg, #ffffff 0%, #e8f0ff 100%);
+    --fd-wash-b: linear-gradient(135deg, #ffffff 0%, #e4f7fb 100%);
+    --fd-chip-a: #1e3a8a;
+    --fd-chip-b: #065f46;
+    --fd-cap: #0284c7;
+    --fd-num-bg: #ffffff;
+    --fd-lbl-bg: #eef2f7;
+    --fd-lbl-fg: #334155;
+    --fd-rail-bg: #e9eef6;
+    /* misc */
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+    --shadow: 0 1px 2px rgba(14,23,38,.06), 0 1px 3px rgba(14,23,38,.04);
+    --shadow-lg: 0 4px 14px rgba(14,23,38,.09), 0 1px 3px rgba(14,23,38,.05);
+}
+
+/* Dark steps are chosen for the dark ground, not inverted. The light accents
+   fall below 3:1 on a dark surface and go muddy. */
+@media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+        --paper: #0b111a;
+        --card: #141d2a;
+        --card-sunk: #101825;
+        --rule: #263243;
+        --rule-strong: #35455a;
+        --ink: #e8edf5;
+        --ink-2: #a9b6c8;
+        --ink-3: #7d8b9e;
+        --brand: #6fa3e8;
+        --brand-ink: #8fbaf2;
+        --brand-wash: #17273d;
+        --good: #4cb37e;
+        --good-wash: #10281d;
+        --warn: #d99a3c;
+        --warn-wash: #2b2011;
+        --crit: #e8736a;
+        --crit-wash: #2d1614;
+        --s1: #3987e5;
+        --s2: #d95926;
+        --s3: #199e70;
+        --s4: #c98500;
+        --s5: #d55181;
+        --grid: #222e3e;
+        --ac-blue: #60a5fa;
+        --ac-sky: #38bdf8;
+        --ac-cyan: #22d3ee;
+        --ac-indigo: #a5b4fc;
+        --ac-navy: #93b4f7;
+        --ac-warn: #fbbf24;
+        --ac-danger: #f87171;
+        --ch-enrolled: #34d399;
+        --ch-waived: #f87171;
+        --ch-ft: #93b4f7;
+        --ch-total: #60a5fa;
+        --ch-cobra: #a5b4fc;
+        --ch-retiree: #22d3ee;
+        --ch-union: #fbbf24;
+        --fd-wash-a: linear-gradient(135deg, #16202e 0%, #1b2b45 100%);
+        --fd-wash-b: linear-gradient(135deg, #16202e 0%, #142d33 100%);
+        --fd-chip-a: #2f4f9e;
+        --fd-chip-b: #0d6b52;
+        --fd-cap: #0ea5e9;
+        --fd-num-bg: #0f1826;
+        --fd-lbl-bg: #1c2636;
+        --fd-lbl-fg: #a9b6c8;
+        --fd-rail-bg: #22304a;
+        --shadow: 0 1px 2px rgba(0,0,0,.4);
+        --shadow-lg: 0 6px 18px rgba(0,0,0,.5);
+    }
+}
+
+/* The viewer's own theme toggle. Must win over the OS media query above. */
+:root[data-theme="dark"] {
+    --paper: #0b111a;
+    --card: #141d2a;
+    --card-sunk: #101825;
+    --rule: #263243;
+    --rule-strong: #35455a;
+    --ink: #e8edf5;
+    --ink-2: #a9b6c8;
+    --ink-3: #7d8b9e;
+    --brand: #6fa3e8;
+    --brand-ink: #8fbaf2;
+    --brand-wash: #17273d;
+    --good: #4cb37e;
+    --good-wash: #10281d;
+    --warn: #d99a3c;
+    --warn-wash: #2b2011;
+    --crit: #e8736a;
+    --crit-wash: #2d1614;
+    --s1: #3987e5;
+    --s2: #d95926;
+    --s3: #199e70;
+    --s4: #c98500;
+    --s5: #d55181;
+    --grid: #222e3e;
+    --ac-blue: #60a5fa;
+    --ac-sky: #38bdf8;
+    --ac-cyan: #22d3ee;
+    --ac-indigo: #a5b4fc;
+    --ac-navy: #93b4f7;
+    --ac-warn: #fbbf24;
+    --ac-danger: #f87171;
+    --ch-enrolled: #34d399;
+    --ch-waived: #f87171;
+    --ch-ft: #93b4f7;
+    --ch-total: #60a5fa;
+    --ch-cobra: #a5b4fc;
+    --ch-retiree: #22d3ee;
+    --ch-union: #fbbf24;
+    --fd-wash-a: linear-gradient(135deg, #16202e 0%, #1b2b45 100%);
+    --fd-wash-b: linear-gradient(135deg, #16202e 0%, #142d33 100%);
+    --fd-chip-a: #2f4f9e;
+    --fd-chip-b: #0d6b52;
+    --fd-cap: #0ea5e9;
+    --fd-num-bg: #0f1826;
+    --fd-lbl-bg: #1c2636;
+    --fd-lbl-fg: #a9b6c8;
+    --fd-rail-bg: #22304a;
+    --shadow: 0 1px 2px rgba(0,0,0,.4);
+    --shadow-lg: 0 6px 18px rgba(0,0,0,.5);
+}
+
+/* =============================================================================
+   2. SMALL UTILITIES
+   ============================================================================= */
+.num {
+    font-variant-numeric: tabular-nums;
+}
+
+.mono {
+    font-family: var(--mono);
+    font-size: .92em;
+}
+
+.eyebrow {
+    font-size: 10.5px;
+    font-weight: 650;
+    letter-spacing: .085em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+}
+
+.shell {
+    /*max-width: 1560px;*/
+    margin: 0 auto;
+    /*padding: 0 20px 64px;*/
+}
+
+.util-spacer {
+    flex: 1 1 auto;
+}
+
+/* Label + control pair used by the View As, employer and year selectors.
+   The select is reached through .field so no bare `select` rule is needed. */
+.field {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+    .field > label {
+        margin: 0;
+        font-size: 11px;
+        font-weight: 650;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        white-space: nowrap;
+    }
+
+    .field select {
+        background: var(--card);
+        color: var(--ink);
+        border: 1px solid var(--rule-strong);
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 13px;
+        font-family: inherit;
+        cursor: pointer;
+    }
+
+        .field select:hover {
+            border-color: var(--brand);
+        }
+
+/* =============================================================================
+   3. PAGE HEAD + SCOPE SECTIONS
+   ============================================================================= */
+.pagehead {
+    /*padding: 26px 0 4px;*/
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+    .pagehead h1 {
+        margin: 0;
+        font-size: 25px;
+        font-weight: 800;
+        letter-spacing: -.015em;
+    }
+
+    .pagehead p {
+        margin: 4px 0 0;
+        color: var(--ink-2);
+        font-size: 13px;
+        max-width: 68ch;
+    }
+
+.pagehead-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.scope {
+    /*margin-top: 22px;*/
+}
+
+.scope-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    border-bottom: 2px solid var(--rule-strong);
+}
+
+    .scope-bar h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 750;
+        letter-spacing: -.01em;
+    }
+
+    .scope-bar .hint {
+        font-size: 12px;
+        color: var(--ink-3);
+    }
+
+    .scope-bar .sb-spacer {
+        flex: 1 1 auto;
+    }
+
+/* The employer scope is visually bounded so its numbers are never confused with
+   the book-of-business numbers above it. */
+.panel {
+    border: 1px solid var(--rule-strong);
+    border-top: 3px solid var(--brand);
+    border-radius: 10px;
+    background: var(--card-sunk);
+    padding: 16px;
+    background:white;
+}
+
+.panel-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: -4px 0 16px;
+}
+
+    .panel-head h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 750;
+        letter-spacing: -.015em;
+    }
+
+    .panel-head .ein {
+        color: var(--ink-3);
+        font-size: 12.5px;
+    }
+
+.group {
+    margin-top: 18px;
+}
+
+    .group:first-of-type {
+        margin-top: 0;
+    }
+
+.group-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 9px;
+}
+
+    .group-label::after {
+        content: "";
+        flex: 1 1 auto;
+        height: 1px;
+        background: var(--rule);
+    }
+
+/* =============================================================================
+   4. GRID
+   ============================================================================= */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 12px;
+}
+
+.c2 {
+    grid-column: span 2;
+}
+
+.c3 {
+    grid-column: span 3;
+}
+
+.c4 {
+    grid-column: span 4;
+}
+
+.c5 {
+    grid-column: span 5;
+}
+
+.c6 {
+    grid-column: span 6;
+}
+
+.c7 {
+    grid-column: span 7;
+}
+
+.c8 {
+    grid-column: span 8;
+}
+
+.c12 {
+    grid-column: span 12;
+}
+
+/* Ten workforce tiles on a 12-column grid give a ragged 4+4+2. Five columns
+   makes it exactly two rows. */
+#gridWorkforce {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+    #gridWorkforce > .tile {
+        grid-column: span 1 !important;
+    }
+
+/* =============================================================================
+   5. TILES
+   ============================================================================= */
+.tile {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 9px;
+    padding: 13px 14px;
+    box-shadow: var(--shadow);
+    min-width: 0;
+    transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+}
+
+    .tile:hover {
+        box-shadow: 0 .5rem 1rem -.5rem rgba(30,64,175,.25);
+        transform: translateY(-2px);
+    }
+
+.tile-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 9px;
+}
+
+    .tile-head h4 {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .01em;
+        color: var(--ink-2);
+    }
+
+    .tile-head .th-spacer {
+        flex: 1 1 auto;
+    }
+
+/* stat tiles */
+.stat .val {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -.035em;
+    line-height: 1.05;
+}
+
+.stat .sub {
+    margin-top: 3px;
+    font-size: 11.5px;
+    color: var(--ink-3);
+}
+
+.stat.compact .val {
+    font-size: 25px;
+}
+
+.stat .val.date {
+    font-size: 20px;
+    letter-spacing: -.02em;
+}
+
+/* Severity rail — encodes state in form, not only in the number. */
+.tile.sev-crit {
+    border-left: 3px solid var(--crit);
+}
+
+.tile.sev-warn {
+    border-left: 3px solid var(--warn);
+}
+
+.tile.sev-good {
+    border-left: 3px solid var(--good);
+}
+
+/* Per-tile accent rail. A 1px coloured outline reads as grey at a distance, so
+   the accent carries weight on the left edge instead. Declared after the
+   severity rails, so a tile carrying both shows the accent. */
+.tile[class*="ac-"] {
+    border-left-width: 4px;
+    border-left-style: solid;
+}
+
+.tile.ac-blue {
+    border-left-color: var(--ac-blue);
+}
+
+.tile.ac-sky {
+    border-left-color: var(--ac-sky);
+}
+
+.tile.ac-cyan {
+    border-left-color: var(--ac-cyan);
+}
+
+.tile.ac-indigo {
+    border-left-color: var(--ac-indigo);
+}
+
+.tile.ac-navy {
+    border-left-color: var(--ac-navy);
+}
+
+.tile.ac-warn {
+    border-left-color: var(--ac-warn);
+}
+
+.tile.ac-danger {
+    border-left-color: var(--ac-danger);
+}
+
+/* Tinted icon chip, colour drawn from the tile's accent. */
+.kpi-row {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+}
+
+.kpi-ico {
+    flex: 0 0 auto;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: .65rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+    .kpi-ico.ic-blue {
+        background: color-mix(in srgb, var(--ac-blue) 14%, transparent);
+        color: var(--ac-blue);
+    }
+
+    .kpi-ico.ic-sky {
+        background: color-mix(in srgb, var(--ac-sky) 14%, transparent);
+        color: var(--ac-sky);
+    }
+
+    .kpi-ico.ic-cyan {
+        background: color-mix(in srgb, var(--ac-cyan) 14%, transparent);
+        color: var(--ac-cyan);
+    }
+
+    .kpi-ico.ic-indigo {
+        background: color-mix(in srgb, var(--ac-indigo) 14%, transparent);
+        color: var(--ac-indigo);
+    }
+
+    .kpi-ico.ic-navy {
+        background: color-mix(in srgb, var(--ac-navy) 14%, transparent);
+        color: var(--ac-navy);
+    }
+
+    .kpi-ico.ic-warn {
+        background: color-mix(in srgb, var(--ac-warn) 14%, transparent);
+        color: var(--ac-warn);
+    }
+
+    .kpi-ico.ic-danger {
+        background: color-mix(in srgb, var(--ac-danger) 14%, transparent);
+        color: var(--ac-danger);
+    }
+
+/* =============================================================================
+   6. PILLS
+   ============================================================================= */
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 999px;
+    padding: 2px 9px;
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: .02em;
+}
+
+.pill-good {
+    background: var(--good-wash);
+    color: var(--good);
+}
+
+.pill-warn {
+    background: var(--warn-wash);
+    color: var(--warn);
+}
+
+.pill-crit {
+    background: var(--crit-wash);
+    color: var(--crit);
+}
+
+.pill-info {
+    background: var(--brand-wash);
+    color: var(--brand);
+}
+
+.pill .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* =============================================================================
+   7. IMPORTANT DATES — live countdown
+   ============================================================================= */
+.fd-card {
+    padding: .7rem .9rem;
+    border-radius: .6rem;
+    border: 1px solid var(--rule);
+    background: var(--fd-wash-a);
+    margin-bottom: .6rem;
+}
+
+    .fd-card:last-child {
+        margin-bottom: 0;
+    }
+
+.fd-card--cyan {
+    background: var(--fd-wash-b);
+}
+
+.fd-title-row {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: .5rem;
+}
+
+.fd-chip {
+    padding: .45rem;
+    border-radius: .55rem;
+    display: flex;
+    background: var(--fd-chip-a);
+    color: #fff;
+}
+
+.fd-chip--green {
+    background: var(--fd-chip-b);
+}
+
+.fd-title {
+    margin: 0;
+    font-size: .92rem;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -.01em;
+}
+
+.fd-target {
+    margin: 0;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--ink-3);
+}
+
+    .fd-target strong {
+        color: var(--ink);
+        font-weight: 700;
+    }
+
+.cd-wrap {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: .4rem;
+}
+
+.fd-tile {
+    display: flex;
+    flex-direction: column;
+    border-radius: .5rem;
+    overflow: hidden;
+    box-shadow: 0 .25rem .5rem -.25rem rgba(15,23,42,.35);
+}
+
+.fd-cap {
+    background: var(--fd-cap);
+    height: .5rem;
+}
+
+.fd-num {
+    background: var(--fd-num-bg);
+    padding: .3rem .2rem;
+}
+
+.fd-lbl {
+    background: var(--fd-lbl-bg);
+    padding: .25rem;
+    text-align: center;
+    font-size: .58rem;
+    font-weight: 700;
+    color: var(--fd-lbl-fg);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+
+/* Sliding digit: the slot clips, the value slides on change. Only the units
+   that actually changed animate, so the seconds tile does not drag the others
+   through a slide every tick. */
+.cd-slot {
+    position: relative;
+    height: 1.4rem;
+    overflow: hidden;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 900;
+    line-height: 1.4rem;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.cd-val {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    transition: transform .45s cubic-bezier(.4,0,.2,1), opacity .45s;
+}
+
+    .cd-val.cd-enter {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    .cd-val.cd-exit {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+.cd-done {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--ink-3);
+    padding: .5rem 0;
+}
+
+.fd-rail {
+    height: 4px;
+    border-radius: 99px;
+    background: var(--fd-rail-bg);
+    margin-top: .5rem;
+    overflow: hidden;
+}
+
+    .fd-rail > span {
+        display: block;
+        height: 100%;
+        border-radius: 99px;
+        background: var(--ac-blue);
+        transition: width .4s ease;
+    }
+
+    .fd-rail.is-green > span {
+        background: #059669;
+    }
+
+/* =============================================================================
+   8. PENALTY EXPOSURE
+   ============================================================================= */
+.pen-body {
+    text-align: center;
+}
+
+.pen-total {
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    line-height: 1.1;
+}
+
+    .pen-total.is-bad {
+        color: var(--crit);
+    }
+
+    .pen-total.is-good {
+        color: var(--good);
+    }
+
+.pen-cap {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .085em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-top: 4px;
+}
+
+.pen-when {
+    font-size: 11.5px;
+    color: var(--ink-3);
+    margin-top: 2px;
+}
+
+.pen-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.pen-box {
+    background: var(--card-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 9px 8px;
+}
+
+.pen-box-lbl {
+    font-size: 11.5px;
+    font-weight: 650;
+    color: var(--ink-2);
+    margin-bottom: 6px;
+}
+
+.pen-box-num {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+    .pen-box-num.is-bad {
+        color: var(--crit);
+    }
+
+.pen-box-amt {
+    font-size: 14px;
+    font-weight: 750;
+    margin-top: 5px;
+    color: var(--crit);
+}
+
+.pen-box-sub {
+    font-size: 10.5px;
+    color: var(--ink-3);
+    margin-top: 2px;
+}
+
+.pen-details {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    text-align: center;
+}
+
+/* =============================================================================
+   9. FILING COMMUNICATIONS
+   ============================================================================= */
+.comms {
+    display: flex;
+    gap: 20px;
+}
+
+    .comms .c {
+        flex: 1 1 0;
+    }
+
+    .comms .n {
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: -.03em;
+    }
+
+/* =============================================================================
+   10. COVERAGE MAP
+   ============================================================================= */
+.cov {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 5px;
+}
+
+.cov-cell {
+    border-radius: 5px;
+    padding: 7px 4px 8px;
+    text-align: center;
+    border: 1px solid transparent;
+    cursor: default;
+}
+
+    .cov-cell .m {
+        font-size: 10px;
+        font-weight: 650;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        opacity: .85;
+    }
+
+    .cov-cell .v {
+        font-size: 13px;
+        font-weight: 750;
+        font-variant-numeric: tabular-nums;
+    }
+
+.cov-ok {
+    background: var(--good-wash);
+    color: var(--good);
+    border-color: color-mix(in srgb, var(--good) 26%, transparent);
+}
+
+.cov-part {
+    background: var(--warn-wash);
+    color: var(--warn);
+    border-color: color-mix(in srgb, var(--warn) 26%, transparent);
+}
+
+.cov-bad {
+    background: var(--crit-wash);
+    color: var(--crit);
+    border-color: color-mix(in srgb, var(--crit) 26%, transparent);
+}
+
+.cov-legend {
+    display: flex;
+    gap: 14px;
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: var(--ink-3);
+    flex-wrap: wrap;
+}
+
+    .cov-legend i {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 2px;
+        margin-right: 5px;
+        vertical-align: baseline;
+    }
+
+/* =============================================================================
+   11. TABLES
+   Reached through .table-wrap so no bare table/thead/tbody rule exists and the
+   template's own tables are untouched.
+   ============================================================================= */
+.table-wrap {
+    overflow-x: auto;
+    margin: 0 -14px -13px;
+}
+
+    .table-wrap table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px;
+        margin: 0;
+    }
+
+    .table-wrap thead th {
+        text-align: left;
+        padding: 7px 14px;
+        white-space: nowrap;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: .07em;
+        text-transform: uppercase;
+        color: var(--ink-3);
+        background: var(--card-sunk);
+        border-top: 1px solid var(--rule);
+        border-bottom: 1px solid var(--rule);
+    }
+
+    .table-wrap tbody td {
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: middle;
+    }
+
+    .table-wrap tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .table-wrap tbody tr:hover td {
+        background: var(--card-sunk);
+    }
+
+    .table-wrap td.n,
+    .table-wrap th.n {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+.emp-link {
+    color: var(--brand);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+    .emp-link:hover {
+        text-decoration: underline;
+    }
+
+/* =============================================================================
+   12. CHARTS
+   overflow:hidden is deliberate — a scale error then clips instead of painting
+   over the chart above it. Tooltips are position:fixed HTML, so nothing needs
+   to escape the SVG box.
+   ============================================================================= */
+.chart {
+    width: 100%;
+    display: block;
+    overflow: hidden;
+}
+
+    /* font-family is inherited from the template rather than restated. */
+    .chart text {
+        fill: #000000;
+    }
+
+.axis-lbl {
+    font-size: 10px;
+}
+
+.val-lbl {
+    font-size: 9.5px;
+    font-weight: 650;
+    fill: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+}
+
+.gridline {
+    stroke: var(--grid);
+    stroke-width: 1;
+}
+
+.legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 9px;
+    font-size: 11.5px;
+    color: var(--ink-2);
+}
+
+    .legend i {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+    .legend .lv {
+        color: var(--ink-3);
+        font-variant-numeric: tabular-nums;
+    }
+
+/* Per-chart series filter in the tile's ⋮ menu. */
+.series-filter .dropdown-menu {
+    min-width: 210px;
+}
+
+.series-opt {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    margin: 0;
+}
+
+    .series-opt input {
+        margin: 0;
+    }
+
+    .series-opt i {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        display: inline-block;
+    }
+
+.tip {
+    position: fixed;
+    z-index: 90;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .1s;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-size: 12px;
+    box-shadow: var(--shadow-lg);
+    max-width: 240px;
+}
+
+    .tip.on {
+        opacity: 1;
+    }
+
+    .tip .tt {
+        font-weight: 700;
+        margin-bottom: 3px;
+    }
+
+    .tip .tr {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        font-variant-numeric: tabular-nums;
+    }
+
+        .tip .tr i {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+/* =============================================================================
+   13. EMPTY STATE
+   ============================================================================= */
+.year-empty {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 28px 22px;
+    border: 1px dashed var(--rule-strong);
+    border-radius: 10px;
+    background: var(--card);
+}
+
+    .year-empty h4 {
+        margin: 0 0 4px;
+        font-size: 15px;
+        font-weight: 750;
+    }
+
+    .year-empty p {
+        margin: 0 0 12px;
+        color: var(--ink-2);
+        font-size: 13px;
+        max-width: 60ch;
+    }
+
+/* =============================================================================
+   14. EDIT MODE — drag, hide, restore
+   The `editing` class is toggled on <body> by the dashboard script.
+   ============================================================================= */
+.tile-tools {
+    display: none;
+    gap: 3px;
+}
+
+body.editing .tile-tools {
+    display: flex;
+}
+
+body.editing .tile {
+    cursor: grab;
+    border-style: dashed;
+    border-color: var(--brand);
+}
+
+    body.editing .tile:active {
+        cursor: grabbing;
+    }
+
+.tile.dragging {
+    opacity: .4;
+}
+
+.tile.drop-target {
+    outline: 2px dashed var(--brand);
+    outline-offset: 2px;
+}
+
+.tile.hidden-widget {
+    display: none;
+}
+
+.icon-btn {
+    font: inherit;
+    border: 1px solid var(--rule-strong);
+    background: var(--card);
+    border-radius: 5px;
+    width: 22px;
+    height: 22px;
+    line-height: 1;
+    padding: 0;
+    cursor: pointer;
+    color: var(--ink-3);
+    font-size: 13px;
+}
+
+    .icon-btn:hover {
+        color: var(--brand);
+        border-color: var(--brand);
+    }
+
+.tray {
+    display: none;
+    margin-top: 14px;
+    padding: 12px 14px;
+    border: 1px dashed var(--rule-strong);
+    border-radius: 9px;
+    background: var(--card-sunk);
+    width: 100%;
+    grid-column: 1 / -1;
+    box-sizing: border-box
+}
+
+body.editing .tray {
+    display: block;
+}
+
+.tray h4 {
+    margin: 0 0 9px;
+    font-size: 12px;
+    color: var(--ink-2);
+}
+
+.tray-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.tray-chip {
+    font: inherit;
+    border: 1px solid var(--rule-strong);
+    background: var(--card);
+    border-radius: 999px;
+    padding: 4px 11px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--ink-2);
+}
+
+    .tray-chip:hover {
+        border-color: var(--brand);
+        color: var(--brand);
+    }
+
+.tray-empty {
+    font-size: 12px;
+    color: var(--ink-3);
+}
+
+.editbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Bootstrap has no .btn-ghost, so this one is safe to define — it is the quiet
+   modifier used by Cancel and Reset, and it sits on top of Bootstrap's .btn
+   rather than replacing it. Every other button on the page uses Bootstrap's
+   own variants. */
+.btn-ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--ink-2);
+}
+
+    .btn-ghost:hover {
+        background: var(--card-sunk);
+        border-color: var(--rule-strong);
+        color: var(--ink);
+    }
+
+/* Keyboard focus for the dashboard's own controls. Scoped so the template's
+   focus styling is left alone everywhere else. */
+.icon-btn:focus-visible,
+.tray-chip:focus-visible,
+.field select:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    border-radius: 3px;
+}
+
+/* =============================================================================
+   15. RESPONSIVE
+   ============================================================================= */
+@media (max-width: 1240px) {
+    .c2 {
+        grid-column: span 3;
+    }
+
+    .c3 {
+        grid-column: span 4;
+    }
+
+    .c4, .c5 {
+        grid-column: span 6;
+    }
+
+    .c6, .c7, .c8 {
+        grid-column: span 12;
+    }
+
+    #gridWorkforce {
+        grid-template-columns: repeat(3, minmax(0,1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .c2, .c3, .c4, .c5 {
+        grid-column: span 6;
+    }
+
+    .grid {
+        gap: 10px;
+    }
+
+    .cov {
+        grid-template-columns: repeat(6, 1fr);
+    }
+
+    #gridWorkforce {
+        grid-template-columns: repeat(2, minmax(0,1fr));
+    }
+}
+
+@media print {
+    .editbar,
+    .tile-tools,
+    .tray,
+    .pagehead-actions {
+        display: none !important;
+    }
+}
+
+/* Scoped to the dashboard's own animated parts — the template keeps whatever
+   reduced-motion handling it already has. */
+@media (prefers-reduced-motion: reduce) {
+    .tile,
+    .tile:hover,
+    .cd-val,
+    .fd-rail > span,
+    .tip {
+        transition: none !important;
+        animation: none !important;
+        transform: none !important;
+    }
+}
+@media print {
+    .editbar,
+    .tile-tools,
+    .tray,
+    .pagehead-actions,
+    .imp-banner {
+        display: none !important;
+    }
+
+    .tile, .panel {
+        break-inside: avoid;
+        box-shadow: none;
+    }
+
+    .grid {
+        gap: 8px;
+    }
+
+    /* Charts collapse to nothing at auto height when printed. */
+    .chart {
+        height: auto !important;
+    }
+}
+/* =============================================================================
+   HEADER BARS — ported from the previous dashboard.
+   Applied by adding `hb hb-N` to a .tile. The existing .tile-head is restyled
+   in place rather than replaced, so the drag handle, hide button and series
+   filter the script injects all keep working untouched.
+   ============================================================================= */
+.tile.hb {
+    padding: 0;
+    overflow: hidden;
+}
+
+    .tile.hb > .tile-head {
+        margin: 0;
+        padding: .65rem 1rem;
+        align-items: center;
+        color: #fff;
+    }
+
+        .tile.hb > .tile-head h4 {
+            color: #fff;
+            font-size: .82rem;
+            font-weight: 700;
+            letter-spacing: .02em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: .4rem;
+        }
+
+        /* The eyebrow badges (year, "924 active") sit on the bar too. */
+        .tile.hb > .tile-head .eyebrow {
+            color: rgba(255,255,255,.85);
+        }
+
+    .tile.hb > .tile-body {
+        padding: 13px 14px;
+    }
+
+    /* Tools inherit the bar rather than the card surface. */
+    .tile.hb .icon-btn {
+        background: rgba(255,255,255,.18);
+        border-color: rgba(255,255,255,.35);
+        color: #fff;
+    }
+
+        .tile.hb .icon-btn:hover {
+            background: rgba(255,255,255,.32);
+            border-color: #fff;
+            color: #fff;
+        }
+
+/* Same five gradients as the old dashboard, plus three for the widgets that
+   did not have a bar before. Deliberately identical in both themes — these are
+   identity colours, and white on them stays legible on either ground. */
+.tile.hb-1 > .tile-head {
+    background: linear-gradient(135deg, #0ea5e9, #0369a1);
+}
+/* sky    */
+.tile.hb-2 > .tile-head {
+    background: linear-gradient(135deg, #2563eb, #1e3a8a);
+}
+/* blue   */
+.tile.hb-3 > .tile-head {
+    background: linear-gradient(135deg, #4f46e5, #312e81);
+}
+/* indigo */
+.tile.hb-4 > .tile-head {
+    background: linear-gradient(135deg, #0891b2, #155e75);
+}
+/* cyan   */
+.tile.hb-5 > .tile-head {
+    background: linear-gradient(135deg, #10b981, #047857);
+}
+/* green  */
+.tile.hb-6 > .tile-head {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+}
+/* violet */
+.tile.hb-7 > .tile-head {
+    background: linear-gradient(135deg, #0d9488, #115e59);
+}
+/* teal   */
+.tile.hb-8 > .tile-head {
+    background: linear-gradient(135deg, #475569, #1e293b);
+}
+/* slate  */
+
+/* =============================================================================
+   INTERACTIVE TABLES — search, status filter, click-to-sort
+   ============================================================================= */
+.tbl-tools {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+
+    .tbl-tools .tbl-search,
+    .tbl-tools .tbl-filter {
+        background: var(--card);
+        color: var(--ink);
+        border: 1px solid var(--rule-strong);
+        border-radius: 6px;
+        padding: 4px 9px;
+        font: inherit;
+        font-size: 12.5px;
+    }
+
+    .tbl-tools .tbl-search {
+        min-width: 220px;
+    }
+
+        .tbl-tools .tbl-search:focus,
+        .tbl-tools .tbl-filter:focus {
+            outline: 2px solid var(--brand);
+            outline-offset: 1px;
+            border-color: var(--brand);
+        }
+
+.tbl-interactive thead th[data-sort] {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 20px;
+}
+
+    /* Neutral chevrons until sorted, so the column reads as sortable without
+       implying a direction it is not in. */
+    .tbl-interactive thead th[data-sort]::after {
+        content: "⇅";
+        position: absolute;
+        right: 6px;
+        opacity: .3;
+        font-size: 11px;
+    }
+
+    .tbl-interactive thead th[data-sort]:hover::after {
+        opacity: .6;
+    }
+
+.tbl-interactive thead th.sort-asc::after {
+    content: "↑";
+    opacity: 1;
+    color: var(--brand);
+}
+
+.tbl-interactive thead th.sort-desc::after {
+    content: "↓";
+    opacity: 1;
+    color: var(--brand);
+}
+
+.tbl-interactive tbody tr.row-hidden {
+    display: none;
+}
+
+.tbl-foot {
+    padding: 8px 14px 0;
+    font-size: 11.5px;
+    color: var(--ink-3);
+    border-top: 1px solid var(--rule);
+    margin-top: 2px;
+}
+
+.tbl-empty {
+    padding: 22px 14px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-3);
+}
+/* Ninth bar — the book-of-business band. Deep navy, deliberately not the amber
+   that "past due" would suggest: the tile is the whole client list, and an
+   all-on-track table should not read as a warning. */
+.tile.hb-9 > .tile-head {
+    background: linear-gradient(135deg, #1e3a8a, #172554);
+}
+
+/* Table controls sitting on a coloured bar rather than the card surface. */
+.tile.hb .tbl-tools .tbl-search,
+.tile.hb .tbl-tools .tbl-filter {
+    background: rgba(255,255,255,.14);
+    border-color: rgba(255,255,255,.35);
+    color: #fff;
+}
+
+    .tile.hb .tbl-tools .tbl-search::placeholder {
+        color: rgba(255,255,255,.7);
+    }
+
+    /* A native select's own option list is drawn by the OS, so the options must
+       stay on a normal surface or they are white-on-white when opened. */
+    .tile.hb .tbl-tools .tbl-filter option {
+        background: var(--card);
+        color: var(--ink);
+    }
+
+    .tile.hb .tbl-tools .tbl-search:hover,
+    .tile.hb .tbl-tools .tbl-filter:hover {
+        background: rgba(255,255,255,.22);
+        border-color: rgba(255,255,255,.6);
+    }
+
+    .tile.hb .tbl-tools .tbl-search:focus,
+    .tile.hb .tbl-tools .tbl-filter:focus {
+        background: rgba(255,255,255,.24);
+        outline: 2px solid #fff;
+        outline-offset: 1px;
+        border-color: #fff;
+    }
+
+/* .table-wrap normally bleeds to the tile edge with a negative bottom margin.
+   With a footer beneath it that pulls the footer up over the last row. */
+.table-wrap.has-foot {
+    margin-bottom: 0;
+}
+
+.tile.hb .tbl-foot {
+    margin: 0 -14px -13px;
+    padding: 8px 14px;
+    background: var(--card-sunk);
+}
+.tile.hb-warn > .tile-head {
+    background: linear-gradient(135deg, #d97706, #92400e);
+}
+/* Semantic bars, for tiles whose header should carry state rather than identity. */
+.tile.hb-crit > .tile-head {
+    background: linear-gradient(135deg, #dc2626, #7f1d1d);
+}
+
+.tile.hb-ok > .tile-head {
+    background: linear-gradient(135deg, #059669, #064e3b);
+}
+
+/* Deadlines. Amber is the subject here, not a warning about it — a countdown
+   card is inherently about time pressure, so it does not mislead the way an
+   amber header on the whole client list would. */
+.tile.hb-amber > .tile-head {
+    background: linear-gradient(135deg, #d97706, #92400e);
+}
+/* Fully-closed state. Distinct from hb-crit so "you missed a deadline" and
+   "the window is shut" do not look identical. */
+.tile.hb-closed > .tile-head {
+    background: linear-gradient(135deg, #475569, #1e293b);
+}
+/* =============================================================================
+   FILING READINESS
+   Five phases derived from CompletionPercentage, not one box per stage: the
+   process has 57 stages with branches, and a box per stage both overflows its
+   labels and implies a sequence that does not exist.
+   ============================================================================= */
+.fr {
+    background: var(--card);
+    border: 1px solid var(--line-2, var(--rule-strong));
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 18px 20px 14px;
+    margin-bottom: 16px;
+}
+
+.fr-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+    .fr-top h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 750;
+    }
+
+.fr-pct {
+    font-size: 13px;
+    color: var(--ink-2);
+}
+
+    .fr-pct b {
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: -.03em;
+        color: var(--ink);
+    }
+
+.fr-phases {
+    display: flex;
+    gap: 6px;
+}
+
+.fr-ph {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.fr-bar {
+    height: 7px;
+    border-radius: 99px;
+    background: var(--rule);
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+
+.fr-ph.done .fr-bar {
+    background: var(--good);
+}
+
+.fr-ph.now .fr-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: 99px;
+    background: var(--brand);
+    transition: width .4s ease;
+}
+
+.fr-nm {
+    font-size: 11.5px;
+    line-height: 1.3;
+    color: var(--ink-3);
+    /* Long phase names wrap rather than run into the next column. */
+    overflow-wrap: anywhere;
+}
+
+.fr-ph.done .fr-nm {
+    color: var(--ink-2);
+}
+
+.fr-ph.now .fr-nm {
+    color: var(--ink);
+    font-weight: 700;
+}
+
+/* ---- filing calendar ---- */
+.fr-cal {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--rule-strong);
+}
+
+.fr-track {
+    position: relative;
+    height: 4px;
+    border-radius: 99px;
+    background: var(--card-sunk);
+    margin: 30px 0 38px;
+}
+
+.fr-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: var(--brand);
+    border-radius: 99px;
+}
+
+.fr-mark {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.fr-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--ink-3);
+    border: 3px solid var(--card);
+    box-shadow: 0 0 0 1px var(--rule-strong);
+}
+
+.fr-mark.crit .fr-dot {
+    background: var(--crit);
+    box-shadow: 0 0 0 1px var(--crit);
+}
+
+.fr-mark.today .fr-dot {
+    background: var(--brand);
+    box-shadow: 0 0 0 1px var(--brand);
+}
+
+/* Labels alternate above and below so adjacent dates cannot collide. */
+.fr-lab {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    text-align: center;
+    font-size: 11px;
+    color: var(--ink-2);
+}
+
+    .fr-lab.above {
+        bottom: 16px;
+    }
+
+    .fr-lab.below {
+        top: 16px;
+    }
+
+    .fr-lab b {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--ink);
+    }
+
+    .fr-lab s {
+        display: block;
+        text-decoration: none;
+        font-size: 10.5px;
+        color: var(--ink-3);
+    }
+
+@media (max-width: 900px) {
+    .fr-phases {
+        flex-wrap: wrap;
+    }
+
+    .fr-ph {
+        flex: 1 1 40%;
+    }
+
+    .fr-lab {
+        font-size: 10px;
+    }
+
+        .fr-lab b {
+            font-size: 11px;
+        }
+}
+
+.impersonation {
+    background: linear-gradient(90deg, #7c3f00 0%, #9a5000 100%);
+    color: #ffe9c7;
+    box-shadow: var(--shadow);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    flex: 1 1 auto;
+}
+
+#btnEdit {
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.impersonation-in {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 10px 20px;
+    font-size: 13.5px;
+    justify-content: center;
+}
+
+.impersonation .ro {
+    background: #ffe9c7;
+    color: #7c3f00;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 10.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.impersonation #impText {
+    font-weight: 700;
+}
+
+.impersonation .exit {
+    margin-left: auto;
+    background: #ffe9c7;
+    color: #7c3f00;
+    border: 0;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font: inherit;
+}
+
+    .impersonation .exit:hover {
+        background: #fff;
+    }
+
+@media (max-width: 720px) {
+    .impersonation .exit {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+
+@media print {
+    .impersonation {
+        display: none !important;
+    }
+}

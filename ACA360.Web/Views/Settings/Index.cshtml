@@ -1,0 +1,463 @@
+﻿@using ACA360.Core.Extensions
+@using ACA360.Web.ViewComponents
+@model ACA360.Web.Models.SettingsListViewModel
+@{
+    ViewData["Title"] = "Account Settings";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var activeTab = Model.UserProfile?.ActiveTab ?? "account";
+}
+
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Settings",
+    items = new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Title = "Home", Url = Url.Action("Index", "Home"), IsActive = false },
+    new BreadcrumbItem { Title = "Account Settings", Url = "", IsActive = true }
+}
+})
+
+@if (TempData["SuccessMessage"] != null || TempData["ErrorMessage"] != null)
+{
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            @if (TempData["SuccessMessage"] != null)
+            {
+                        <text>
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: '@Html.Raw(TempData["SuccessMessage"])',
+                            confirmButtonText: 'OK'
+                        });
+                        </text>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                        <text>
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: '@Html.Raw(TempData["ErrorMessage"])',
+                            confirmButtonText: 'OK'
+                        });
+                        </text>
+            }
+        });
+    </script>
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="nav-align-top">
+            <ul class="nav nav-pills flex-column flex-md-row-start mb-3" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link @(activeTab == "account" ? "active" : "")" data-bs-toggle="tab" href="#account-tab" role="tab"><i class="bx bx-user me-1"></i> Account</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(activeTab == "security" ? "active" : "")" data-bs-toggle="tab" href="#security-tab" role="tab"><i class="bx bx-lock-alt me-1"></i> Security</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#notifications-tab" role="tab"><i class="bx bx-bell me-1"></i> Notification</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#connections-tab" role="tab"><i class="bx bx-link-alt me-1"></i> Connections</a>
+                </li>
+            </ul>
+        </div>
+        <div class="tab-content bg-transparent shadow-none p-0">
+
+            <div class="tab-pane fade @(activeTab == "account" ? "show active" : "")" id="account-tab" role="tabpanel">
+                <div class="card mb-4">
+                    <h5 class="card-header">Profile Details</h5>
+                    <form asp-controller="Settings" asp-action="UpdateProfile" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="UserProfile.UserId" />
+                        <input type="hidden" asp-for="UserProfile.RoleId" />
+                        <input type="hidden" asp-for="UserProfile.RefId" />
+                        <input type="hidden" asp-for="UserProfile.UserName" />
+                        <input type="hidden" asp-for="UserProfile.ProfilePicture" />
+
+                        <div class="card mb-4 shadow-sm border-0">
+                            <div class="card-body d-flex align-items-center gap-4">
+                                <img src="@(string.IsNullOrEmpty(Model.UserProfile.ProfilePicture) ? "/assets/img/avatars/1.png" : Model.UserProfile.ProfilePicture)"
+                                     alt="user-avatar" class="d-block rounded" height="80" width="80" id="uploadedAvatar" />
+
+                                <div class="button-wrapper">
+                                    <label for="upload" class="btn btn-primary me-2 mb-2" tabindex="0">
+                                        <i class="bx bx-upload d-block d-sm-none"></i>
+                                        <span class="d-none d-sm-block">Upload New Photo</span>
+                                        <input asp-for="UserProfile.ProfileImage" type="file" id="upload" class="account-file-input" hidden accept="image/png, image/jpeg" />
+                                    </label>
+                                    <button type="button" class="btn btn-outline-secondary account-image-reset mb-2">
+                                        <i class="bx bx-reset d-block d-sm-none"></i>
+                                        <span class="d-none d-sm-block">Reset</span>
+                                    </button>
+                                    <div class="text-muted small mt-1">Allowed JPG, GIF or PNG. Max size of 800K</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card shadow-sm border-0">
+                            <h5 class="card-header border-bottom bg-transparent fw-bold">Personal Information</h5>
+                            <div class="card-body mt-4">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.FirstName" class="form-control" placeholder="John" />
+                                            <label asp-for="UserProfile.FirstName">First Name</label>
+                                        </div>
+                                        <span asp-validation-for="UserProfile.FirstName" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.LastName" class="form-control" placeholder="Doe" />
+                                            <label asp-for="UserProfile.LastName">Last Name</label>
+                                        </div>
+                                        <span asp-validation-for="UserProfile.LastName" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.Email" class="form-control bg-light" readonly />
+                                            <label asp-for="UserProfile.Email">Email Address</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.PhoneNumber" class="form-control mask-us-phone" placeholder="123-456-7890" />
+                                            <label asp-for="UserProfile.PhoneNumber">Phone Number</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4 text-muted opacity-50">
+
+                                <h6 class="fw-bold mb-3">Address Details</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-12">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.Address1" class="form-control" placeholder="123 Main St" />
+                                            <label asp-for="UserProfile.Address1">Address Line 1</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.City" class="form-control" placeholder="New York" />
+                                            <label asp-for="UserProfile.City">City</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.State" class="form-control" placeholder="NY" />
+                                            <label asp-for="UserProfile.State">State</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.ZipCode" class="form-control" placeholder="10001" />
+                                            <label asp-for="UserProfile.ZipCode">Zip Code</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h5 class="card-header">Delete Account</h5>
+                    <div class="card-body">
+                        <div class="mb-3 col-12 mb-0">
+                            <div class="alert alert-warning">
+                                <h6 class="alert-heading fw-bold mb-1">Are you sure you want to delete your account?</h6>
+                                <p class="mb-0">Once you delete your account, there is no going back. Please be certain.</p>
+                            </div>
+                        </div>
+                        <div class="form-check mb-3 ms-3">
+                            <input class="form-check-input" type="checkbox" name="accountActivation" id="accountActivation" />
+                            <label class="form-check-label" for="accountActivation">I confirm my account deactivation</label>
+                        </div>
+                        <form asp-action="DeactivateAccount" method="post" id="formAccountDeactivation">
+                            <button type="submit" id="btnDeactivate" class="btn btn-danger" disabled>Deactivate Account</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade @(activeTab == "security" ? "show active" : "")" id="security-tab" role="tabpanel">
+                <div class="card mb-4">
+                    <h5 class="card-header">Change Password</h5>
+                    <div class="card-body">
+                        <input type="hidden" id="User_ID" value="@ViewBag.UserId" />
+                        <form asp-action="ChangePassword" method="post" id="formChangePassword">
+                            @Html.AntiForgeryToken()
+                            <div class="row">
+                                <div class="mb-3 col-md-6 form-password-toggle">
+                                    <label class="form-label" for="txt_old_password">Current Password</label>
+                                    <div class="input-group input-group-merge">
+                                        <input asp-for="ChangePassword.CurrentPassword" class="form-control" type="password" placeholder="········" />
+                                        <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                                    </div>
+                                    <span asp-validation-for="ChangePassword.CurrentPassword" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="mb-3 col-md-6 form-password-toggle">
+                                    <label class="form-label" for="txt_new_password">New Password</label>
+                                    <div class="input-group input-group-merge">
+                                        <input asp-for="ChangePassword.NewPassword" class="form-control" type="password" placeholder="············" />
+                                        <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                                    </div>
+                                    <span asp-validation-for="ChangePassword.NewPassword" class="text-danger small"></span>
+                                </div>
+                                <div class="mb-3 col-md-6 form-password-toggle">
+                                    <label class="form-label" for="txt_Confirm_password">Confirm New Password</label>
+                                    <div class="input-group input-group-merge">
+                                        <input asp-for="ChangePassword.ConfirmPassword" class="form-control" type="password" placeholder="············" />
+                                        <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                                    </div>
+                                    <span asp-validation-for="ChangePassword.ConfirmPassword" class="text-danger small"></span>
+                                </div>
+                                @{
+                                    var pwdPolicy = ViewBag.PasswordPolicy as ACA360.Core.Models.SecuritySettingsDto
+                                    ?? new ACA360.Core.Models.SecuritySettingsDto();
+                                }
+                                <div class="alert alert-warning mt-4 d-flex" role="alert">
+                                    <i class="bx bx-info-circle me-2 mt-1"></i>
+                                    <div>
+                                        <span class="fw-bold">Password Requirements:</span>
+                                        <ul class="mb-0 ps-3 small mt-1" id="pwdPolicyList">
+                                            <li>Minimum @pwdPolicy.MinPasswordLength characters long</li>
+                                            @if (pwdPolicy.RequireUppercase)
+                                            {
+                                                <li>At least one uppercase letter</li>
+                                            }
+                                            @if (pwdPolicy.RequireDigits)
+                                            {
+                                                <li>At least one number (0-9)</li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end mt-3">
+                                    <button type="submit" id="btnChangePassword" class="btn btn-warning">Update Password</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <h5 class="card-header">Two-step verification</h5>
+                    <div class="card-body mt-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="mb-1">Secure your account</h6>
+                                <p class="text-muted mb-0 small">Two-factor authentication adds an extra layer of security to your account.</p>
+                            </div>
+
+                            @if (Model.UserProfile?.IsMFAEnabled == true)
+                            {
+                                <form asp-action="ToggleMFA" method="post">
+                                    <input type="hidden" name="enable" value="false" />
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Disable MFA?');">Disable</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-action="ToggleMFA" method="post">
+                                    <input type="hidden" name="enable" value="true" />
+                                    <button type="submit" class="btn btn-primary">Enable</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <h5 class="card-header">Create an API key</h5>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="mb-3 col-md-5">
+                                <label for="apiAccess" class="form-label">Choose the Api key type you want to create</label>
+                                <select id="apiAccess" class="form-select">
+                                    <option value="">Choose Key Type</option>
+                                    <option value="full">Full Control</option>
+                                    <option value="modify">Modify</option>
+                                    <option value="read">Read Execute</option>
+                                </select>
+                            </div>
+                            <div class="mb-3 col-md-5">
+                                <label for="apiKey" class="form-label">Name the API key</label>
+                                <input type="text" class="form-control" id="apiKey" placeholder="Server Key 1" />
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end mb-3">
+                                <button class="btn btn-primary w-100">Create Key</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="notifications-tab" role="tabpanel">
+                <div class="card">
+                    <h5 class="card-header">Recent Devices</h5>
+                    <div class="card-body">
+                        <span class="mb-4 d-block">We need permission from your browser to show notifications. <span class="fw-bold">Request Permission</span></span>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-borderless border-bottom">
+                                <thead>
+                                    <tr>
+                                        <th class="text-nowrap">Type</th>
+                                        <th class="text-nowrap text-center">✉️ Email</th>
+                                        <th class="text-nowrap text-center">🖥 Browser</th>
+                                        <th class="text-nowrap text-center">👩🏻‍💻 App</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-nowrap">New for you</td>
+                                        <td><div class="form-check d-flex justify-content-center"><input class="form-check-input" type="checkbox" id="defaultCheck1" checked /></div></td>
+                                        <td><div class="form-check d-flex justify-content-center"><input class="form-check-input" type="checkbox" id="defaultCheck2" checked /></div></td>
+                                        <td><div class="form-check d-flex justify-content-center"><input class="form-check-input" type="checkbox" id="defaultCheck3" checked /></div></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-nowrap">Account activity</td>
+                                        <td><div class="form-check d-flex justify-content-center"><input class="form-check-input" type="checkbox" id="defaultCheck4" checked /></div></td>
+                                        <td><div class="form-check d-flex justify-content-center"><input class="form-check-input" type="checkbox" id="defaultCheck5" checked /></div></td>
+                                        <td><div class="form-check d-flex justify-content-center"><input class="form-check-input" type="checkbox" id="defaultCheck6" checked /></div></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary me-2">Save changes</button>
+                            <button type="reset" class="btn btn-outline-secondary">Discard</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="connections-tab" role="tabpanel">
+                <div class="card">
+                    <h5 class="card-header">Connected Accounts</h5>
+                    <div class="card-body">
+                        <p>Display content from your connected accounts on your site</p>
+                        <div class="d-flex mb-3">
+                            <div class="flex-shrink-0">
+                            </div>
+                            <div class="flex-grow-1 row">
+                                <div class="col-9 mb-sm-0 mb-2">
+                                    <h6 class="mb-0">Google</h6>
+                                    <small class="text-muted">Calendar and contacts</small>
+                                </div>
+                                <div class="col-3 text-end">
+                                    <div class="form-check form-switch">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex mb-3">
+                            <div class="flex-shrink-0">
+                            </div>
+                            <div class="flex-grow-1 row">
+                                <div class="col-9 mb-sm-0 mb-2">
+                                    <h6 class="mb-0">Github</h6>
+                                    <small class="text-muted">Manage your Git repositories</small>
+                                </div>
+                                <div class="col-3 text-end">
+                                    <div class="form-check form-switch">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+         document.addEventListener('DOMContentLoaded', function () {
+            const fileInput = document.getElementById('upload');
+            const mainAvatar = document.getElementById('uploadedAvatar');
+            const sidebarAvatar = document.getElementById('sidebarAvatar');
+            const resetBtn = document.querySelector('.account-image-reset');
+            const form = document.getElementById('formChangePassword');
+            const btn = document.getElementById('btnChangePassword');
+
+            if (mainAvatar) {
+                const originalSrc = mainAvatar.src;
+
+                // Preview on Select
+                fileInput.onchange = () => {
+                    if (fileInput.files[0]) {
+                        const newSrc = window.URL.createObjectURL(fileInput.files[0]);
+                        mainAvatar.src = newSrc;
+                        if(sidebarAvatar) sidebarAvatar.src = newSrc; // Update Sidebar too
+                    }
+                };
+
+                // Reset
+                resetBtn.onclick = () => {
+                    fileInput.value = '';
+                    mainAvatar.src = originalSrc;
+                    if(sidebarAvatar) sidebarAvatar.src = originalSrc;
+                };
+            }
+
+            // --- 3. Deactivation Safety ---
+            const checkbox = document.getElementById('accountActivation');
+            const btnDeactivate = document.getElementById('btnDeactivate');
+
+            if (checkbox && btnDeactivate) {
+                checkbox.addEventListener('change', function() {
+                    btnDeactivate.disabled = !this.checked;
+                });
+            }
+        });
+
+                document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('formChangePassword');
+            const btn = document.getElementById('btnChangePassword');
+
+            if (form && btn) {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    if (btn.disabled) return;
+
+                    const newPwd = document.getElementById('ChangePassword_NewPassword').value;
+                    const confirmPwd = document.getElementById('ChangePassword_ConfirmPassword').value;
+
+                    if (!newPwd || newPwd !== confirmPwd) {
+                        Swal.fire('Error!', 'New password and confirm password do not match.', 'error');
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "Do you want to update this password?",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, update it!',
+                        cancelButtonText: 'Cancel',
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            btn.disabled = true;
+                            btn.textContent = 'Updating...';
+                            form.submit();
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+}

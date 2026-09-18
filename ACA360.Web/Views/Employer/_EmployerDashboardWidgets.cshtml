@@ -1,0 +1,498 @@
+﻿<!-- =================================================================================== -->
+<!-- ADDITIVE WIDGETS LAYOUT REGION: BINDING TO THE FETCHED DATA PAYLOAD                 -->
+<!-- =================================================================================== -->
+@* TODO: [DASHBOARD-LAYOUT] White-card design per reference: every panel is a white card
+   with a coloured accent border from the blue family, a light transparent hover lift, and
+   light-tinted inner tiles. No gradients. The Important Dates clock keeps our sliding-digit
+   mechanism - only the skin and height changed. *@
+<style>
+    /* ---- shared white card + accent + hover ---------------------------------- */
+    .dw-card {
+        background: #fff;
+        border: 1px solid #e5e9f0;
+        border-radius: .75rem;
+        height: 100%;
+        box-shadow: 0 1px 2px rgba(16,24,40,.04);
+        transition: background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+        .dw-card:hover {
+            background: rgba(239,246,255,.55); /* light transparent wash */
+            box-shadow: 0 .5rem 1rem -.5rem rgba(30,64,175,.25);
+            transform: translateY(-2px);
+        }
+    /* different blue-family accents, one per card */
+    .ac-1 {
+        border-color: #2563eb;
+    }
+    /* blue      */
+    .ac-2 {
+        border-color: #0ea5e9;
+    }
+    /* sky       */
+    .ac-3 {
+        border-color: #0891b2;
+    }
+    /* cyan      */
+    .ac-4 {
+        border-color: #4f46e5;
+    }
+    /* indigo    */
+    .ac-5 {
+        border-color: #1e3a8a;
+    }
+    /* navy      */
+    .ac-warn {
+        border-color: #d97706;
+    }
+
+    .ac-danger {
+        border-color: #dc2626;
+    }
+
+    /* ---- top count tiles ------------------------------------------------------ */
+    .stat-lbl {
+        font-size: .68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: #64748b;
+        margin-bottom: .35rem;
+    }
+
+    .stat-val {
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        color: #0f172a;
+        margin: 0;
+    }
+
+    .stat-sub {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #94a3b8;
+    }
+
+    /* ---- section heading ------------------------------------------------------ */
+    .fd-head {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        margin-bottom: .6rem;
+    }
+
+    .fd-head-ico {
+        display: flex;
+        padding: .3rem;
+        border-radius: .4rem;
+        background: #1e3a8a;
+        color: #fff;
+    }
+
+    .fd-head-txt {
+        font-size: .82rem;
+        font-weight: 700;
+        color: #1e293b;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        margin: 0;
+    }
+
+    /* ---- Important Dates card ------------------------------------------------- */
+    /* Light gradient wash for the Important Dates cards (dark icon chips sit on top). */
+    .fd-card {
+        padding: 1rem 1.1rem;
+        background: linear-gradient(135deg, #ffffff 0%, #e8f0ff 100%);
+    }
+
+    .fd-card--cyan {
+        background: linear-gradient(135deg, #ffffff 0%, #e4f7fb 100%);
+    }
+
+    .dw-card.fd-card:hover {
+        background: linear-gradient(135deg, #ffffff 0%, #dbe7ff 100%);
+    }
+
+    .dw-card.fd-card--cyan:hover {
+        background: linear-gradient(135deg, #ffffff 0%, #d3f2f8 100%);
+    }
+
+    .fd-title-row {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        margin-bottom: .9rem;
+    }
+
+    .fd-chip {
+        padding: .45rem;
+        border-radius: .55rem;
+        display: flex;
+        background: #1e3a8a;
+        color: #fff;
+    }
+
+    .fd-chip--green {
+        background: #065f46;
+        color: #fff;
+    }
+
+    .fd-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+        letter-spacing: -.01em;
+    }
+
+    .fd-target {
+        font-size: .78rem;
+        font-weight: 500;
+        color: #64748b;
+        margin: 0;
+    }
+
+        .fd-target strong {
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+    .cd-wrap {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0,1fr));
+        gap: .55rem;
+    }
+
+    /* Tile: two-tone per reference - sky cap over a slate number block, white label. */
+    .fd-tile {
+        display: flex;
+        flex-direction: column;
+        border-radius: .5rem;
+        overflow: hidden;
+        box-shadow: 0 .25rem .5rem -.25rem rgba(15,23,42,.35);
+        animation: fdSoftPulse 4s ease-in-out infinite;
+    }
+
+        .fd-tile.d1 {
+            animation-delay: .2s;
+        }
+
+        .fd-tile.d2 {
+            animation-delay: .4s;
+        }
+
+        .fd-tile.d3 {
+            animation-delay: .6s;
+        }
+
+        .fd-tile.d4 {
+            animation-delay: .8s;
+        }
+
+    .fd-cap {
+        background: #0284c7;
+        height: .5rem;
+    }
+    /* shade 1 - sky  */
+    .fd-num {
+        background: #fff;
+        padding: .3rem .2rem;
+    }
+    /* shade 2 - slate */
+    .fd-lbl {
+        background: #eeeeee;
+        padding: .25rem;
+        text-align: center;
+        font-size: .58rem;
+        font-weight: 700;
+        color: #334155;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+    }
+
+    /* Sliding digit: slot clips, value slides vertically on change. */
+    .cd-slot {
+        position: relative;
+        height: 1.9rem;
+        overflow: hidden;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 900;
+        line-height: 1.9rem;
+        color: #1e293b;
+    }
+
+    .cd-val {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        transition: transform .45s cubic-bezier(.4,0,.2,1), opacity .45s;
+    }
+
+        .cd-val.cd-enter {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+
+        .cd-val.cd-exit {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+
+    .cd-done {
+        grid-column: 1 / -1;
+        text-align: center;
+        font-size: .85rem;
+        font-weight: 600;
+        color: #64748b;
+        padding: .5rem 0;
+    }
+
+    /* progress rail under each countdown */
+    .fd-rail {
+        height: 4px;
+        border-radius: 99px;
+        background: #e9eef6;
+        margin-top: .9rem;
+        overflow: hidden;
+    }
+
+        .fd-rail > span {
+            display: block;
+            height: 100%;
+            border-radius: 99px;
+            background: #2563eb;
+            transition: width .4s ease;
+        }
+
+        .fd-rail.is-green > span {
+            background: #059669;
+        }
+
+    @@keyframes fdSoftPulse {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        50% {
+            transform: scale(1.03);
+            opacity: .95;
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .fd-card {
+            padding: .8rem .85rem;
+        }
+
+        .cd-slot {
+            height: 1.6rem;
+            font-size: 1.2rem;
+            line-height: 1.6rem;
+        }
+
+        .stat-val {
+            font-size: 1.6rem;
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .dw-card, .cd-val, .fd-tile, .fd-rail > span {
+            transition: none !important;
+        }
+
+        .fd-tile {
+            animation: none !important;
+        }
+
+        .dw-card:hover {
+            transform: none;
+        }
+    }
+</style>
+
+@* TODO: [DASHBOARD-LAYOUT] Order per reference: counts -> important dates + completeness
+   -> process workflow / lifecycle / communications -> trend charts. *@
+<!-- Row 1: Core count tiles -->
+<div class="row g-3 mt-1">
+    <div class="col-xl-3 col-sm-6">
+        <div class="card dw-card ac-1">
+            <div class="card-body py-3">
+                <p class="stat-lbl">Total FT / PT Employees Receiving Forms</p>
+                <p class="stat-val"><span id="ftForms">0</span> <span class="stat-sub">/ <span id="ptForms">0</span></span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card dw-card ac-2">
+            <div class="card-body py-3">
+                <p class="stat-lbl">Total Enrolled / Waived Employees</p>
+                <p class="stat-val"><span id="enrolled">0</span> <span class="stat-sub">/ <span id="waived">0</span></span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card dw-card ac-3">
+            <div class="card-body py-3">
+                <p class="stat-lbl">Total COBRA / Retiree Participants</p>
+                <p class="stat-val"><span id="cobra">0</span> <span class="stat-sub">/ <span id="retiree">0</span></span></p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card dw-card ac-4">
+            <div class="card-body py-3">
+                <p class="stat-lbl">Total Union Members</p>
+                <p class="stat-val" id="union">0</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row A: Countdown Trackers for Compliance Deadlines -->
+<div class="row mt-4">
+    <div class="col-12 mb-4">
+        @* Container ids (mailCd / efileCd) and date ids (txtMailDate / txtEfileDate) are
+           unchanged, so initLiveClock(id, iso) in Dashboard.cshtml still binds to them. *@
+        <div class="fd-head">
+            <span class="fd-head-ico">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                </svg>
+            </span>
+            <h2 class="fd-head-txt">Important Dates</h2>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-xl-4 col-lg-5 col-md-6">
+                <article class="card dw-card ac-1 fd-card">
+                    <div>
+                        <div class="fd-title-row">
+                            <span class="fd-chip">
+                                <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                </svg>
+                            </span>
+                            <div>
+                                <h3 class="fd-title">1095 Mailing Deadline</h3>
+                                <p class="fd-target">Target Date: <strong id="txtMailDate">--</strong></p>
+                            </div>
+                        </div>
+                        <div class="cd-wrap" id="mailCd"></div>
+                        <div class="fd-rail"><span id="mailRail" style="width:0%"></span></div>
+                    </div>
+                </article>
+            </div>
+
+            <div class="col-xl-4 col-lg-5 col-md-6">
+                <article class="card dw-card ac-3 fd-card fd-card--cyan">
+                    <div>
+                        <div class="fd-title-row">
+                            <span class="fd-chip fd-chip--green">
+                                <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                </svg>
+                            </span>
+                            <div>
+                                <h3 class="fd-title">1094 &amp; 1095 E-Filing Deadline</h3>
+                                <p class="fd-target">Target Date: <strong id="txtEfileDate">--</strong></p>
+                            </div>
+                        </div>
+                        <div class="cd-wrap" id="efileCd"></div>
+                        <div class="fd-rail is-green"><span id="efileRail" style="width:0%"></span></div>
+                    </div>
+                </article>
+            </div>
+
+            @* TODO: [DEADLINE-COUNTDOWN UI] Filing Workflow Completeness moved up beside
+               Important Dates - it fills the space freed by the narrower cards and groups
+               the "where are we / when is it due" status together. Canvas id unchanged. *@
+            <div class="col-xl-4 col-lg-7 col-md-6">
+                <div class="card dw-card ac-5">
+                    <div class="card-body py-2">
+                        <h6 class="stat-lbl text-center mb-0">Filing Workflow Completeness</h6>
+                        <div style="height: 150px; position: relative;"><canvas id="chartProc"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row B: three cards in one row - process step wider, others adjusted -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card dw-card ac-danger">
+            <div class="card-body">
+                <h6 class="text-muted text-uppercase small font-weight-bold">Process Step</h6>
+                <span class="badge bg-label-primary mb-2">Active Status Step</span>
+                <!-- Combined step name and due date placeholder -->
+                <h4 class="text-primary font-weight-bold mb-0">
+                    <span id="procStep">--</span>
+                    <span id="procDueDate" class="text-danger small fs-6 ml-1"></span>
+                </h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card dw-card ac-1">
+            <div class="card-body py-3">
+                <h6 class="text-muted text-uppercase small font-weight-bold">Employee Lifecycle</h6>
+                <p class="mb-1 small d-flex justify-content-between">
+                    <span>Most Recent Hire:</span><strong id="recentHire" class="text-dark">--</strong>
+                </p>
+                <p class="mb-0 small d-flex justify-content-between">
+                    <span>Most Recent Termination:</span><strong id="recentTerm" class="text-dark">--</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card dw-card ac-warn">
+            <div class="card-body py-3">
+                <h6 class="text-muted text-uppercase small font-weight-bold">Filing Communications</h6>
+                <p class="mb-1 small d-flex justify-content-between align-items-center">
+                    <span>Unread System Notifications:</span>
+                    <span id="msgUnread" class="badge bg-warning text-dark font-weight-bold">0</span>
+                </p>
+                <p class="mb-0 small d-flex justify-content-between">
+                    <span>Read Messages History:</span><span id="msgRead" class="text-muted">0</span>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Rows D & E: 4 Chart.js Canvas Targets Rendering Graphics Stack -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="card-title text-secondary">Monthly Breakdown: Full-Time vs Total Employed</h6>
+                <div style="height: 260px; position: relative;"><canvas id="chartFtTotal"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="card-title text-secondary">Monthly Status Split: Enrolled vs Waived</h6>
+                <div style="height: 260px; position: relative;"><canvas id="chartEnrWaived"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="card-title text-secondary">Special Compliance Categories Trend (COBRA / Retiree / Union)</h6>
+                <div style="height: 260px; position: relative;"><canvas id="chartCru"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>

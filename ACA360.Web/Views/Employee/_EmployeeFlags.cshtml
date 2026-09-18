@@ -1,0 +1,65 @@
+@model ACA360.Web.Models.EmployeeListViewModel
+
+@* Rendered inside the Flags tab of the Flags/Notes card in EmployeeDetails.cshtml *@
+@if (Model.EmployeeFlags == null || Model.EmployeeFlags.Count == 0)
+{
+    <div class="text-center text-muted py-4">
+        <i class="bx bx-check-circle text-success fs-2 d-block mb-2 mx-auto"></i>
+        No flags raised for this employee.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle ui-table">
+            <thead>
+                <tr>
+                    <th style="width: 100px;">Severity</th>
+                    <th>Flag</th>
+                    <th style="width: 110px;">Category</th>
+                    <th style="width: 170px;">Months</th>
+                    <th style="width: 25%;">Suggested Fix</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var f in Model.EmployeeFlags)
+                {
+                    var badgeClass = f.Severity switch
+                    {
+                        "Critical" => "bg-label-danger",
+                        "Error" => "bg-label-danger",
+                        "Warning" => "bg-label-warning",
+                        _ => "bg-label-info"
+                    };
+
+                    <tr class="flag-row"
+                        data-target-tab="@f.TargetTab" data-target-field="@f.TargetField"
+                        data-flag-name="@f.FlagName" data-category="@f.Category" data-months="@f.MonthsAffected">
+                        <td><span class="badge @badgeClass">@(string.IsNullOrWhiteSpace(f.Severity) ? "Info" : f.Severity)</span></td>
+                        <td>
+                            <div class="fw-semibold">@f.FlagName</div>
+                            @if (!string.IsNullOrWhiteSpace(f.Description))
+                            {
+                                <small class="text-muted">@f.Description</small>
+                            }
+                        </td>
+                        <td class="small">@(string.IsNullOrWhiteSpace(f.Category) ? "-" : f.Category)</td>
+                        <td class="small">@(string.IsNullOrWhiteSpace(f.MonthsAffected) ? "-" : f.MonthsAffected)</td>
+                        <td class="small" colspan="2">
+                            <div class="d-flex align-items-center justify-content-between w-100">
+                                <div class="pe-2">
+                                    @(string.IsNullOrWhiteSpace(f.RemediationSuggestion) ? "-" : f.RemediationSuggestion)
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-xs btn-outline-danger flag-fix-btn text-nowrap" title="Jump to the field to fix">
+                                        <i class="bx bx-target-lock"></i> Fix
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

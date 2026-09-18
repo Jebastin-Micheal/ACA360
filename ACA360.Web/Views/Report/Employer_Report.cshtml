@@ -1,0 +1,517 @@
+﻿@{
+    ViewData["Title"] = "EmployerReport";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div>    
+    <script src="@(Url.Content("~/assets/vendor/libs/jquery/jquery.js"))"></script>
+
+   
+</div>
+
+<style>
+    th {
+        background: #061387 !important;
+        color: white !important;
+    }
+</style>
+
+
+
+<section>
+    <div class="row">
+        <div class="card">
+            <div class="stick-top course-content-fixed mb-6 block_Employer_Report">
+                <div class="accordion-item mb-0 active">
+                    <div class="accordion-header" id="headingOne">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="h5 card-header text-center m-0 text-nowrap flex-grow-1">Custom Filter</div>
+                            <button type="button" class="accordion accordion-button" data-bs-toggle="collapse" data-bs-target="#chapterOne" aria-expanded="true" aria-controls="chapterOne">
+                            </button>
+                        </div>
+                    </div>
+                    <div id="chapterOne" class="card-body accordion-collapse collapse show" data-bs-parent="#courseContent" >
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label" for="Filing_Year">Filing Year</label>
+                                <select id="Filing_Year" class="form-select select2" name="Filing_Year">
+                                    <option value="">Select Filing Year</option>
+                                    @foreach (var year in ViewBag.FilingYear)
+                                    {
+                                        <option value="@year.FilingYear">@year.FilingYear</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="emp_search">Employer Name</label>
+                                <select id="Employer_Id" class="form-select select2" disabled>
+                                    <option value="">Select Employer</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="city_search">City</label>
+                                <select id="city_search" class="select2 form-select form-select-lg">
+                                    <option value="">Select City</option>
+                                    <option value="IMMOKALEE">IMMOKALEE</option>
+                                    <option value="MENIFEE">MENIFEE</option>
+                                    <option value="DUDLEY">DUDLEY</option>
+                                    <option value="CONROE">CONROE</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-5">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" id="correct_check" type="checkbox">
+                                    <label for="correct_check" class="form-check-label">Is Corrected</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" id="author_check" type="checkbox">
+                                    <label for="author_check" class="form-check-label">Is Authoritative</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" id="callcenter_check" type="checkbox">
+                                    <label for="callcenter_check" class="form-check-label">Enable CallCenter</label>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="row mt-5">
+                            <div class="col-md-2 p-t-20">
+                                <button type="button" class="btn btn-secondary" id="btn_filter">Filter</button>
+                                <button type="button" class="btn btn-primary" id="btn_reset">Reset </button>
+                            </div>
+                        </div>
+
+                        <hr />
+                    </div>
+                </div>
+
+                <table class="table table-bordered table-striped nowrap" id="tbl_EmployerReport">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Filing Year</th>
+                            <th class="text-center">Company Id</th>
+                            <th class="text-center">Tax ID</th>
+                            <th class="text-center">Name</th>
+                            <th class="text-center">Is Foreign</th>
+                            <th class="text-center">Address</th>
+                            <th class="text-center">Address 2</th>
+                            <th class="text-center">City</th>
+                            <th class="text-center">State</th>
+                            <th class="text-center">State ID</th>
+                            <th class="text-center">ZIP</th>
+                            <th class="text-center">Country ID</th>
+                            <th class="text-center">Is Corrected</th>
+                            <th class="text-center">Contact Name</th>
+                            <th class="text-center">Phone Number</th>
+                            <th class="text-center">Origin Code</th>
+                            <th class="text-center">Is Authoritative</th>
+                            <th class="text-center">Total Number Forms</th>
+                            <th class="text-center">Is Aggregated ALE</th>
+                            <th class="text-center">Qualifying Offer Method</th>
+                            <th class="text-center">SEC 4980H Relief</th>
+                            <th class="text-center">Offer 98 Method</th>
+                            <th class="text-center">Sign Title</th>
+                            <th class="text-center">Sign Date</th>
+                            <th class="text-center nosort">Minimum 0</th>
+                            <th class="text-center nosort">Minimum 1</th>
+                            <th class="text-center nosort">Minimum 2</th>
+                            <th class="text-center nosort">Minimum 3</th>
+                            <th class="text-center nosort">Minimum 4</th>
+                            <th class="text-center nosort">Minimum 5</th>
+                            <th class="text-center nosort">Minimum 6</th>
+                            <th class="text-center nosort">Minimum 7</th>
+                            <th class="text-center nosort">Minimum 8</th>
+                            <th class="text-center nosort">Minimum 9</th>
+                            <th class="text-center nosort">Minimum 10</th>
+                            <th class="text-center nosort">Minimum 11</th>
+                            <th class="text-center nosort">Minimum 12</th>
+                            <th class="text-center nosort">Full Time 0</th>
+                            <th class="text-center nosort">Full Time 1</th>
+                            <th class="text-center nosort">Full Time 2</th>
+                            <th class="text-center nosort">Full Time 3</th>
+                            <th class="text-center nosort">Full Time 4</th>
+                            <th class="text-center nosort">Full Time 5</th>
+                            <th class="text-center nosort">Full Time 6</th>
+                            <th class="text-center nosort">Full Time 7</th>
+                            <th class="text-center nosort">Full Time 8</th>
+                            <th class="text-center nosort">Full Time 9</th>
+                            <th class="text-center nosort">Full Time 10</th>
+                            <th class="text-center nosort">Full Time 11</th>
+                            <th class="text-center nosort">Full Time 12</th>
+                            <th class="text-center nosort">Total 0</th>
+                            <th class="text-center nosort">Total 1</th>
+                            <th class="text-center nosort">Total 2</th>
+                            <th class="text-center nosort">Total 3</th>
+                            <th class="text-center nosort">Total 4</th>
+                            <th class="text-center nosort">Total 5</th>
+                            <th class="text-center nosort">Total 6</th>
+                            <th class="text-center nosort">Total 7</th>
+                            <th class="text-center nosort">Total 8</th>
+                            <th class="text-center nosort">Total 9</th>
+                            <th class="text-center nosort">Total 10</th>
+                            <th class="text-center nosort">Total 11</th>
+                            <th class="text-center nosort">Total 12</th>
+                            <th class="text-center nosort">Group 0</th>
+                            <th class="text-center nosort">Group 1</th>
+                            <th class="text-center nosort">Group 2</th>
+                            <th class="text-center nosort">Group 3</th>
+                            <th class="text-center nosort">Group 4</th>
+                            <th class="text-center nosort">Group 5</th>
+                            <th class="text-center nosort">Group 6</th>
+                            <th class="text-center nosort">Group 7</th>
+                            <th class="text-center nosort">Group 8</th>
+                            <th class="text-center nosort">Group 9</th>
+                            <th class="text-center nosort">Group 10</th>
+                            <th class="text-center nosort">Group 11</th>
+                            <th class="text-center nosort">Group 12</th>
+                            <th class="text-center nosort">S4980H 0</th>
+                            <th class="text-center nosort">S4980H 1</th>
+                            <th class="text-center nosort">S4980H 2</th>
+                            <th class="text-center nosort">S4980H 3</th>
+                            <th class="text-center nosort">S4980H 4</th>
+                            <th class="text-center nosort">S4980H 5</th>
+                            <th class="text-center nosort">S4980H 6</th>
+                            <th class="text-center nosort">S4980H 7</th>
+                            <th class="text-center nosort">S4980H 8</th>
+                            <th class="text-center nosort">S4980H 9</th>
+                            <th class="text-center nosort">S4980H 10</th>
+                            <th class="text-center nosort">S4980H 11</th>
+                            <th class="text-center nosort">S4980H 12</th>
+                            <th class="text-center nosort">Disable Changes</th>
+                            <th class="text-center nosort">Form Type</th>
+                            <th class="text-center nosort">Mail Memo</th>
+                            <th class="text-center nosort">Enable Call Center</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            var tCols = 92;
+            var hCols = [1,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,91,92]
+            var itemArray= [
+                          // { data: "id", name: "Id", autoWidth: true }, //Index 0
+                                  { data: "filingYear", name: "Filing Year", autoWidth: true }, //Index 1
+                                  { data: "companyId", name: "Company Id", autoWidth: true }, //Index 2
+                                  { data: "taxid", name: "Tax ID", autoWidth: true }, //Index 3
+                                  { data: "name", name: "Name", autoWidth: true }, //Index 4
+                                  { data: "isForeign", name: "Is Foreign", autoWidth: true }, //Index 5
+                                  { data: "address", name: "Address", autoWidth: true }, //Index 6
+                                  { data: "address2", name: "Address 2", autoWidth: true }, //Index 7
+                                  { data: "city", name: "City", autoWidth: true }, //Index 8
+                                  { data: "state", name: "State", autoWidth: true }, //Index 9
+                                  { data: "stateId", name: "State ID", autoWidth: true }, //Index 10
+                                  { data: "zip", name: "ZIP", autoWidth: true }, //Index 11
+                                  { data: "countryId", name: "Country ID", autoWidth: true }, //Index 12
+                                  { data: "isCorrected", name: "Is Corrected", autoWidth: true }, //Index 13
+                                  { data: "contactName", name: "Contact Name", autoWidth: true }, //Index 14
+                                  { data: "phoneNumber", name: "Phone Number", autoWidth: true }, //Index 15
+                                  { data: "originCode", name: "Origin Code", autoWidth: true }, //Index 16
+                                  { data: "isAuthoritative", name: "Is Authoritative", autoWidth: true }, //Index 17
+                                  { data: "totalNumberForms", name: "Total Number Forms", autoWidth: true }, //Index 18
+                                  { data: "isAggregatedAle", name: "Is Aggregated ALE", autoWidth: true }, //Index 19
+                                  { data: "qualifyingOfferMethod", name: "Qualifying Offer Method", autoWidth: true }, //Index 20
+                                  { data: "sec4980HRelief", name: "SEC 4980H Relief", autoWidth: true }, //Index 21
+                                  { data: "offer98Method", name: "Offer 98 Method", autoWidth: true }, //Index 22
+                                  { data: "signTitle", name: "Sign Title", autoWidth: true }, //Index 23
+                                  { data: "signDate", name: "Sign Date", autoWidth: true }, //Index 24
+                                  { data: "minimum_0", name: "Minimum 0", autoWidth: true }, //Index 25
+                                  { data: "minimum_1", name: "Minimum 1", autoWidth: true }, //Index 26
+                                  { data: "minimum_2", name: "Minimum 2", autoWidth: true }, //Index 27
+                                  { data: "minimum_3", name: "Minimum 3", autoWidth: true }, //Index 28
+                                  { data: "minimum_4", name: "Minimum 4", autoWidth: true }, //Index 29
+                                  { data: "minimum_5", name: "Minimum 5", autoWidth: true }, //Index 30
+                                  { data: "minimum_6", name: "Minimum 6", autoWidth: true }, //Index 31
+                                  { data: "minimum_7", name: "Minimum 7", autoWidth: true }, //Index 32
+                                  { data: "minimum_8", name: "Minimum 8", autoWidth: true }, //Index 33
+                                  { data: "minimum_9", name: "Minimum 9", autoWidth: true }, //Index 34
+                                  { data: "minimum_10", name: "Minimum 10", autoWidth: true }, //Index 35
+                                  { data: "minimum_11", name: "Minimum 11", autoWidth: true }, //Index 36
+                                  { data: "minimum_12", name: "Minimum 12", autoWidth: true }, //Index 37
+                                  { data: "fullTime_0", name: "Full Time 0", autoWidth: true }, //Index 38
+                                  { data: "fullTime_1", name: "Full Time 1", autoWidth: true }, //Index 39
+                                  { data: "fullTime_2", name: "Full Time 2", autoWidth: true }, //Index 40
+                                  { data: "fullTime_3", name: "Full Time 3", autoWidth: true }, //Index 41
+                                  { data: "fullTime_4", name: "Full Time 4", autoWidth: true }, //Index 42
+                                  { data: "fullTime_5", name: "Full Time 5", autoWidth: true }, //Index 43
+                                  { data: "fullTime_6", name: "Full Time 6", autoWidth: true }, //Index 44
+                                  { data: "fullTime_7", name: "Full Time 7", autoWidth: true }, //Index 45
+                                  { data: "fullTime_8", name: "Full Time 8", autoWidth: true }, //Index 46
+                                  { data: "fullTime_9", name: "Full Time 9", autoWidth: true }, //Index 47
+                                  { data: "fullTime_10", name: "Full Time 10", autoWidth: true }, //Index 48
+                                  { data: "fullTime_11", name: "Full Time 11", autoWidth: true }, //Index 49
+                                  { data: "fullTime_12", name: "Full Time 12", autoWidth: true }, //Index 50
+                                  { data: "total_0", name: "Total 0", autoWidth: true }, //Index 51
+                                  { data: "total_1", name: "Total 1", autoWidth: true }, //Index 52
+                                  { data: "total_2", name: "Total 2", autoWidth: true }, //Index 53
+                                  { data: "total_3", name: "Total 3", autoWidth: true }, //Index 54
+                                  { data: "total_4", name: "Total 4", autoWidth: true }, //Index 55
+                                  { data: "total_5", name: "Total 5", autoWidth: true }, //Index 56
+                                  { data: "total_6", name: "Total 6", autoWidth: true }, //Index 57
+                                  { data: "total_7", name: "Total 7", autoWidth: true }, //Index 58
+                                  { data: "total_8", name: "Total 8", autoWidth: true }, //Index 59
+                                  { data: "total_9", name: "Total 9", autoWidth: true }, //Index 60
+                                  { data: "total_10", name: "Total 10", autoWidth: true }, //Index 61
+                                  { data: "total_11", name: "Total 11", autoWidth: true }, //Index 62
+                                  { data: "total_12", name: "Total 12", autoWidth: true }, //Index 63
+                                  { data: "group_0", name: "Group 0", autoWidth: true }, //Index 64
+                                  { data: "group_1", name: "Group 1", autoWidth: true }, //Index 65
+                                  { data: "group_2", name: "Group 2", autoWidth: true }, //Index 66
+                                  { data: "group_3", name: "Group 3", autoWidth: true }, //Index 67
+                                  { data: "group_4", name: "Group 4", autoWidth: true }, //Index 68
+                                  { data: "group_5", name: "Group 5", autoWidth: true }, //Index 69
+                                  { data: "group_6", name: "Group 6", autoWidth: true }, //Index 70
+                                  { data: "group_7", name: "Group 7", autoWidth: true }, //Index 71
+                                  { data: "group_8", name: "Group 8", autoWidth: true }, //Index 72
+                                  { data: "group_9", name: "Group 9", autoWidth: true }, //Index 73
+                                  { data: "group_10", name: "Group 10", autoWidth: true }, //Index 74
+                                  { data: "group_11", name: "Group 11", autoWidth: true }, //Index 75
+                                  { data: "group_12", name: "Group 12", autoWidth: true }, //Index 76
+                                  { data: "s4980H_0", name: "S4980H 0", autoWidth: true }, //Index 77
+                                  { data: "s4980H_1", name: "S4980H 1", autoWidth: true }, //Index 78
+                                  { data: "s4980H_2", name: "S4980H 2", autoWidth: true }, //Index 79
+                                  { data: "s4980H_3", name: "S4980H 3", autoWidth: true }, //Index 80
+                                  { data: "s4980H_4", name: "S4980H 4", autoWidth: true }, //Index 81
+                                  { data: "s4980H_5", name: "S4980H 5", autoWidth: true }, //Index 82
+                                  { data: "s4980H_6", name: "S4980H 6", autoWidth: true }, //Index 83
+                                  { data: "s4980H_7", name: "S4980H 7", autoWidth: true }, //Index 84
+                                  { data: "s4980H_8", name: "S4980H 8", autoWidth: true }, //Index 85
+                                  { data: "s4980H_9", name: "S4980H 9", autoWidth: true }, //Index 86
+                                  { data: "s4980H_10", name: "S4980H 10", autoWidth: true }, //Index 87
+                                  { data: "s4980H_11", name: "S4980H 11", autoWidth: true }, //Index 88
+                                  { data: "s4980H_12", name: "S4980H 12", autoWidth: true }, //Index 89
+                                  { data: "disableChanges", name: "Disable Changes", autoWidth: true }, //Index 90
+                                  { data: "formType", name: "Form Type", autoWidth: true }, //Index 91
+                                  { data: "mailMemo", name: "Mail Memo", autoWidth: true }, //Index 92
+                                  { data: "enableCallCenter", name: "Enable Call Center", autoWidth: true }, //Index 93
+
+
+                 ]
+            var t = $('#tbl_EmployerReport').DataTable({
+                serverSide: true,
+                processing: true,
+                scrollX: true,
+                scrollY: 400,
+                scrollCollapse: true,
+
+                columnDefs: [
+                  {
+                    targets: hCols,visible: false
+                  },
+                  {
+                    targets: 'nosort',orderable: false
+                  }
+                ],
+                    // "dom": '<fB<"clear">ip<t>>',
+                      "dom": '<"row mb-2"<"d-md-flex align-items-center dt-layout-end col-md-auto justify-content-md-between justify-content-center d-flex flex-wrap gap-2 mb-md-0 mb-4 mt-0"fl><"d-md-flex align-items-center dt-layout-end col-md-auto ms-auto justify-content-md-between justify-content-center d-flex flex-wrap gap-2 mb-md-0 mb-4 mt-0 custom-export-btn">>rt<"bottom mt-4"ip><"clear">',
+
+                 //"dom": '<"top"fB>rt<"bottom"ip><"clear">',
+                 "lengthMenu": [[10,100, 500, 1000, -1], ['10','100', '500', '1000', 'All']],
+                 "pageLength": 10,
+                  scrollY: 400,
+                  scrollX: true,
+                  scrollCollapse: true,
+                         buttons: [
+              {
+                extend: 'colvis',
+                className: 'buttons-colvis d-none',
+                text: '<span class="colvis-counter">Columns</span>',
+                collectionLayout: 'fixed four-column',
+                postfixButtons: [{ extend: 'colvisRestore', text: 'Restore' }]
+              },
+              { extend: 'copyHtml5', className: 'buttons-copy d-none' },
+              { extend: 'excelHtml5', className: 'buttons-excel d-none' },
+              { extend: 'csvHtml5', className: 'buttons-csv d-none' },
+              { extend: 'pdfHtml5', className: 'buttons-pdf d-none', orientation: 'landscape' },
+                  { extend: 'print', className: 'buttons-print d-none' },'pageLength'
+            ]
+                          ,initComplete: function () {
+              const table = $('#tbl_EmployerReport').DataTable();
+
+              // Inject custom export + column + row count UI
+              $('.custom-export-btn').html(`
+                <div class="btn-group">
+                  <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                      <i class="bx bx-export me-1"></i> Export
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li><a class="dropdown-item export-btn" data-type="print" href="#">Print</a></li>
+                      <li><a class="dropdown-item export-btn" data-type="excel" href="#">Excel</a></li>
+                      <li><a class="dropdown-item export-btn" data-type="csv" href="#">CSV</a></li>
+                      <li><a class="dropdown-item export-btn" data-type="pdf" href="#">PDF</a></li>
+                      <li><a class="dropdown-item export-btn" data-type="copy" href="#">Copy</a></li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="btn-group ms-2">
+                  <button class="btn btn-outline-secondary colvis-btn">
+                    <span class="colvis-counter">Columns</span>
+                  </button>
+                </div>
+              `);
+
+              // Bind export actions
+              $('.export-btn').on('click', function (e) {
+                e.preventDefault();
+                const type = $(this).data('type');
+                table.button(`.buttons-${type}`).trigger();
+              });
+
+              // Trigger ColVis
+              $('.colvis-btn').on('click', function () {
+                table.button('.buttons-colvis').trigger();
+              });
+
+              // Update column counter dynamically
+              function updateColvisCounter() {
+                const total = table.columns().count();
+                const visible = table.columns(':visible').count();
+                $('.colvis-counter').text(`Columns (${visible} of ${total})`);
+              }
+
+              updateColvisCounter();
+              table.on('column-visibility.dt', updateColvisCounter);
+            }
+                  , ajax: {
+                      url: '@Url.Action("EmployerReport_GETDATA", "Report")',
+                      type: 'POST',
+                      data: function (d) {
+                         d.Report_Type = "Employer_Report";
+                         //console.log("Data received:", d);
+                      },
+                      beforeSend: function () { OnAjaxBegin(); },
+                      complete: function () { OnAjaxSuccess(); }
+                  },
+                  "columns": itemArray
+
+            });
+             var correct_check = "";
+             $('#correct_check').on('change', function () {
+              correct_check = $(this).is(':checked') ? "Yes" : "No";
+             });
+
+              var author_check = "";
+              $('#author_check').on('change', function () {
+                author_check = $(this).is(':checked') ? "Yes" : "No";
+              });
+
+             var callcenter_check = "";
+             $('#callcenter_check').on('change', function () {
+              callcenter_check = $(this).is(':checked') ? "Yes" : "No";
+             });
+
+
+
+            //Apply Custom search on jQuery DataTables here
+            $('#btn_filter').click(function () {
+                     //$('.select2').select2('destroy');
+               //Apply search
+               t.columns(1).search($("#Filing_Year").val());
+               t.columns(2).search($("#Employer_Id").val());
+               t.columns(3).search($("#city_search").val());
+               t.columns(4).search(correct_check);
+               t.columns(5).search(author_check);
+               t.columns(6).search(callcenter_check);
+               t.draw();
+                    //$('.select2').select2();
+            });
+                   $('#btn_reset').click(function () {
+                // Reset Select2 dropdowns and UI
+                $("#Filing_Year").val("").trigger('change');
+
+                // Reset Employer dropdown: clear value, disable, and optionally clear options
+                $("#Employer_Id").val("").trigger('change');         // Clear value
+                $("#Employer_Id").prop("disabled", true);            // Disable
+                $("#Employer_Id").html('<option value="">Select Employer</option>'); // Optional: reset options
+
+                // Reset other form fields
+                $("#city_search").val("");
+                $('#correct_check').prop('checked', false);
+                $('#author_check').prop('checked', false);
+                $('#callcenter_check').prop('checked', false);
+
+                // DataTable filters
+                t.columns(1).search("Select All");
+                t.columns(2).search("Select All");
+                t.columns(3).search("Select All");
+
+                correct_check = "No";
+                author_check = "No";
+                callcenter_check = "No";
+
+                t.columns(4).search(correct_check);
+                t.columns(5).search(author_check);
+                t.columns(6).search(callcenter_check);
+
+                t.draw();
+            });
+
+
+            $('#Filing_Year').on('change', function () {
+                            var filingYear = $(this).val();
+
+                            // Reset and disable Employer dropdown if no year selected
+                            if (!filingYear) {
+                                $('#Employer_Id').html('<option value="">Select Employer</option>').prop('disabled', true);
+                                return;
+                            }
+
+                            // Enable Employer dropdown
+                            $('#Employer_Id').prop('disabled', false);
+
+                            // Call the controller action with selected filingYear
+                            $.ajax({
+                                url: '@Url.Action("SearchEmployers", "Employer")',
+                                type: 'GET',
+                                    data: { term: '',pageSize : 10000,filingYear: filingYear },
+                                success: function (data) {
+                                    var options = '<option value="">Select Employer</option>';
+                                    $.each(data, function (i, employer) {
+                                            options += '<option value="' + employer.name + '">' + employer.name + '</option>';
+                                    });
+                                    $('#Employer_Id').html(options);
+                                },
+                                error: function () {
+                                    alert('Failed to load employers.');
+                                }
+                            });
+            });
+
+
+        });
+
+
+
+        function OnAjaxBegin() {
+            //$.blockUI({ message: '<h4>Loading...</h4>' });
+                loader_deform();
+        }
+
+        function OnAjaxSuccess() {
+            //$.unblockUI();
+              $('div.block_Employer_Report').unblock();
+        }
+
+        function loader_deform(msg) {
+           $('div.block_Employer_Report').block({
+              message: '<br><img src="../images/busy.gif" /><br/>Loading, please wait...<br/><br/>',
+              css: {
+                border: '1px solid #fff',
+                'border-radius': '10px'
+              }
+           });
+        }
+    </script>
+
+</section>

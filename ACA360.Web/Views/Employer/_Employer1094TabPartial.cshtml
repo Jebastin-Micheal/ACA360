@@ -1,0 +1,457 @@
+﻿@model ACA360.Web.Models.Employer1094ViewModel
+
+<form id="frm1094Details" method="post" autocomplete="off">
+    <input type="hidden" name="_1094View.EmployerId" value="@Model.EmployerId" />
+
+    <input type="hidden" name="_1094View.FilingYear" value="@Model.FilingYear" />
+
+    @* TODO: [GAP-17 / EMPLOYER-MANUAL-CODING INTEGRATION] The "Disable automatic coding" checkbox
+       lives in the modal (outside this form), so its value can't post directly. This hidden field
+       inside the form carries it: syncMatrix1094() writes "true"/"false" here on Update Table, and
+       it is serialized with the form on Save. Binds to bool _1094View.DisableAutoCounts. *@
+    <input type="hidden" name="_1094View.DisableAutoCounts" id="DisableAutoCounts"
+           value="@(Model.DisableAutoCounts ? "true" : "false")" />
+   
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label">Form Type</label>
+            <select class="form-select" asp-for="FormType" name="_1094View.FormType">
+                @* <option value="@Model.FormType" selected>@Model.FormType</option> *@
+                <option value="1095C">1095C</option>
+                <option value="1095B">1095B</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Origin Code</label>
+            <select name="_1094View.OriginCode" asp-for="OriginCode" asp-items="Model.OriginCodeOptions" class="form-select">
+               
+            </select>
+        </div>
+    </div>
+
+    <div class="mb-6">
+        <label class="form-label mb-2">Certification of Eligibility</label>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-check d-flex align-items-center mb-3" style="padding-left: 0;">
+                    <input class="form-check-input mt-0" type="checkbox" name="_1094View.CertA" id="CertA" value="true" @(Model.CertA ? "checked" : "") style="margin-left: 0;" />
+                    <input type="hidden" name="_1094View.CertA" value="false" />
+                    <label class="form-check-label ms-2" for="CertA">A. Qualifying Offer Method</label>
+                </div>
+                <div class="form-check d-flex align-items-center mb-3" style="padding-left: 0;">
+                    <input class="form-check-input mt-0" type="checkbox" name="_1094View.CertC" id="CertC" value="true"
+                    @(Model.CertC ? "checked" : "")
+                           style="margin-left: 0; pointer-events: none; opacity: 0.5;"
+                           onclick="return false;" tabindex="-1" disabled />
+                    <input type="hidden" name="_1094View.CertC" value="false" />
+                    <label class="form-check-label ms-2 text-muted" for="CertC" style="pointer-events: none; opacity: 0.7;">C. Reserved</label>
+                </div>
+                
+            </div>
+            <div class="col-md-6">
+                <div class="form-check d-flex align-items-center mb-3" style="padding-left: 0;">
+                    <input class="form-check-input mt-0" type="checkbox" name="_1094View.CertB" id="CertB" value="true"
+                    @(Model.CertB ? "checked" : "")
+                           style="margin-left: 0; pointer-events: none; opacity: 0.5;"
+                           onclick="return false;" tabindex="-1" disabled />
+                    <input type="hidden" name="_1094View.CertB" value="false" />
+                    <label class="form-check-label ms-2 text-muted" for="CertB" style="pointer-events: none; opacity: 0.7;">B. Reserved</label>
+                </div>
+                <div class="form-check d-flex align-items-center mb-3" style="padding-left: 0;">
+                    <input class="form-check-input mt-0" type="checkbox" name="_1094View.CertD" id="CertD" value="true" @(Model.CertD ? "checked" : "") style="margin-left: 0;" />
+                    <input type="hidden" name="_1094View.CertD" value="false" />
+                    <label class="form-check-label ms-2" for="CertD">D. 98% Offer Method</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+  
+    @* TODO: [GAP-17 / EMPLOYER-MANUAL-CODING INTEGRATION] Manual coding matrix opener —
+       spreadsheet-style editor matching the old K-System ManualEmployerView. *@
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <label class="form-label mb-0">ALE Information</label>
+        <button type="button" class="btn btn-sm btn-outline-primary" onclick="openMatrixModal1094()">
+            <i class="bx bx-grid-horizontal me-1"></i> Manual coding matrix
+        </button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-bordered text-center">
+            <thead class="table-light">
+                <tr>
+                    <th>Month</th>
+                    <th>Minimum Coverage</th>
+                    <th>Full-Time</th>
+                    <th>Total</th>
+                    <th>Aggregate</th>
+                    <th>Sec4980H</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    string[] months = { "All", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+                    for (int i = 0; i < 13; i++)
+                    {
+                        <tr>
+                            <td>@months[i]</td>
+
+                            <td>
+                                <input type="checkbox" id="vis_minCov_@i" onchange="$('#minCov_@i').val(this.checked ? 1 : 0);" @(Model.MinimumCoverage[i] == 1 ? "checked" : "") />
+                                <input type="hidden" name="_1094View.MinimumCoverage[@i]" id="minCov_@i" value="@Model.MinimumCoverage[i]" />
+                            </td>
+
+                            <td>
+                                <input type="number" id="vis_ft_@i" class="form-control form-control-sm px-1 py-0 d-inline-block w-auto"
+                                       value="@(Model.FullTime[i] == 0 ? "" : Model.FullTime[i].ToString())" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';"
+                                       oninput="$('#ft_@i').val(this.value === '' ? '0' : this.value);" />
+                                <input type="hidden" name="_1094View.FullTime[@i]" id="ft_@i" value="@Model.FullTime[i]" />
+                            </td>
+
+                            <td>
+                                <input type="number" id="vis_tot_@i" class="form-control form-control-sm px-1 py-0 d-inline-block w-auto"
+                                       value="@(Model.Total[i] == 0 ? "" : Model.Total[i].ToString())" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';"
+                                       oninput="$('#tot_@i').val(this.value === '' ? '0' : this.value);" />
+                                <input type="hidden" name="_1094View.Total[@i]" id="tot_@i" value="@Model.Total[i]" />
+                            </td>
+
+                            <td>
+                                <input type="checkbox" id="vis_agg_@i" onchange="$('#aggGrp_@i').val(this.checked ? 1 : 0);" @(Model.AggregateGroup[i] == 1 ? "checked" : "") />
+                                <input type="hidden" name="_1094View.AggregateGroup[@i]" id="aggGrp_@i" value="@Model.AggregateGroup[i]" />
+                            </td>
+
+                            <td>
+                                <input type="number" id="vis_sec_@i" class="form-control form-control-sm px-1 py-0 d-inline-block w-auto"
+                                       value="@Model.Sec4980H[i]" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';"
+                                       oninput="$('#sec_@i').val(this.value);" />
+                                <input type="hidden" name="_1094View.Sec4980H[@i]" id="sec_@i" value="@Model.Sec4980H[i]" />
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card-footer bg-transparent border-top-0 d-flex justify-content-end pt-3 pb-0 px-0">
+        
+        <button type="button" class="btn btn-primary rounded-pill me-2" id="btnSave1094">
+            <i class='bx bx-save'></i> Save
+        </button>
+        <button type="button" class="btn btn-dark rounded-pill" id="btnSaveContinue1094">
+            <i class='bx bx-skip-next-circle'></i> Save & Continue
+        </button>
+    </div>
+</form>
+
+@* TODO: [GAP-17 / EMPLOYER-MANUAL-CODING INTEGRATION] Manual Update Employer Detail matrix modal.
+   Design ported from the supplied Stitch mockup into plain CSS (this app is Bootstrap, no Tailwind),
+   kept in our app's navy/blue palette. Bootstrap modal + every mx_* id preserved, so
+   openMatrixModal1094 / syncMatrix1094 keep working unchanged.
+   Behaviour: all five Part III rows across All + 12 months + "Disable automatic coding".
+   Update Table writes into the 1094 form fields; Save persists them (with the K-System All-12
+   rollup + disableChanges lock handled server-side). *@
+<style>
+    #matrixModal1094 .mx-content { background:#f0f2f5; border:0; border-radius:.75rem; overflow:hidden; }
+    #matrixModal1094 .mx-head {
+        background: linear-gradient(to right, #1e3a8a, #2563eb);   /* our navy -> blue */
+        color:#fff; padding:1.25rem 1.5rem; position:relative;
+    }
+    #matrixModal1094 .mx-head h2 { font-size:1.35rem; font-weight:600; margin:0; letter-spacing:-.01em;color:#ffff;}
+    #matrixModal1094 .mx-head p { font-size:.85rem; opacity:.9; margin:.35rem 0 0; font-weight:500; }
+    #matrixModal1094 .mx-close {
+        position:absolute; top:1rem; right:1rem; width:1.75rem; height:1.75rem; border:0;
+        background:#ef4444; color:#fff; border-radius:.35rem; display:flex; align-items:center;
+        justify-content:center; font-size:1.1rem; line-height:1; box-shadow:0 2px 6px rgba(0,0,0,.25);
+    }
+    #matrixModal1094 .mx-close:hover { background:#dc2626; }
+    #matrixModal1094 .mx-body { padding:1.5rem; }
+    #matrixModal1094 .mx-tablecard { background:#fff; border:1px solid #e2e8f0; border-radius:.5rem; overflow:auto; }
+    #matrixModal1094 table.mx-table { width:100%; border-collapse:collapse; margin:0; }
+    #matrixModal1094 .mx-table thead th {
+        background:#f1f3f6; border-bottom:1px solid #e2e8f0; padding:.5rem .35rem;
+        font-size:.66rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+        color:#45464d; text-align:center; white-space:nowrap;
+    }
+    #matrixModal1094 .mx-table thead th.mx-detailcol { text-align:left; width:110px; padding-left:.75rem; }
+    #matrixModal1094 .mx-table tbody td { padding:.35rem .3rem; text-align:center; border-bottom:1px solid #edf2f7; }
+    #matrixModal1094 .mx-table tbody td.mx-detail {
+        text-align:left; font-weight:700; color:#1a202c; font-size:.8rem; padding-left:.75rem; white-space:nowrap;
+    }
+    #matrixModal1094 .mx-num {
+        width:100%; min-width:46px; height:2.3rem; border:1px solid #e2e8f0; border-radius:.35rem;
+        background:#f8fafc; text-align:center; font-size:.85rem;
+    }
+    #matrixModal1094 .mx-num:focus { outline:none; border-color:#2563eb; box-shadow:0 0 0 2px rgba(37,99,235,.2); }
+    #matrixModal1094 .mx-check { width:18px; height:18px; accent-color:#2563eb; cursor:pointer; }
+    #matrixModal1094 .mx-disablewrap { display:flex; align-items:center; gap:.6rem; }
+    #matrixModal1094 .mx-disablewrap label { font-size:.9rem; font-weight:500; color:#4a5568; margin:0; }
+    #matrixModal1094 .mx-foot {
+        background:#fff; border-top:1px solid #e2e8f0; padding:1rem 1.5rem;
+        display:flex; justify-content:space-between; align-items:center; gap:1rem;
+    }
+    #matrixModal1094 .mx-foot-actions { display:flex; gap:.75rem; }
+    #matrixModal1094 .mx-btn { border:0; border-radius:.5rem; padding:.6rem 2rem; font-weight:700; font-size:.85rem; color:#fff; }
+    #matrixModal1094 .mx-btn-cancel { background:#718096; }
+    #matrixModal1094 .mx-btn-cancel:hover { background:#4a5568; }
+    #matrixModal1094 .mx-btn-update { background:#2563eb; box-shadow:0 2px 6px rgba(37,99,235,.35); }
+    #matrixModal1094 .mx-btn-update:hover { background:#1d4ed8; }
+</style>
+<div class="modal fade" id="matrixModal1094" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content mx-content">
+            <div class="mx-head">
+                <h2>Manual Update Employer Detail</h2>
+                <p>Edit the 1094-C Part III counts for each of the 12 months, then click Update Table. If all 12 months match, they roll up to the "All" row.</p>
+                <button type="button" class="mx-close" data-bs-dismiss="modal" aria-label="Close"><i class="bx bx-x"></i></button>
+            </div>
+            <div class="mx-body">
+                <div class="mx-tablecard">
+                    <table class="mx-table">
+                        <thead>
+                            <tr>
+                                <th class="mx-detailcol">Detail</th>
+                                @* K-System manual modal shows only the 12 months (no "All" column);
+                                   the whole-row roll-up to "All" happens on Update Table / Save. *@
+                                @{ string[] mxMonths = { "All", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" }; }
+                                @for (int i = 1; i <= 12; i++) { <th>@mxMonths[i]</th> }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="mx-detail">Min Coverage</td>
+                                @for (int i = 1; i <= 12; i++) { <td><input type="checkbox" class="mx-check" id="mx_minCov_@i" @(Model.MinimumCoverage[i] == 1 ? "checked" : "") /></td> }
+                            </tr>
+                            <tr>
+                                <td class="mx-detail">Full-Time</td>
+                                @for (int i = 1; i <= 12; i++) { <td><input type="text" class="mx-num" id="mx_ft_@i" value="@(Model.FullTime[i] == 0 ? "" : Model.FullTime[i].ToString())" /></td> }
+                            </tr>
+                            <tr>
+                                <td class="mx-detail">Total</td>
+                                @for (int i = 1; i <= 12; i++) { <td><input type="text" class="mx-num" id="mx_tot_@i" value="@(Model.Total[i] == 0 ? "" : Model.Total[i].ToString())" /></td> }
+                            </tr>
+                            <tr>
+                                <td class="mx-detail">Aggregate</td>
+                                @for (int i = 1; i <= 12; i++) { <td><input type="checkbox" class="mx-check" id="mx_agg_@i" @(Model.AggregateGroup[i] == 1 ? "checked" : "") /></td> }
+                            </tr>
+                            <tr>
+                                <td class="mx-detail">Sec 4980H</td>
+                                @for (int i = 1; i <= 12; i++) { <td><input type="text" class="mx-num" id="mx_sec_@i" value="@(Model.Sec4980H[i] == 0 ? "" : Model.Sec4980H[i].ToString())" /></td> }
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="mx-foot">
+                @* Disable automatic coding — matches K-System's ManualEmployerView checkbox. Footer-left. *@
+                <div class="mx-disablewrap">
+                    <input type="checkbox" class="mx-check" id="mx_disableAuto" @(Model.DisableAutoCounts ? "checked" : "") />
+                    <label for="mx_disableAuto"><strong>Disable automatic coding</strong> — recalculation will not overwrite these counts.</label>
+                </div>
+                <div class="mx-foot-actions">
+                    <button type="button" class="mx-btn mx-btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="mx-btn mx-btn-update" onclick="syncMatrix1094()">Update Table</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // TODO: [GAP-17 / EMPLOYER-MANUAL-CODING INTEGRATION] Manual coding matrix open/sync.
+    function openMatrixModal1094() {
+        // The modal has only the 12 months (no "All"). Each 1094-C column has its OWN "All
+        // 12 Months" line, so a metric may be rolled up to "All" (months blank, "All" holds
+        // the value) INDEPENDENTLY of the others. Expand each metric that is in "All" mode
+        // into all 12 modal months so the user sees/edits it; otherwise read its months.
+        function v(id) { return $('#' + id).val(); }
+        function num(id) { var x = v(id); return x === '' || x == null ? 0 : (parseInt(x, 10) || 0); }
+        // A numeric metric (ft/tot/sec) is in "All" mode if its months are all 0 but "All" != 0.
+        function numAll(pfx) {
+            for (var j = 1; j <= 12; j++) if (num(pfx + '_' + j) !== 0) return false;
+            return num(pfx + '_0') !== 0;
+        }
+        // A checkbox metric (minCov/agg) is in "All" mode if its months are all unticked but "All" is ticked.
+        function chkAll(pfx) {
+            for (var j = 1; j <= 12; j++) if (v(pfx + '_' + j) == '1') return false;
+            return v(pfx + '_0') == '1';
+        }
+        var minAll = chkAll('minCov'), aggAll = chkAll('aggGrp'),
+            ftAll = numAll('ft'), totAll = numAll('tot'), secAll = numAll('sec');
+
+        for (var i = 1; i <= 12; i++) {
+            $('#mx_minCov_' + i).prop('checked', v('minCov_' + (minAll ? 0 : i)) == '1');
+            $('#mx_agg_' + i).prop('checked', v('aggGrp_' + (aggAll ? 0 : i)) == '1');
+            var ft = v('ft_' + (ftAll ? 0 : i)), tot = v('tot_' + (totAll ? 0 : i)), sec = v('sec_' + (secAll ? 0 : i));
+            $('#mx_ft_' + i).val(ft === '0' ? '' : ft);
+            $('#mx_tot_' + i).val(tot === '0' ? '' : tot);
+            $('#mx_sec_' + i).val(sec === '0' ? '' : sec);
+        }
+        $('#mx_disableAuto').prop('checked', $('#DisableAutoCounts').val() === 'true');   // hidden field -> modal checkbox
+        new bootstrap.Modal(document.getElementById('matrixModal1094')).show();
+    }
+
+    function syncMatrix1094() {
+        // Read the 12 modal months into arrays (index 1..12).
+        var minc = [], agg = [], ft = [], tot = [], sec = [];
+        for (var i = 1; i <= 12; i++) {
+            minc[i] = $('#mx_minCov_' + i).is(':checked') ? 1 : 0;
+            agg[i]  = $('#mx_agg_' + i).is(':checked') ? 1 : 0;
+            ft[i]   = ($('#mx_ft_' + i).val()  || '').trim();
+            tot[i]  = ($('#mx_tot_' + i).val() || '').trim();
+            sec[i]  = ($('#mx_sec_' + i).val() || '').trim();
+        }
+
+        // Per-metric K-System roll-up (matches server CollapseAllTwelveMonths): each column
+        // rolls up INDEPENDENTLY — a metric whose 12 months are identical and used collapses
+        // to its "All" row (index 0) with Jan..Dec blanked; otherwise its months are kept and
+        // its "All" cleared. So Min Coverage can sit on "All" while Full-Time stays per-month.
+        function num(v) { return v === '' ? 0 : (parseInt(v, 10) || 0); }
+
+        // Writers for one inline-grid cell (hidden posted field + visible input).
+        function writeChk(hid, vis, idx, on) { $('#' + hid + '_' + idx).val(on ? 1 : 0); $('#' + vis + '_' + idx).prop('checked', !!on); }
+        function writeNum(hid, vis, idx, val) { $('#' + hid + '_' + idx).val(val === '' ? '0' : val); $('#' + vis + '_' + idx).val(val); }
+
+        function collapseChk(vals, hid, vis) {
+            var used = false; for (var i = 1; i <= 12; i++) if (vals[i] !== 0) { used = true; break; }
+            var uniform = used; for (var i = 2; i <= 12 && uniform; i++) if (vals[i] !== vals[1]) uniform = false;
+            if (uniform) { writeChk(hid, vis, 0, vals[1]); for (var i = 1; i <= 12; i++) writeChk(hid, vis, i, 0); }
+            else { writeChk(hid, vis, 0, 0); for (var i = 1; i <= 12; i++) writeChk(hid, vis, i, vals[i]); }
+        }
+        function collapseNum(vals, hid, vis) {
+            var used = false; for (var i = 1; i <= 12; i++) if (num(vals[i]) !== 0) { used = true; break; }
+            var uniform = used; for (var i = 2; i <= 12 && uniform; i++) if (num(vals[i]) !== num(vals[1])) uniform = false;
+            if (uniform) { writeNum(hid, vis, 0, vals[1]); for (var i = 1; i <= 12; i++) writeNum(hid, vis, i, ''); }
+            else { writeNum(hid, vis, 0, ''); for (var i = 1; i <= 12; i++) writeNum(hid, vis, i, vals[i]); }
+        }
+
+        collapseChk(minc, 'minCov', 'vis_minCov');
+        collapseChk(agg, 'aggGrp', 'vis_agg');
+        collapseNum(ft, 'ft', 'vis_ft');
+        collapseNum(tot, 'tot', 'vis_tot');
+        collapseNum(sec, 'sec', 'vis_sec');
+
+        $('#DisableAutoCounts').val($('#mx_disableAuto').is(':checked') ? 'true' : 'false');   // modal checkbox -> hidden field (posts on Save)
+
+        var el = document.getElementById('matrixModal1094');
+        (bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el)).hide();
+    }
+</script>
+<script>
+    $(document).ready(function () {
+
+        // TODO: [GAP-17 / EMPLOYER-MANUAL-CODING INTEGRATION] Re-render the 1094 tab from the DB so
+        // the K-System "All 12 Months" rollup and the saved lock state show immediately after Save.
+        function reload1094Pane() {
+            var empId = $('input[name="_1094View.EmployerId"]').val();
+            var $pane = $('#frm1094Details').closest('.tab-pane');
+            if (empId && $pane.length) {
+                $.get('@Url.Action("Employer1094Tab", "Employer")', { aca_employerId: empId }, function (html) {
+                    $pane.html(html);
+                });
+            }
+        }
+
+        // Function to handle saving
+            function save1094Details(isContinue) {
+        var $form = $('#frm1094Details');
+        var $btnSave = $('#btnSave1094');
+        var $btnContinue = $('#btnSaveContinue1094');
+
+        // serialize() automatically collects all inputs with name="_1094View.Property"
+        var formData = $form.serialize();
+
+        // Visual Loading State
+        $btnSave.prop('disabled', true);
+        $btnContinue.prop('disabled', true);
+        var originalText = $btnSave.html();
+        $btnSave.html('<i class="bx bx-loader-alt bx-spin"></i> Saving...');
+                // 2. Anti-Forgery Token
+         var token = $('input[name="__RequestVerificationToken"]').val();
+        $.ajax({
+            url: '@Url.Action("SaveEmployer1094Tab", "Employer")', // Adjust Controller Name if needed
+            type: 'POST',
+            headers: {
+             "RequestVerificationToken": token
+            },
+            data: formData,
+                success: function (response) {
+        if (response.success) {
+
+            if (isContinue) {
+                reload1094Pane();   // refresh the (now-hidden) 1094 tab so it is correct on return
+                // Find the current active tab and click the next one
+                var $activeTab = $('.nav-pills .nav-link.active');
+                var $nextTab = $activeTab.parent().next().find('.nav-link');
+
+                if ($nextTab.length > 0) {
+                    $nextTab.trigger('click'); // Switch tab
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Saved!',
+                        text: response.message,
+                        timer: 1000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Saved!',
+                        text: response.message,
+                        confirmButtonColor: '#696cff'
+                    }).then(function () {
+                        Swal.fire('Info', 'No next tab available.', 'info');
+                    });
+                }
+            } else {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Saved!',
+                    text: response.message,
+                    timer: 1200,
+                    showConfirmButton: false
+                });
+                reload1094Pane();   // show the collapsed/rolled-up data immediately
+            }
+
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: response.message
+            });
+        }
+    },
+    error: function (xhr) {
+        Swal.fire({
+            icon: 'error',
+            title: 'System Error',
+            text: xhr.statusText
+        });
+    },
+            complete: function () {
+                // Reset Buttons
+                $btnSave.prop('disabled', false).html(originalText);
+                $btnContinue.prop('disabled', false);
+            }
+        });
+    }
+
+        // --- Click Handlers ---
+
+        // Save Button
+        $(document).off('click', '#btnSave1094').on('click', '#btnSave1094', function (e) {
+            e.preventDefault();
+            save1094Details(false); // false = stay on page
+        });
+
+        // Save & Continue Button
+        $(document).off('click', '#btnSaveContinue1094').on('click', '#btnSaveContinue1094', function (e) {
+            e.preventDefault();
+            save1094Details(true); // true = move to next tab
+        });
+
+    });
+</script>

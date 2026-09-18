@@ -1,0 +1,681 @@
+﻿
+@using ACA360.Core.Extensions
+@model ACA360.Web.Models.EmployerDetailsViewModel
+@{
+    // Guard: a null model (e.g. the split-screen compare year has no employer
+    // record for the requested filing year) must not dereference Model below.
+    // Emit a friendly empty state and stop rendering here.
+    if (Model == null)
+    {
+        <div class="alert alert-warning d-flex align-items-center m-3" role="alert">
+            <i class='bx bx-error-circle me-2'></i>
+            <div>Employer details not available for the selected filing year.</div>
+        </div>
+        return;
+    }
+
+    bool hasTrackerId = !string.IsNullOrEmpty(Model.EmployerId);
+    // Generate a unique prefix for this specific instance of the tabs
+    var tabPrefix = "tab_" + Guid.NewGuid().ToString("N").Substring(0, 6);
+}
+<style>
+    /* Space between tabs */
+
+    /* Default (Inactive) */
+    .nav-pills .nav-link {
+        border: 1px solid var(--bs-border-color);
+        border-top: 2px solid var(--bs-primary);
+        border-radius: 0.75rem; /* curved */
+
+        color: var(--bs-body-color);
+        transition: all .2s ease-in-out;
+    }
+
+        .nav-pills .nav-link i {
+            color: var(--bs-primary);
+        }
+
+        /* Hover */
+        .nav-pills .nav-link:hover:not(.active) {
+            background-color: var(--bs-primary-bg-subtle);
+            color: var(--bs-primary);
+        }
+
+            .nav-pills .nav-link:hover:not(.active) i {
+                color: var(--bs-primary);
+            }
+
+        /* Active */
+        .nav-pills .nav-link.active,
+        .nav-pills .show > .nav-link {
+            border: 1px solid var(--bs-success-border-subtle);
+            border-bottom: 2px solid var(--bs-success);
+            background-color: var(--bs-success-bg-subtle) !important;
+            color: var(--bs-success) !important;
+            font-weight: 600;
+            box-shadow: none !important;
+        }
+
+            .nav-pills .nav-link.active i {
+                color: var(--bs-success) !important;
+            }
+
+        .nav-pills .nav-link:focus {
+            box-shadow: none !important;
+        }
+</style>
+
+<input type="hidden" id="hdnEmployerId" value="@Model.EmployerId" />
+<input type="hidden" id="hdnACAEmployerId" value="@Model.ACA_EmployerId" />
+<input type="hidden" id="hdnEmployerName" value="@Model.Name" />
+@if (Model == null)
+{
+<div class="alert alert-warning d-flex align-items-center" role="alert">
+            <i class='bx bx-error-circle me-2'></i>
+            <div>Employer details not available.</div>
+        </div>
+}
+else
+{
+    @* --- HIDDEN FIELDS FOR LOGIC --- *@
+    <input type="hidden" id="hdnEmployerId" value="@Model.EmployerId" />
+    <input type="hidden" id="hdnACAEmployerId" value="@Model.ACA_EmployerId" />
+    <input type="hidden" id="hdnEmployerName" value="@Model.Name" />
+
+    @* =========================================================================
+       SECTION 1: EMPLOYER PROFILE (MODERN DESIGN)
+       ========================================================================= *@
+    <div class="card shadow-sm border-0 mb-4">
+
+        <div class="card-header d-flex align-items-center justify-content-between bg-transparent border-bottom py-3">
+            <div class="d-flex align-items-center">
+                <h5 class="mb-0 fw-bold">Employer Profile</h5>
+            </div>
+            <div class="ms-auto" id="editActionsFooter" style="display: none !important;">
+                <button type="button" class="btn btn-label-secondary me-2" id="bottomCancelBtn">
+                    Discard
+                </button>
+                <button type="button" class="btn btn-primary" id="employer_common_SaveBtn">
+                    Save Changes
+                </button>
+            </div>
+            <button type="button" id="toggleEditBtn" class="btn btn-outline-primary px-4 shadow-sm">
+                <i class='bx bx-edit me-1'></i> Edit
+            </button>
+        </div>
+
+        <fieldset disabled id="employerFieldset" class="border-0" autocomplete="off">
+            <div class="card-body">
+                @* --- Row 1: Identity --- *@               
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Employer Name</label>
+                        <div class="input-group">
+
+                            <input type="text" class="form-control" autocomplete="off" id="EmployerName" value="@Model.Name" placeholder="Enter Employer Name" oninput="this.value=this.value.replace(/[^A-Za-z0-9 &().'\/-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" maxlength="75">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">EIN (Tax ID)</label>
+                        <div class="input-group border rounded">
+                            @* Added border & rounded for safety *@
+                            
+                            <input type="text"
+                                   class="form-control border-0 ps-2 ein-input"
+                                   placeholder="EIN" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'').slice(0,9).replace(/^(\d{2})(\d)/,'$1-$2')"
+                                   value="@(CanViewSSNorEIN ? (Model.EIN ?? "") : DataMasker.MaskEIN(Model.EIN ?? ""))"
+                                   aria-describedby="basic-addon-ein" id="hdnEIN">
+                            @* <input type="hidden" id="hdnEIN" value="@Model.EIN"> *@
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Organization Type</label>
+                        <div class="input-group">
+
+                            <input type="text" class="form-control bg-secondary-subtle" id="defaultSelect" value="@Model.Type" readonly autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Filing Year</label>
+                        <div class="input-group">
+
+                            <input type="text" class="form-control bg-secondary-subtle" id="FilingYear" value="@Model.FilingYear" readonly>
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-4">
+                @* --- Row 2: Address --- *@
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Address1</label>
+                        <div class="input-group">
+
+                            <input type="text" class="form-control" id="Address1" autocomplete="off" name="Address1" value="@Model.Address1" placeholder="123 Main St" maxlength="150" oninput="this.value=this.value.replace(/[^A-Za-z0-9 #&'(),.\/-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Address2</label>
+                        <div class="input-group">
+
+                            <input type="text" class="form-control" id="Address2" autocomplete="off" name="Address2" value="@Model.Address2" placeholder="Suite/Apt" maxlength="150" oninput="this.value=this.value.replace(/[^A-Za-z0-9 #&'(),.\/-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()">
+                        </div>
+                    </div>
+                </div>
+                @* --- Row 3: City/State/Zip --- *@
+                <div class="row g-3 mt-1">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">City</label>
+                        <div class="input-group">
+
+                            <input type="text" autocomplete="off" class="form-control" id="City" value="@Model.City" maxlength="50" oninput="this.value=this.value.replace(/[^A-Za-z .'-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">State</label>
+                        <div class="input-group">
+
+                            <select asp-for="StateId" asp-items="Model.StateList" class="form-select" id="State" autocomplete="off">
+                                <option value="">--Select State--</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Zip Code</label>
+                        <div class="input-group">
+
+                            <input type="number" class="form-control" autocomplete="off" id="ZipCode" value="@Model.ZipCode" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'').slice(0,9).replace(/^(\d{5})(\d)/,'$1-$2')">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Country</label>
+                        <div class="input-group">
+
+                            <select asp-for="Country" asp-items="Model.CountryList" class="form-select" id="Country" autocomplete="off"></select>
+                        </div>
+                    </div>
+                </div>
+                @* --- Switched Settings (Modern Toggles) --- *@
+                <div class="mt-4 p-3 rounded bg-label-primary">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" autocomplete="off" id="foreignAddressCheckbox" @(Model.IsForeignAddress ? "checked" : "")>
+                                <label class="form-check-label fw-medium text-dark" for="foreignAddressCheckbox">Foreign Address</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="callCenterCheckbox" @(Model.enableCallCenter ? "checked" : "")>
+                                <label class="form-check-label fw-medium text-dark" for="callCenterCheckbox">Call Center</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="correctedCheckbox" @(Model.IsCorrected ? "checked" : "")>
+                                <label class="form-check-label fw-medium text-dark" for="correctedCheckbox">Mark Corrected</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>      
+        </fieldset>
+    
+    </div>
+
+    @* =========================================================================
+       SECTION 2: TABS 
+       ========================================================================= *@
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="accordion stick-top course-content-fixed">
+            <div class="accordion-item mb-0 active border-0">
+                <div class="accordion-header bg-transparent" id="headingOtherDetails">
+                    <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                        <div class="h5 m-0 text-nowrap flex-grow-1 text-center">
+                            DETAILED INFORMATION
+                            @if (!hasTrackerId)
+                            {
+                                <span class="badge bg-label-warning ms-2" style="font-size: 0.7em;">
+                                    <i class='bx bx-error'></i> No Tracker Details
+                                </span>
+                            }
+                        </div>
+                        <button type="button" class="accordion-button collapsed shadow-none bg-transparent" data-bs-toggle="collapse" data-bs-target="#otherDetailsAccordion">
+                        </button>
+                    </div>
+                </div>
+
+
+
+                <div id="otherDetailsAccordion" class="accordion-collapse collapse show mt-2">
+                    <div class=" mb-3">
+                        <ul class="nav nav-pills nav-fill mb-0" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active py-3"
+                                        id="@(tabPrefix)-1094-btn"
+                                        data-bs-toggle="tab"
+                                        data-bs-target="#@(tabPrefix)-1094Details"
+                                        type="button"
+                                        role="tab"
+                                        data-url="@Url.Action("Employer1094Tab", "Employer", new { aca_employerId = Model.ACA_EmployerId })">
+                                    <i class="bx bx-file me-2"></i>
+                                    1094 Details
+                                </button>
+                            </li>
+
+
+                            <li class="nav-item">
+                                <button class="nav-link py-3"
+                                        id="@(tabPrefix)-erinfo-btn"
+                                        data-bs-toggle="tab"
+                                        data-bs-target="#@(tabPrefix)-erinfo"
+                                        type="button"
+                                        role="tab">
+                                    <i class="bx bx-buildings me-2"></i>
+                                    ER Info
+                                </button>
+                            </li>
+
+                            <li class="nav-item">
+                                <button class="nav-link py-3"
+                                        id="@(tabPrefix)-service-btn"
+                                        data-bs-toggle="tab"
+                                        data-bs-target="#@(tabPrefix)-service"
+                                        type="button"
+                                        role="tab"
+                                        data-url="@Url.Action("EmployerServiceInfo", "Employer", new { employerId = Model.EmployerId, planYear = Model.FilingYear })">
+                                    <i class="bx bx-cog me-2"></i>
+                                    Service Info
+                                </button>
+                            </li>
+
+                            <li class="nav-item">
+                                <button class="nav-link py-3"
+                                        id="@(tabPrefix)-other-btn"
+                                        data-bs-toggle="tab"
+                                        data-bs-target="#@(tabPrefix)-other"
+                                        type="button"
+                                        role="tab"
+                                        data-url="@Url.Action("EmployerOtherDetailsPartial", "Employer", new { aca_employerId = Model.ACA_EmployerId })">
+                                    <i class="bx bx-info-circle me-2"></i>
+                                    Other Info
+                                </button>
+                            </li>
+
+                        </ul>
+                    </div>
+                    <div id="scrollable-tab-container" class="position-relative h-100 px-4 pb-4">
+                        <div class="tab-content h-100 shadow-none p-0">
+                            <div class="tab-pane fade show active" id="@(tabPrefix)-1094Details" role="tabpanel">
+                                <fieldset class="independent-fieldset" disabled>
+                                    <div id="1094-content"></div>
+                                </fieldset>
+                            </div>
+
+                            <div class="tab-pane fade" id="@(tabPrefix)-other" role="tabpanel">
+                                <fieldset class="independent-fieldset" disabled>
+                                    <div id="other-content"></div>
+                                </fieldset>
+                            </div>
+                            <div class="tab-pane fade" id="@(tabPrefix)-erinfo" role="tabpanel">
+                                <fieldset class="tracker-fieldset" disabled data-tracker-exists="@hasTrackerId.ToString().ToLower()">
+                                    @if (!hasTrackerId)
+                                    {
+                                        <div class="alert alert-warning text-center m-2 p-2"><i class='bx bx-error me-2'></i>No Tracker Info Available</div>
+                                    }
+                                    @Html.Partial("_EmployerInfoPartial", Model)
+                                </fieldset>
+                            </div>
+
+                            <div class="tab-pane fade" id="@(tabPrefix)-service" role="tabpanel">
+                                <fieldset class="tracker-fieldset" disabled data-tracker-exists="@hasTrackerId.ToString().ToLower()">
+                                    <div id="service-content"></div>
+                                </fieldset>
+                            </div>
+
+                            
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* =========================================================================
+    SECTION 3: Notes
+    ========================================================================= *@
+    <div class="col-12 mt-4">
+        <div class="card mb-4">
+            <div class="card-header p-0 mx-3 py-4">
+                <ul class="nav nav-pills nav-fill mb-0" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#employer_notes" type="button" role="tab">
+                            <i class="bx bx-notepad me-1"></i> Notes
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#employer_auditlogs" type="button" role="tab" onclick="loadEmployerAuditData('@Model.ACA_EmployerId')">
+                            <i class="bx bx-history me-1"></i> Audit Logs
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body pt-2">
+                <div class="tab-content p-0">
+                    <div class="tab-pane fade show active" id="employer_notes" role="tabpanel">
+                        @await Html.PartialAsync("_NotesTablePartial", new ACA360.Web.Models.NotesWidgetViewModel
+                        {
+                            EntityType = ACA360.Core.Models.NoteEntityType.Employer,
+                                        EntityId = int.TryParse(Model.EmployerId, out int employerEntityId) ? employerEntityId : 0,
+                                        Title = "Employer"
+                                        })
+                </div>
+                <div class="tab-pane fade" id="employer_auditlogs" role="tabpanel">
+                    <div id="auditLogContainer_Employer">
+                        <div class="text-center py-5 text-muted">
+                            <div class="spinner-border text-primary mb-3" role="status"></div>
+                            <p>Loading Audit Logs...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+}
+@* <partial name="~/Views/Components/Modals/_TrackerModalsPartial.cshtml" /> *@
+@* @await Html.PartialAsync("~/Views/Components/Modals/_TrackerModalsPartial.cshtml") *@
+<!-- Modals -->
+@await Html.PartialAsync("Components/Modals/_TrackerModalsPartial")
+<script>
+    var canViewFullEIN = @(CanViewSSNorEIN ? "true" : "false");
+        $(document).ready(function () {
+           // 1. --- HELPER: Find elements inside the current active Tab Pane ---
+    function getActivePane() {
+         // In split-screen compare the read-only right pane ALSO has an active tab.
+         // Return only the editable side's active pane(s) so the compare guard in
+         // syncFieldsetStates doesn't short-circuit and leave (e.g.) the 1094 tab
+         // disabled when Edit is clicked.
+         var $active = $('.tab-pane.active.show');
+         var $editable = $active.filter(function () { return $(this).closest('.cmp-right').length === 0; });
+         return $editable.length ? $editable : $active;
+    }
+
+        // 2. --- EDIT BUTTON LOGIC ---
+        $(document).on('click', '#toggleEditBtn', function () {
+            var $btn = $(this);
+            var $commonFs = $('#employerFieldset');
+
+            // Use the disabled property itself as the source of truth
+            var isEnabling = $commonFs.prop('disabled');
+
+            if (isEnabling) {
+                // Masking Logic: Switch to raw EIN
+                    if (canViewFullEIN) {
+    var rawEIN = $('#hdnEIN').val();
+    $('input[placeholder="EIN"]').val(rawEIN);
+    }
+
+
+                // UI Switch: Show footer actions
+                $('#editActionsFooter').attr('style', 'display: flex !important');
+                $btn.hide();
+
+                // Enable Main Profile
+                $commonFs.prop('disabled', false);
+                $('.independent-fieldset').prop('disabled', false);
+                
+                // Sync the currently visible tab
+                syncFieldsetStates(getActivePane());
+            }
+        });
+
+        // 3. --- CANCEL BUTTON LOGIC ---
+        $(document).on('click', '#bottomCancelBtn', function() {
+            // Disable everything
+            $('fieldset').prop('disabled', true);
+            $('#toggleEditBtn').show();
+            $('#editActionsFooter').attr('style', 'display: none !important');
+
+            // Restore Masked EIN logic
+            var rawEIN = $('#hdnEIN').val();
+                if (!canViewFullEIN && rawEIN && rawEIN.length > 2) {
+    var masked = rawEIN.substring(0, 2) + "-XXXXXXX";
+    $('input[placeholder="EIN"]').val(masked);
+    }
+
+        });
+
+        // 4. --- UNIVERSAL TAB CLICK HANDLER ---
+        $(document).on('click', '.nav-link[data-bs-toggle="tab"]', function (e) {
+            var $clickedTab = $(this);
+            var targetSelector = $clickedTab.attr('data-bs-target');
+            var $targetPane = $(targetSelector);
+
+            // UI Switch
+            $targetPane.siblings('.tab-pane').removeClass('show active').hide();
+            $targetPane.addClass('show active').show();
+
+            // Check if we need to load AJAX content
+            var $contentDiv = $targetPane.find('div[id$="-content"]');
+            if ($contentDiv.length > 0) {
+                loadTabContent($clickedTab, $contentDiv);
+            } else {
+                // Content already exists, just sync the edit state
+                syncFieldsetStates($targetPane);
+            }
+        });
+
+        // 5. --- AJAX LOADING HELPER ---
+        function loadTabContent($btn, $container) {
+            var url = $btn.data('url');
+            if (!url) return;
+
+            if ($container.data('loaded')) {
+                syncFieldsetStates($container.closest('.tab-pane'));
+                return;
+            }
+
+            $container.html('<div class="text-center p-4"><div class="spinner-border text-primary"></div></div>');
+
+            $.get(url, function (html) {
+                $container.html(html);
+                $container.data('loaded', true);
+                // Sync immediately after HTML is injected into the DOM
+                syncFieldsetStates($container.closest('.tab-pane'));
+            });
+        }
+
+        // 6. --- SYNC EDIT MODE (The "Brain") ---
+        function syncFieldsetStates($container) {
+               // Split-screen comparison: the compare-year (right) pane is strictly
+    // read-only. Its tabs lazy-load through this same handler, so force
+    // everything disabled and hide action buttons, and never fall through
+    // to the global edit-mode logic (which keys off the LEFT pane's Edit
+    // button and would wrongly re-enable the compare copy).
+    if ($container.closest('.cmp-right').length) {
+        $container.find('fieldset').prop('disabled', true);
+        $container.find('input, select, textarea').prop('disabled', true);
+        $container.find('.btn').not('.nav-link, [data-bs-toggle="tab"]').hide();
+        return;
+    }
+
+        // We determine if we are in "Edit Mode" by checking if the Edit button is gone
+        var isEditMode = $('#toggleEditBtn').is(':hidden');
+
+        $container.find('fieldset').each(function() {
+            var $fs = $(this);
+
+            if ($fs.hasClass('tracker-fieldset')) {
+                // For Tracker tabs, check if data actually exists to be edited
+                var hasTracker = $fs.data('tracker-exists');
+                if (hasTracker === true || hasTracker === "true") {
+                    $fs.prop('disabled', !isEditMode);
+                    // Explicitly target inputs/selects inside to force the UI update
+                    $fs.find('select, input, button').prop('disabled', !isEditMode);
+                } else {
+                    $fs.prop('disabled', true); // Always disabled if no data
+                }
+            } else {
+                // For 1094 or "Other" details
+                $fs.prop('disabled', !isEditMode);
+            }
+        });
+          // The 1094 tab is a <form> with no <fieldset>, so the loop above can't
+    // toggle it. Enable/disable its editable controls directly to match edit
+    // mode — but never touch hidden fields or the intentionally-locked
+    // Reserved certs (marked tabindex="-1").
+    $container.find('form[id$="frm1094Details"]')
+        .find('input, select, textarea, button')
+        .each(function () {
+            if (this.type === 'hidden') return;
+            if (this.getAttribute('tabindex') === '-1') return;
+            $(this).prop('disabled', !isEditMode);
+        });
+         applyAffiliateButtonRule($container);
+    }
+        // Add: editable + this page is itself the primary employer.
+    function applyAffiliateButtonRule($container) {
+        var $sel = $container.find('#affiliateSelect');
+        if (!$sel.length) return;                       // not the ER Info tab
+        var selEditable = !$sel.prop('disabled');
+
+        var sel = $sel.find(':selected');
+        var isMain = sel.data('is-main') === true || sel.data('is-main') === 'true';
+        $container.find('#btnEditAffiliate, #btnDeleteAffiliate')
+                  .prop('disabled', !(selEditable && !isMain));
+
+        var $add = $container.find('#btnAddAffiliate');
+        var isMainPage = $add.data('is-main-page') === true || $add.data('is-main-page') === 'true';
+         $add.prop('disabled', !(selEditable && isMainPage));
+        //$add.toggleClass('d-none', !isMainPage);
+    }
+
+        // 7. --- COMMON SAVE LOGIC ---
+             //common update
+        $('#employer_common_SaveBtn').on('click', function (e) {
+            e.preventDefault();
+
+            // 1. Construct the Data Object (JSON style)
+            var employerData = {
+                // IDs from Hidden Fields
+                EmployerId: $('#hdnEmployerId').val(),
+                ACA_EmployerId: $('#hdnACAEmployerId').val(),
+                Name: $('#EmployerName').val(),
+
+                // Text Fields (Using placeholders because of duplicate IDs in your HTML)
+                //EIN: $('input[placeholder="EIN"]').val(),
+                EIN: $('#hdnEIN').val(),
+                        FilingYear: $('#FilingYear').val(),
+                Type: $('#defaultSelect').val(),
+
+                // Address Info
+                Address1: $('#Address1').val(),
+                Address2: $('#Address2').val(),
+                City: $('#City').val(),
+                StateId: $('#State').val(),
+                State: $('#State').val() === "" ? null : $('#State option:selected').text(),
+                ZipCode: $('#ZipCode').val(),
+                Country: $('#Country').val(),
+
+                // Boolean/Checkboxes
+                IsForeignAddress: $('#foreignAddressCheckbox').is(':checked'),
+                enableCallCenter: $('#callCenterCheckbox').is(':checked'),
+                IsCorrected: $('#correctedCheckbox').is(':checked')
+            };
+             var token = $('input[name="__RequestVerificationToken"]').val();
+            // 2. Button Loading State
+            var $btn = $(this);
+            var originalText = $btn.html();
+            $btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin"></i> Saving...');
+
+                    // 3. Send via AJAX
+        $.ajax({
+            url: '@Url.Action("UpdateEmployerCommon", "Employer")',
+            type: 'POST',
+            data: employerData, // Pass the object directly
+            // contentType: 'application/x-www-form-urlencoded; charset=UTF-8', // Default for [FromForm]
+           headers: {
+              "RequestVerificationToken": token   // ✅ Add this
+           },
+
+            success: function (response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Saved!',
+                        text: response.message,
+                        confirmButtonColor: '#696cff'
+                    });
+
+                    // Optional: Re-disable form after save
+                    $('fieldset').prop('disabled', true);
+                    $('#editActionsFooter').attr('style', 'display: none !important');
+                    $('#toggleEditBtn').show().html('<i class="bx bx-pencil"></i> Edit');
+
+                    if (typeof GridManager !== 'undefined' && GridManager.reload) {
+                    GridManager.reload();
+                    }
+                } else {
+                    var errorMsg = response.message;
+                     if (response.errors) {
+                   errorMsg += "<br>" + response.errors.join("<br>");
+                }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        html: errorMsg
+                    });
+                }
+            },
+            error: function (xhr, status, error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error
+                });
+            },
+            complete: function () {
+                $btn.prop('disabled', false).html(originalText);
+            }
+        });
+        });
+         // --- GENERIC BACK TAB BUTTON ---
+    $(document).on('click', '.btn-tab-back', function (e) {
+        e.preventDefault();
+        var $activeTab = $('.nav-pills .nav-link.active');
+        var $prevTab = $activeTab.parent().prev().find('.nav-link');
+
+        if ($prevTab.length > 0) {
+            $prevTab.trigger('click');
+        }
+    });
+        $('.nav-pills .nav-link.active').trigger('click');
+    });
+   
+
+   
+</script>
+<script>
+    function loadEmployerAuditData(recordId) {
+        var containerId = '#auditLogContainer_Employer';
+
+        // Prevent reloading if the data has already been fetched
+        if ($(containerId).find('.audit-log-container').length > 0) return;
+
+        $.ajax({
+            url: '@Url.Action("LoadAuditLogPartial", "DataAuditlog")',
+            type: 'GET',
+            data: {
+                category: 'Employer',
+                recordId: recordId
+            },
+            success: function (result) {
+                $(containerId).html(result);
+            },
+            error: function () {
+                $(containerId).html('<div class="alert alert-danger m-3">Error loading audit logs. Please try again.</div>');
+            }
+        });
+    }
+</script>

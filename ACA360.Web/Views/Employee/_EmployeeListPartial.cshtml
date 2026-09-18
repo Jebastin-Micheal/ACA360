@@ -1,0 +1,170 @@
+@using ACA360.Core.Extensions
+@using ACA360.Web.Helpers;
+@model ACA360.Web.Models.EmployeeListViewModel
+
+
+    
+
+<div class="card border-0 shadow-none">
+    <table class="table table-bordered mb-0 table-fixed ui-table">
+        <thead>
+            <tr class="align-middle">
+                <th>#</th>
+                <th>
+                    @await Html.PartialAsync("_SortableHeader", new
+                    { Title = "First Name",  Column = "0", SortColumn = Model.SortColumn, SortOrder = Model.SortOrder  })
+                </th>
+                <th>
+                    @await Html.PartialAsync("_SortableHeader", new
+                     { Title = "Last Name",  Column = "1", SortColumn = Model.SortColumn, SortOrder = Model.SortOrder  })
+
+                <th>
+                    <div class="d-flex">
+                        <span class="me-1">SSN</span>
+                    </div>
+                </th>
+
+                <th class="text-center">Flag</th>
+
+                <th class="text-center" style="width: 150px;">Action</th>
+            </tr>
+        </thead>
+            <tbody>
+                @if (Model.Employees != null && Model.Employees.Count > 0)
+                {
+                    foreach (var employee in Model.Employees)
+                    {
+                        var rowClass = employee.IsMissingData ? "row-missing" : (employee.FlagId.HasValue ? "row-flagged" : "");
+                        <tr class="employee-item @rowClass" data-id="@employee.Id">
+                            <td> @employee.RowNum</td>
+                            <td>
+
+                                <div class="d-flex align-items-center">
+                                    <div class="d-flex flex-column w-100">
+                                        @* mw-100 (Max Width 100%) and text-truncate handles the ellipsis *@
+                                        <span class="text-primary text-truncate3 d-inline-block mw-100" title="@employee.FullName">
+                                        <a href="#" class="employee-row" data-employee-id="@employee.Id" title="@employee.FirstName">
+                                            @employee.FirstName
+                                        </a>
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td title="@employee.LastName">@employee.LastName</td>
+                            <td>
+                            @{
+                                var maskedSSN = CanViewSSNorEIN
+                                ? employee.SSN
+                                : DataMasker.MaskSSN(employee.SSN);
+                            }
+
+                            @Html.Raw(
+                            string.IsNullOrEmpty(employee.SSN)
+                            ? "N/A"
+                            : (maskedSSN == "Invalid SSN"
+                            ? "<span class='badge bg-label-warning'>Invalid SSN</span>"
+                            : maskedSSN)
+                                        )
+                            </td>
+                            <td class="text-center">
+                                @if (employee.FlagId.HasValue)
+                                {
+                                    var flagColor = employee.FlagSeverity switch
+                                    {
+                                        "Critical" => "text-danger",
+                                        "Error" => "text-danger",
+                                        "Warning" => "text-warning",
+                                        _ => "text-info"
+                                    };
+                                    <i class="bx bxs-flag-alt @flagColor fs-5" data-bs-toggle="tooltip" title="@($"{employee.FlagSeverity}: {employee.FlagDescription}")"></i>
+                                }
+                            </td>
+                        <td class="text-center" style="width: 150px;">
+                            <div class="d-inline-flex align-items-center">
+                                @* Consent/Employee-Portal feature — row icons to (1) view electronic consent and (2) activate the employee's portal login. *@
+
+                                @if (User.IsInRole(ACA360.Core.Constants.UserRoles.Employer)
+                                                        || User.IsInRole(ACA360.Core.Constants.UserRoles.Admin)
+                                                        || User.IsInRole(ACA360.Core.Constants.UserRoles.ACADirector)
+                                                        || User.IsInRole(ACA360.Core.Constants.UserRoles.SuperAdmin))
+                                {
+                                    <a href="@Url.Action("Confirmation", "Consent", new { id = employee.Id })"
+                                       class="btn p-1 me-1" title="Electronic Delivery Consent">
+                                        <i class="icon-base bx bx-check-shield icon-sm fs-4 text-success"></i>
+                                    </a>
+                                    <a href="@Url.Action("Activate", "PortalAdmin", new { id = employee.Id })"
+                                       class="btn p-1 me-1" title="Activate Portal Access">
+                                        <i class="icon-base bx bx-key icon-sm fs-4 text-primary"></i>
+                                    </a>
+                                }
+                                @* end Consent/Employee-Portal feature*@
+                                @if (User.HasPermission("Employee", "Edit"))
+                                {
+                                    <button type="button" class="btn p-1 me-1 employee-edit-btn" data-employee-id="@employee.Id" title="Edit">
+                                        <i class="icon-base bx bx-edit icon-sm bg-info fs-4 text-secondary"></i>
+                                    </button>
+                                }
+
+                                <!-- Single Action Dropdown (Contains Delete + Form Generation) -->
+                                <div class="dropdown">
+                                    <button type="button" class="btn btn-sm btn-icon dropdown-toggle hide-arrow action-dots-btn" data-bs-toggle="dropdown" aria-expanded="false" title="Actions">
+                                        <i class="icon-base bx bx-dots-vertical-rounded icon-md"></i>
+                                    </button>
+
+                                    <div class="dropdown-menu dropdown-menu-end m-0 shadow-sm" style="min-width: 220px; padding-bottom: 8px;">
+
+                                        <!-- Delete Option -->
+                                        @if (User.HasPermission("Employee", "Delete"))
+                                        {
+                                            <a href="javascript:;" class="dropdown-item employee-delete-btn text-danger" data-employee-id="@employee.Id">
+                                                <i class="bx bx-trash me-1"></i> Delete
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                        }
+
+                                        <!-- Generate Form Header -->
+                                        <div class="px-3 py-1">
+                                            <span class="fw-bold text-muted" style="font-size: 11px; text-transform: uppercase;">Generate Form</span>
+                                        </div>
+
+                                        <!-- Suppress SSN Toggle -->
+                                        <div class="dropdown-item form-check form-switch mx-0 ps-0 mb-1">
+                                            <input class="form-check-input suppress-ssn-chk ms-3" type="checkbox" id="suppressSsn_@employee.Id" style="cursor: pointer;">
+                                            <label class="form-check-label text-muted small ps-3" for="suppressSsn_@employee.Id" style="cursor: pointer; font-size: 12px;">
+                                                Suppress SSN
+                                            </label>
+                                        </div>
+
+                                        <!-- Form Types -->
+                                        <a href="javascript:void(0);" class="dropdown-item form-gen-btn" data-emp-id="@employee.Id" data-form-type="1095-C">
+                                            <i class="bx bxs-file-pdf text-danger me-1"></i> 1095-C
+                                        </a>
+                                        <a href="javascript:void(0);" class="dropdown-item form-gen-btn" data-emp-id="@employee.Id" data-form-type="1095-B">
+                                            <i class="bx bxs-file-pdf text-danger me-1"></i> 1095-B
+                                        </a>
+
+
+                                        @* <a href="javascript:void(0);" class="dropdown-item form-gen-btn" data-emp-id="@employee.Id" data-form-type="1094-C_1095-C">
+                                              <i class="bx bxs-file-pdf text-danger me-1"></i> 1094-C & 1095-C
+                                           </a>
+                                         <a href="javascript:void(0);" class="dropdown-item form-gen-btn" data-emp-id="@employee.Id" data-form-type="1094-B_1095-B">
+                                             <i class="bx bxs-file-pdf text-danger me-1"></i> 1094-B & 1095-B
+                                         </a> *@
+
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="6" class="text-center text-danger p-4">No employees found.</td></tr>
+                }
+            </tbody>
+        </table>
+</div>
+
+@await Html.PartialAsync("_GridPagination", Model.Metadata)
+

@@ -1,0 +1,355 @@
+@using ACA360.Core.Extensions
+@model ACA360.Core.Models.Plan
+@{
+    bool isNewRecord = string.IsNullOrEmpty(Model.ide) || Model.ide == "0";
+    // FIX: Use a boolean flag instead of a string variable for Tag Helpers
+    bool isDisabled = !isNewRecord;
+}
+
+<form id="frmPlanManagement">
+    @Html.AntiForgeryToken()
+    <input type="hidden" id="plan_ide" value="@(isNewRecord ? "0" : Model.ide)" />
+    <input type="hidden" id="plan_EmployerId" value="@Model.EmployerId" />
+
+    <div class="card">
+        <div class="accordion stick-top course-content-fixed">
+            <div class="accordion-item mb-0 active">
+                <div class="accordion-header" id="headingOne">
+                    <div class="card-header d-flex justify-content-between align-items-center border-bottom">
+                        <h5 class="mb-0 text-primary text-uppercase"><i class="bx bx-spreadsheet me-2"></i>Plan Information</h5>
+                        <div class="card-header-actions">
+                            @if (!isNewRecord && User.HasPermission("Plan", "Edit"))
+                            {
+                                <button type="button" id="btn_plan_edit" class="btn btn-sm btn-outline-primary btn-edit">
+                                    <i class="bx bx-pencil me-1"></i> Edit
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div id="chapterOne" class="card-body accordion-collapse collapse show" data-bs-parent="#courseContent">
+                    <div class="row g-3 plan-field-grid" id="plan_info">
+
+                        <div class="row mb-3 mt-3">
+                            <div class="col-md-6">
+                                <label asp-for="Name" class="form-label">Plan Name <span class="text-danger">*</span></label>
+                                <input asp-for="Name" id="plan_name" class="form-control text-uppercase" placeholder="Enter Name" disabled="@isDisabled" maxlength="100" oninput="this.value=this.value.replace(/[^A-Za-z0-9 &().'\/-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" />
+                                <span data-valmsg-for="Name" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-3">
+                                <label asp-for="FundingType" class="form-label">Funding Type <span class="text-danger">*</span></label>
+                                <select asp-for="FundingType" class="form-select text-uppercase" id="plan_fund_type" disabled="@isDisabled">
+                                    <option value="">-- Select Funding Type --</option>
+                                    @foreach (var freq in Model.Plan_Funding_Type ?? new List<SelectListItem>())
+                                    {
+                                        <option value="@freq.Value" selected="@(Model.FundingType == freq.Value ? "selected" : null)">@freq.Text</option>
+                                    }
+                                </select>
+                                <span data-valmsg-for="FundingType" class="text-danger"></span>
+
+                            </div>
+                            <div class="col-md-3">
+                                <label asp-for="MedicalPlan" class="form-label">Plan Type</label>
+                                <select asp-for="MedicalPlan" class="form-select text-uppercase" id="plan_medical" disabled="@isDisabled">
+                                    <option value="">-- Select Plan Type --</option>
+                                    @foreach (var freq in Model.Plan_Type ?? new List<SelectListItem>())
+                                    {
+                                        <option value="@freq.Value" selected="@(Model.MedicalPlan == freq.Value ? "selected" : null)">@freq.Text</option>
+                                    }
+                                </select>
+                                <span data-valmsg-for="MedicalPlan" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label asp-for="EligibleFirstOfMonth" class="form-label">Waiting Period</label>
+                                <select asp-for="EligibleFirstOfMonth" class="form-select text-uppercase" id="plan_eligiable" disabled="@isDisabled">
+                                    <option value="">-- Select Waiting Period --</option>
+                                    @foreach (var freq in Model.Plan_Waiting_Period ?? new List<SelectListItem>())
+                                    {
+                                        <option value="@freq.Value" selected="@(Model.EligibleFirstOfMonth == freq.Value ? "selected" : null)">@freq.Text</option>
+                                    }
+                                </select>
+                                <span data-valmsg-for="EligibleFirstOfMonth" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-2">
+                                <label asp-for="WaitingDays" class="form-label">Days</label>
+
+                                <input asp-for="WaitingDays" type="number" id="plan_waitingdays" class="form-control" placeholder="Enter Waiting Days" pattern="[0-9-]*" disabled="@isDisabled" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                                <span data-valmsg-for="WaitingDays" class="text-danger"></span>
+
+
+                            </div>
+
+                            <div class="col-md-4">
+
+                                <label asp-for="PlanRenewal" class="form-label">Plan Renewal (Months)</label>
+
+                                <select asp-for="PlanRenewal" class="form-select" id="plan_renewal" disabled="@isDisabled">
+                                    <option value="" selected="@(Model.PlanRenewal == null ? "selected" : null)">-- Select Renewal Months --</option>
+                                    @for (int i = 1; i <= 12; i++)
+                                    {
+                                        <option value="@i" selected="@(Model.PlanRenewal == i ? "selected" : null)">@i</option>
+                                    }
+                                </select>
+                                <span data-valmsg-for="PlanRenewal" class="text-danger"></span>
+
+
+                            </div>
+
+                            <div class="col-md-2 pt-7">
+                                <div class="form-check">
+                                    <input asp-for="MinimumValue" class="form-check-input" id="plan_minimumvalue" disabled="@isDisabled" />
+                                    <label class="form-label" for="plan_minimumvalue">Minimum Value</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <!-- Converted to standard Tag Helpers for cleaner disabled binding -->
+                            <div class="col-md-2 ms-4">
+                                <div class="form-check">
+                                    <input asp-for="OfferedSpouse" class="form-check-input" id="plan_offeredspouse" disabled="@isDisabled" />
+                                    <label class="form-label" for="plan_offeredspouse"> Offered Spouse ?</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input asp-for="ConditionallyOffSpouse" class="form-check-input" id="plan_conditionally" disabled="@isDisabled" />
+                                    <label class="form-label" for="plan_conditionally"> Conditionally Offered ?</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3 mx-n2">
+                                <div class="form-check">
+                                    <input asp-for="OfferedDependents" class="form-check-input" id="plan_offereddependents" disabled="@isDisabled" />
+                                    <label class="form-label" for="plan_offereddependents">Offered to Dependents ?</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 mx-n2">
+                                <div class="form-check">
+                                    <input asp-for="PlanTermTermination" class="form-check-input" id="plan_planterm" disabled="@isDisabled" />
+                                    <label class="form-label" for="plan_planterm">Plan Terminates on Date of Termination</label>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="col-12 mt-0">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-2 fw-semibold">Disable Codes :</div>
+                                        <div class="col-md-2">
+                                            <div class="form-check">
+                                                <input asp-for="CodeOneA" class="form-check-input" id="plan_codeoneA" disabled="@isDisabled" />
+                                                <label class="form-label" for="plan_codeoneA">Code 1A</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-check">
+                                                <input asp-for="CodeTwoF" class="form-check-input" id="plan_codetwoF" disabled="@isDisabled" />
+                                                <label class="form-label" for="plan_codetwoF">Code 2F</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-check">
+                                                <input asp-for="CodeTwoG" class="form-check-input" id="plan_codetwoG" disabled="@isDisabled" />
+                                                <label class="form-label" for="plan_codetwoG">Code 2G</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-check">
+                                                <input asp-for="CodeTwoH" class="form-check-input" id="plan_codetwoH" disabled="@isDisabled" />
+                                                <label class="form-label" for="plan_codetwoH">Code 2H</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-3 fw-semibold">ICHRA (Individual Coverage HRA) :</div>
+
+                                        <div class="col-md-5">
+                                            <label asp-for="IchraLocationBasis" class="form-label">Affordability ZIP</label>
+
+                                            <select asp-for="IchraLocationBasis" class="form-select" id="plan_ichrabasis" disabled="@isDisabled">
+                                                <option value="">-- Select --</option>
+                                                <option value="R" selected="@(Model.IchraLocationBasis == "R" ? "selected" : null)">Residence ZIP (1L/1M/1N/1T)</option>
+                                                <option value="W" selected="@(Model.IchraLocationBasis == "W" ? "selected" : null)">Work-Site ZIP (1O/1P/1Q/1U)</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <label asp-for="IchraSelfOnlyAllow" class="form-label">Monthly Allowance ($)</label>
+                                            <input asp-for="IchraSelfOnlyAllow" type="number" step="0.01" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" id="plan_ichraallow" class="form-control" placeholder="e.g. 280" disabled="@isDisabled" />
+                                        </div>
+                                        <div class="col-md-12 ms-3 mt-2">
+                                            <div class="form-check">
+                                                <input asp-for="IsIchra" class="form-check-input" id="plan_isichra" disabled="@isDisabled" />
+                                                <label class="form-label" for="plan_isichra">This plan is an ICHRA</label>
+                                                <i class="text-secondary fst-italic ms-2">(Tier (1L vs 1M vs 1N vs 1T) is taken from the Offered Spouse / Offered to Dependents checkboxes above.)</i>
+                                            </div>
+                                        </div>
+                                    </div>                                   
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+
+                            <div class="col-md-6">
+
+                                <label asp-for="BandingType" class="form-label">Banding Type</label>
+                                <select asp-for="BandingType" class="form-select text-uppercase" id="plan_banding_type" disabled="@isDisabled">
+                                    <option value="">-- Select Banding Type --</option>
+                                    @foreach (var freq in Model.Plan_Banding_Type)
+                                    {
+                                        var textValue = freq.Text?.Trim();
+                                        <option value="@textValue" selected="@(Model.BandingType?.Trim() == textValue ? "selected" : null)">@textValue</option>
+                                    }
+                                </select>
+                                <span data-valmsg-for="BandingType" class="text-danger"></span>
+
+
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <label asp-for="PremiumCap" class="form-label">Premium Cap </label>
+                                    <input asp-for="PremiumCap" type="number" id="plan_premiumcap" class="form-control" placeholder="Enter Premium Cap" max="10000" disabled="@isDisabled" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <br />
+
+    <div class="card">
+        <div class="accordion stick-top course-content-fixed">
+            <div class="accordion-item mb-0 active">
+                <div class="accordion-header" id="headingTwo">
+                    <div class="d-flex justify-content-between align-items-center border-bottom">
+                        <div class="h5 card-header text-center m-0 text-nowrap flex-grow-1">BANDING DETAILS</div>
+                        <button type="button" class="accordion-button" data-bs-toggle="collapse" data-bs-target="#chapterTwo" aria-expanded="true" aria-controls="chapterOne"></button>
+                    </div>
+                </div>
+
+                <div id="chapterTwo" class="card-body accordion-collapse collapse show" data-bs-parent="#courseContent">
+                    <div class="table-responsive text-nowrap" id="plan_banding_details">
+                        <table class="table table-bordered ui-table cmp-rowdiff">
+                            <thead>
+                                <tr>
+                                    <th>Plan start value</th>
+                                    <th>Plan end value</th>
+                                    <th>Premium start</th>
+                                    <th>Premium end</th>
+                                    <th>Amount</th>
+                                    <th class="td_delete_row @(isNewRecord ? "" : "d-none")">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Benefits != null && Model.Benefits.Any())
+                                {
+                                    @for (int i = 0; i < Model.Benefits.Count; i++)
+                                    {
+                                        <tr class="dynamic-band-row" data-index="@i" data-saved="true">
+                                            <td>
+                                                <input name="Benefits[@i].Plan_start_value" class="form-control plan_start_value text-uppercase @(isNewRecord ? "" : "d-none")" type="text" value="@Model.Benefits[i].Plan_start_value" />
+                                                <span class="view-text view_plan_start @(isNewRecord ? "d-none" : "")">@Model.Benefits[i].Plan_start_value</span>
+                                            </td>
+                                            <td>
+                                                <input name="Benefits[@i].Plan_end_value" class="form-control plan_end_value text-uppercase @(isNewRecord ? "" : "d-none")" type="text" value="@Model.Benefits[i].Plan_end_value" />
+                                                <span class="view-text view_plan_end @(isNewRecord ? "d-none" : "")">@Model.Benefits[i].Plan_end_value</span>
+                                            </td>
+                                            <td>
+                                                <input name="Benefits[@i].Premium_start" class="form-control text-uppercase premium_start @(isNewRecord ? "" : "d-none")" type="date" value="@Model.Benefits[i].Premium_start?.ToString("yyyy-MM-dd")" />
+                                                <span class="view-text view_premium_start @(isNewRecord ? "d-none" : "")">@Model.Benefits[i].Premium_start?.ToString("yyyy-MM-dd")</span>
+                                            </td>
+                                            <td>
+                                                <input name="Benefits[@i].Premium_end" class="form-control text-uppercase premium_end @(isNewRecord ? "" : "d-none")" type="date" value="@Model.Benefits[i].Premium_end?.ToString("yyyy-MM-dd")" />
+                                                <span class="view-text view_premium_end @(isNewRecord ? "d-none" : "")">@Model.Benefits[i].Premium_end?.ToString("yyyy-MM-dd")</span>
+                                            </td>
+                                            <td>
+                                                <input name="Benefits[@i].Amount" class="form-control amount @(isNewRecord ? "" : "d-none")" type="number" value="@Model.Benefits[i].Amount" />
+                                                <span class="view-text view_amount @(isNewRecord ? "d-none" : "")">@Model.Benefits[i].Amount?.ToString("C")</span>
+                                            </td>
+                                            <td class="td_delete_row @(isNewRecord ? "" : "d-none")">
+                                                <button type="button" class="btn btn-danger btn-delete-row"> <i class="bx bx-x"></i></button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                        <br />
+                        <button type="button" id="add_band" class="btn btn-primary @(isNewRecord ? "" : "d-none")"> <i class="bx bx-plus me-1"></i> Add </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!isNewRecord)
+    {
+        <br />
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header p-0 mx-3 py-4">
+                    <ul class="nav nav-pills nav-fill mb-0" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#plan_notes" type="button" role="tab">
+                                <i class="bx bx-notepad me-1"></i> Notes
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#plan_auditlogs" type="button" role="tab" onclick="loadPlanAuditData('@Model.ide')">
+                                <i class="bx bx-history me-1"></i> Audit Logs
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body pt-2">
+                    <div class="tab-content p-0">
+                        <div class="tab-pane fade show active" id="plan_notes" role="tabpanel">
+                            @await Html.PartialAsync("_NotesTablePartial", new ACA360.Web.Models.NotesWidgetViewModel
+                            {
+                                EntityType = ACA360.Core.Models.NoteEntityType.Plan,
+                                                EntityId = int.TryParse(Model.ide, out int planEntityId) ? planEntityId : 0,
+                                                Title = "Plan"
+                                                })
+                    </div>
+                    <div class="tab-pane fade" id="plan_auditlogs" role="tabpanel">
+                        <div id="auditLogContainer_Plan">
+                            <div class="text-center py-5 text-muted">
+                                <div class="spinner-border text-primary mb-3" role="status"></div>
+                                <p>Loading Audit Logs...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        }
+
+    <div class="modal-footer">
+        <button type="button" id="btn_plan_save" class="btn btn-primary me-3 @(isNewRecord ? "" : "d-none")">Save</button>
+        <button type="button" id="btn_plan_cancel" class="btn btn-secondary @(isNewRecord ? "" : "d-none")">Cancel</button>
+        <button type="button" class="btn btn-secondary plan-cancel" data-bs-dismiss="modal">Cancel</button>
+    </div>
+</form>
+
+<script src="~/js/PVScript/plan_manager.js"></script>

@@ -1,0 +1,161 @@
+﻿@{
+    ViewData["Title"] = "Generate 1095-C Forms";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1">Generate 1095-C Forms</h4>
+                    <p class="text-muted mb-0">@ViewBag.EmployerName | Tax Year @ViewBag.Year</p>
+                </div>
+                <a href="@Url.Action("Dashboard", "Employer", new { id = ViewBag.EmployerId })" class="btn btn-outline-secondary">
+                    <i class='bx bx-arrow-back me-1'></i> Back to Dashboard
+                </a>
+            </div>
+
+            <div class="card-body">
+                <div class="alert alert-warning d-flex align-items-center" role="alert">
+                    <i class='bx bx-info-circle me-2 fs-4'></i>
+                    <div>
+                        Please ensure you have completed the <strong>Code Review</strong> step.
+                        Generating forms will overwrite any existing PDFs for this employer/year.
+                    </div>
+                </div>
+
+                <div id="generationProgress" class="d-none my-5">
+                    <label class="form-label fw-bold">Generating PDF Batch...</label>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 100%">Processing...</div>
+                    </div>
+                    <p class="text-center mt-2 text-muted small">This may take a few minutes depending on employee count.</p>
+                </div>
+
+                <div id="generationSuccess" class="d-none my-4 text-center">
+                    <div class="avatar avatar-xl bg-label-success rounded-circle mx-auto mb-3">
+                        <i class='bx bx-check fs-1'></i>
+                    </div>
+                    <h4>Forms Generated Successfully!</h4>
+                    <p class="text-muted">Your batch file is ready for download.</p>
+
+                    <button id="btnDownload" class="btn btn-success btn-lg mt-2"
+                            data-url="@Url.Action("DownloadForms", "ACA", new { employerId = ViewBag.EmployerId, year = ViewBag.Year })">
+                        <i class='bx bxs-download me-2'></i> Download ZIP File
+                    </button>
+                </div>
+
+                <div id="actionContainer" class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+                    <button id="btnGenerate" class="btn btn-primary btn-lg px-5">
+                        <i class='bx bxs-file-pdf me-1'></i> Generate Forms
+                    </button>
+                </div>
+            </div>
+            <div class="card-footer text-muted text-center">
+                <small>Generated forms are archived securely on the server.</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 1. HANDLE GENERATION (POST)
+        $('#btnGenerate').click(function() {
+            var btn = $(this);
+
+            if(!confirm("Are you sure you want to generate forms? This will overwrite existing PDFs.")) return;
+
+            $('#actionContainer').addClass('d-none');
+            $('#generationProgress').removeClass('d-none');
+
+            $.ajax({
+                url: '@Url.Action("GenerateForms", "ACA")',
+                type: 'POST',
+                data: {
+                    employerId: @ViewBag.EmployerId,
+                    year: @ViewBag.Year,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function(res) {
+                    if(res.success) {
+                        $('#generationProgress').addClass('d-none');
+                        $('#generationSuccess').removeClass('d-none');
+                        toastr.success(res.message);
+                    } else {
+                        toastr.error(res.message);
+                        $('#actionContainer').removeClass('d-none');
+                        $('#generationProgress').addClass('d-none');
+                    }
+                },
+                error: function() {
+                    toastr.error("Server error occurred during generation.");
+                    $('#actionContainer').removeClass('d-none');
+                    $('#generationProgress').addClass('d-none');
+                }
+            });
+        });
+
+        // 2. HANDLE DOWNLOAD (GET via jQuery)
+        $('#btnDownload').click(function() {
+            var btn = $(this);
+            var originalText = btn.html();
+            var downloadUrl = btn.data('url');
+
+            // Show loading state on button
+            btn.prop('disabled', true).html("<i class='bx bx-loader-alt bx-spin me-2'></i> Downloading...");
+
+            $.ajax({
+                url: downloadUrl,
+                method: 'GET',
+                xhrFields: {
+                    responseType: 'blob' // Critical for downloading files
+                },
+                success: function (data, status, xhr) {
+                    // 1. Check content type (ensure it's not an error JSON)
+                    var contentType = xhr.getResponseHeader("content-type");
+                    if (contentType && contentType.indexOf("application/json") !== -1) {
+                        // If server returned JSON error instead of file
+                        toastr.error("File not found or access denied.");
+                        resetButton(btn, originalText);
+                        return;
+                    }
+
+                    // 2. Extract Filename from Headers
+                    var filename = "Filing_Package.zip";
+                    var disposition = xhr.getResponseHeader('Content-Disposition');
+                    if (disposition && disposition.indexOf('attachment') !== -1) {
+                        var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                        var matches = filenameRegex.exec(disposition);
+                        if (matches != null && matches[1]) {
+                            filename = matches[1].replace(/['"]/g, '');
+                        }
+                    }
+
+                    // 3. Create Blob & Trigger Download
+                    var blob = new Blob([data], { type: contentType });
+                    var link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+
+                    // 4. Cleanup
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(link.href);
+
+                    toastr.success("Download completed successfully.");
+                    resetButton(btn, originalText);
+                },
+                error: function (xhr) {
+                    toastr.error("Download failed. Please try again.");
+                    resetButton(btn, originalText);
+                }
+            });
+        });
+
+        function resetButton(btn, html) {
+            btn.prop('disabled', false).html(html);
+        }
+    </script>
+}

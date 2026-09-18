@@ -1,0 +1,96 @@
+﻿@model ACA360.Core.Models.AuditLogListViewModel
+
+<div class="table-responsive">
+    <table class="table table-hover table-striped mb-0">
+        <thead class="table-light">
+            <tr>
+                <th class="cursor-pointer" onclick="sortAudit('Type')">Type <i class='bx bxs-sort-alt'></i></th>
+                <th class="cursor-pointer" onclick="sortAudit('Detail')">Detail <i class='bx bxs-sort-alt'></i></th>
+                <th class="cursor-pointer" onclick="sortAudit('User')">User <i class='bx bxs-sort-alt'></i></th>
+                <th class="cursor-pointer" onclick="sortAudit('Time')">Time <i class='bx bxs-sort-alt'></i></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Logs.Any())
+            {
+                foreach (var log in Model.Logs)
+                {
+                    <tr>
+                        <td>
+                            @if (log.ActivityType == "Email")
+                            {
+                                <span class="badge bg-label-info">Email</span>
+                            }
+                            else if (log.ActivityType == "Portal Access")
+                            {
+
+                                <span class="badge bg-label-success">Access</span>
+                            }
+                            else if (log.ActivityType == "File Upload")
+                            {
+
+                                <span class="badge bg-label-warning">Upload</span>
+                            }
+                            else
+                            {
+
+                                <span class="badge bg-label-secondary">@log.ActivityType</span>
+                            }
+                        </td>
+                        <td class="text-wrap" style="max-width: 400px;">@log.ActionDetail</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xs me-2">
+                                    <span class="avatar-initial rounded-circle bg-label-primary">@log.UserName.Substring(0, 1)</span>
+                                </div>
+                                <span>@log.UserName</span>
+                            </div>
+                        </td>
+                        <td>@log.ActivityDate.ToString("MMM dd, yyyy HH:mm")</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4" class="text-center py-5">
+                        <i class='bx bx-search-alt fs-1 text-muted'></i>
+                        <p class="mt-2 text-muted">No records found.</p>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="d-flex justify-content-between align-items-center p-3 border-top">
+        <small class="text-muted">Showing page @Model.CurrentFilter.Page of @Model.TotalPages (@Model.TotalRecords Total)</small>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(Model.CurrentFilter.Page == 1 ? "disabled" : "")">
+                    <a class="page-link" href="javascript:void(0)" onclick="loadAuditPage(@(Model.CurrentFilter.Page - 1))">Previous</a>
+                </li>
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    if (i == 1 || i == Model.TotalPages || (i >= Model.CurrentFilter.Page - 2 && i <= Model.CurrentFilter.Page + 2))
+                    {
+                        <li class="page-item @(i == Model.CurrentFilter.Page ? "active" : "")">
+                            <a class="page-link" href="javascript:void(0)" onclick="loadAuditPage(@i)">@i</a>
+                        </li>
+                    }
+                    else if (i == Model.CurrentFilter.Page - 3 || i == Model.CurrentFilter.Page + 3)
+                    {
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    }
+                }
+
+                <li class="page-item @(Model.CurrentFilter.Page == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" href="javascript:void(0)" onclick="loadAuditPage(@(Model.CurrentFilter.Page + 1))">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}

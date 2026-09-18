@@ -1,0 +1,355 @@
+﻿@model ACA360.Web.Models.EmployerAssignmentViewModel
+
+@{
+    ViewData["Title"] = "Manage Assignments - " + Model.StaffMember.AM_name;
+}
+<style>
+    .list-group-item.selected {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .list-group-item {
+        cursor: pointer;
+    }
+
+    .alphabet-filter {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        justify-content: center;
+        margin-bottom: 15px;
+    }
+
+    .alphabet-btn {
+        min-width: 30px;
+        padding: 2px 5px;
+    }
+
+    .swal2-container {
+        z-index: 10000 !important;
+    }
+</style>
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Manage Assignments : <span class="text-info"> @Model.StaffMember.AM_name</span></h3>
+    </div>
+    <div class="card-body">
+        <!-- Alphabet Filter -->
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="alphabet-filter">
+                    @for (char c = 'A'; c <= 'Z'; c++)
+                    {
+                        <button class="btn btn-sm btn-outline-primary alphabet-btn" data-letter="@c">@c</button>
+                    }
+                    <button class="btn btn-sm btn-outline-secondary alphabet-btn" data-letter="ALL">ALL</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-5">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="card-title mb-0">Available Employers</h4>
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        <ul id="availableEmployers" class="list-group">
+                            @foreach (var employer in Model.AvailableEmployers.OrderBy(e => e.Name))
+                            {
+                                <li class="list-group-item employer-item employer-filter"
+                                    data-id="@employer.Id"
+                                    data-name="@employer.Name"
+                                    ondblclick="assignEmployer(this)">
+                                    @employer.Name
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 text-center" style="padding-top: 100px;">
+                <button class="btn btn-primary mb-2" onclick="assignSelected()">→</button>
+                <br>
+                <button class="btn btn-primary mb-2 d-none" onclick="assignAll()">⇉</button>
+                <br class="d-none">
+                <button class="btn btn-primary mb-2" onclick="removeSelected()">←</button>
+                <br>
+                <button class="btn btn-primary d-none" onclick="removeAll()">⇇</button>
+            </div>
+            <div class="col-md-5">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Assigned Employers</h4>
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        <ul id="assignedEmployers" class="list-group">
+                            @foreach (var employer in Model.AssignedEmployers.OrderBy(e => e.Name))
+                            {
+                                <li class="list-group-item employer-item"
+                                    data-id="@employer.Id"
+                                    data-name="@employer.Name"
+                                    ondblclick="removeEmployer(this)">
+                                    @employer.Name
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-12 text-center">
+                <button id="saveButton" class="btn btn-success float-end" onclick="saveAssignments()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="staffId" value="@Model.StaffMember.Id" />
+<input type="hidden" id="StaffType_ID" value="@Model.StaffType_ID" />
+
+
+
+<script>
+    // Shared JavaScript functions
+       
+
+        // Alphabet Filter Buttons
+        document.querySelectorAll('.alphabet-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const letter = this.getAttribute('data-letter');
+                filterEmployers(letter);
+            });
+        });
+
+
+           document.addEventListener("click", function (e) {
+        if (e.target.classList.contains("list-group-item")) {
+            e.target.classList.toggle("selected");
+        }
+    });
+
+  
+
+    function filterEmployers(letter) {
+        const allItems = document.querySelectorAll('.employer-filter');
+        allItems.forEach(item => {
+            if (letter === 'ALL') {
+                item.style.display = 'block';
+            } else {
+                const name = item.getAttribute('data-name');
+                if (name && name.charAt(0).toUpperCase() === letter) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    function assignEmployer(element) {
+        var assignedList = document.getElementById('assignedEmployers');
+        assignedList.appendChild(element);
+        element.classList.remove('selected');
+        element.classList.remove('employer-filter');
+    }
+
+    function removeEmployer(element) {
+        var availableList = document.getElementById('availableEmployers');
+        availableList.appendChild(element);
+        element.classList.remove('selected');
+        element.classList.add('employer-filter');
+    }
+
+    function assignSelected() {
+        var availableList = document.getElementById('availableEmployers');
+        var assignedList = document.getElementById('assignedEmployers');
+        var selected = Array.from(availableList.querySelectorAll('.selected'));
+
+        selected.forEach(function(element) {
+            element.classList.remove('selected');
+            element.classList.remove('employer-filter');
+            assignedList.appendChild(element);
+        });
+    }
+
+    function removeSelected() {
+        var availableList = document.getElementById('availableEmployers');
+        var assignedList = document.getElementById('assignedEmployers');
+        var selected = Array.from(assignedList.querySelectorAll('.selected'));
+
+        selected.forEach(function(element) {
+            element.classList.remove('selected');
+            element.classList.add('employer-filter');
+            availableList.appendChild(element);
+        });
+    }
+
+    function assignAll() {
+        var availableList = document.getElementById('availableEmployers');
+        var assignedList = document.getElementById('assignedEmployers');
+        var items = Array.from(availableList.querySelectorAll('.employer-item'));
+
+        items.forEach(function(element) {
+            element.classList.remove('selected');
+            element.classList.remove('employer-filter');
+            assignedList.appendChild(element);
+        });
+    }
+
+    function removeAll() {
+        var availableList = document.getElementById('availableEmployers');
+        var assignedList = document.getElementById('assignedEmployers');
+        var items = Array.from(assignedList.querySelectorAll('.employer-item'));
+
+        items.forEach(function(element) {
+            element.classList.remove('selected');
+            element.classList.add('employer-filter');
+            availableList.appendChild(element);
+        });
+    }
+
+    function saveAssignments() {
+         var assignedEmployers = document.getElementById('assignedEmployers');
+         var employerIds = Array.from(assignedEmployers.querySelectorAll('li'))
+             .map(li => parseInt(li.getAttribute('data-id')));
+
+         var staffId = parseInt(document.getElementById('staffId').value);
+         var staffType = document.getElementById('StaffType_ID').value;  // keep as string
+
+         // Before saving: warn if any of these employers already belong to a DIFFERENT AM / DA
+         $.ajax({
+             url: '@Url.Action("CheckAssignmentConflicts", "Assignment")',
+             type: 'POST',
+             data: {
+                 staffId: staffId,
+                 staffType: staffType,
+                 assignedEmployerIds: employerIds
+             },
+             traditional: true,
+             success: function (res) {
+                 var conflicts = (res && res.conflicts) || [];
+                 if (conflicts.length === 0) {
+                     doSaveAssignments(staffId, staffType, employerIds);
+                     return;
+                 }
+
+                 var roleLabel = (staffType === '16' || staffType === '6') ? 'Account Manager' : 'Data Analyst';
+
+                 function esc(s) {
+                     return String(s == null ? '' : s)
+                         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                 }
+
+                 // Group by the current owner so a bulk move (100 employers from one
+                 // DA to another) reads as one line with a count, not 100 lines.
+                 var groups = {};
+                 conflicts.forEach(function (c) {
+                     var owner = c.currentStaffName || 'another user';
+                     (groups[owner] = groups[owner] || []).push(c.employerName);
+                 });
+
+                 var html = '<div style="text-align:left">'
+                     + '<b>' + conflicts.length + '</b> employer' + (conflicts.length > 1 ? 's' : '')
+                     + ' already ' + (conflicts.length > 1 ? 'have' : 'has') + ' a different ' + roleLabel + ':'
+                     + '<div style="max-height:40vh;overflow-y:auto;margin-top:10px;border:1px solid #ddd;border-radius:6px;padding:10px 12px;">';
+
+                 Object.keys(groups).sort().forEach(function (owner) {
+                     var names = groups[owner];
+                     html += '<div style="margin-bottom:8px;">'
+                         + '<b>' + esc(owner) + '</b>'
+                         + ' <span style="color:#888;">(' + names.length + ' employer' + (names.length > 1 ? 's' : '') + ')</span>'
+                         + '<div style="margin:4px 0 0 14px;color:#666;font-size:0.9em;">'
+                         + names.map(esc).join('<br>')
+                         + '</div></div>';
+                 });
+
+                 html += '</div>'
+                     + '<div style="margin-top:10px;">Proceeding will reassign '
+                     + (conflicts.length > 1 ? 'them' : 'it')
+                     + ' and end the current assignment' + (conflicts.length > 1 ? 's' : '') + '.</div></div>';
+
+                 Swal.fire({
+                     title: 'Already assigned',
+                     html: html,
+                     icon: 'warning',
+                     width: '620px',
+                     showCancelButton: true,
+                     confirmButtonText: 'Proceed with change',
+                     cancelButtonText: 'Cancel'
+                 }).then(function (result) {
+                     if (result.isConfirmed) {
+                         doSaveAssignments(staffId, staffType, employerIds);
+                     }
+                 });
+             },
+             error: function (xhr) {
+                 console.error('AJAX Error:', xhr.responseText);
+                 Swal.fire({
+                     title: 'Error!',
+                     text: 'Could not verify existing assignments. Please try again.',
+                     icon: 'error',
+                     confirmButtonText: 'OK'
+                 });
+             }
+         });
+     }
+
+     function doSaveAssignments(staffId, staffType, employerIds) {
+             $.ajax({
+         url: '@Url.Action("SaveAssignments", "Assignment")',
+         type: 'POST',
+         data: {
+             staffId: staffId,
+             staffType: staffType,
+             assignedEmployerIds: employerIds
+         },
+         traditional: true,  // important for sending array values correctly
+         success: function (response) {
+             if (response.success) {
+                 // SweetAlert success message
+                 Swal.fire({
+                     title: 'Success!',
+                     text: 'Account successfully assigned.',
+                     icon: 'success',
+                     showConfirmButton: true,
+                     confirmButtonText: 'OK'
+                 }).then((result) => {
+                     // This block executes ONLY after the user clicks 'OK'
+                     if (result.isConfirmed) {
+                         var modal = bootstrap.Modal.getInstance(
+                             document.getElementById('ManageAssignmentsFormModal')
+                         );
+                         if (modal) {
+                             modal.hide();
+                         }
+                         window.location.reload();
+                     }
+                 });
+             } else {
+                 // Updated to SweetAlert for consistency
+                 Swal.fire({
+                     title: 'Error!',
+                     text: response.message,
+                     icon: 'error',
+                     confirmButtonText: 'OK'
+                 });
+             }
+         },
+         error: function (xhr, status, error) {
+             console.error('AJAX Error:', xhr.responseText);
+             // Updated to SweetAlert for consistency
+             Swal.fire({
+                 title: 'Error!',
+                 text: 'An error occurred while saving assignments.',
+                 icon: 'error',
+                 confirmButtonText: 'OK'
+             });
+         }
+     });
+     }
+
+
+</script>

@@ -1,0 +1,33 @@
+﻿@{
+    Layout = "_EmployeeLayout";
+    ViewData["Title"] = "Verify Identity";
+}
+
+<h4 class="mb-2">Welcome! 👋</h4>
+<p class="mb-4">Please verify your identity to access your tax documents.</p>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<form asp-action="Verify" method="post">
+    <input type="hidden" name="token" value="@ViewBag.Token" />
+
+    <div class="mb-3">
+        <label for="last4SSN" class="form-label">Last 4 Digits of SSN</label>
+        <input type="password" class="form-control" id="last4SSN" name="last4SSN"
+               placeholder="••••" maxlength="4" required autofocus
+               style="letter-spacing: 5px; text-align: center; font-size: 1.2rem;" />
+    </div>
+
+    <button class="btn btn-primary d-grid w-100" type="submit">
+        Verify & Access
+    </button>
+</form>
+
+<div class="text-center mt-4">
+    <small class="text-muted">
+        <i class='bx bx-lock-alt'></i> Your connection is secure.
+    </small>
+</div>

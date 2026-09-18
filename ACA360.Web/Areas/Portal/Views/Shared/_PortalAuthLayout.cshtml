@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style" dir="ltr" data-theme="theme-default" data-assets-path="~/assets/">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] &middot; ACA 360 Portal</title>
+
+    <link rel="stylesheet" href="~/assets/vendor/fonts/iconify-icons.css" />
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/assets/vendor/css/core.css" />
+    <link rel="stylesheet" href="~/assets/css/demo.css" />
+    <link rel="stylesheet" href="~/assets/vendor/css/pages/page-auth.css" />
+    <link rel="stylesheet" href="~/assets/css/portal.css" />
+
+    <script src="~/assets/vendor/js/helpers.js"></script>
+    <script src="~/assets/js/config.js"></script>
+</head>
+<body>
+    <div class="container-xxl">
+        <div class="authentication-wrapper authentication-basic container-p-y">
+            <div class="authentication-inner portal-auth-inner">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="app-brand justify-content-center mb-4">
+                            <span class="app-brand-text portal-brand fw-bold">ACA <span class="text-primary">360</span></span>
+                        </div>
+                        @RenderBody()
+                    </div>
+                </div>
+                <p class="text-center text-muted mt-3 mb-0">
+                    &copy; @DateTime.Now.Year Medcom Benefit Solutions, LLC
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/assets/vendor/libs/jquery/jquery.js"></script>
+    <script src="~/assets/vendor/libs/popper/popper.js"></script>
+    <script src="~/assets/vendor/js/bootstrap.js"></script>
+    <script src="~/assets/js/main.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

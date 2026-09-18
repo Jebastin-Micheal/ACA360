@@ -1,0 +1,88 @@
+﻿@using ACA360.Core.Models
+@model EmployerDashboardPageViewModel
+@{
+    var pct = Math.Clamp(Model.Employer360.ProcessCompletePercent, 0, 100);
+    var step = Model.Employer360.CurrentProcessStep;
+
+    var yearEnd = new DateTime(Model.FilingYear, 12, 31);
+    var mail = Model.Employer360.MailingDeadline;
+    var efile = Model.Employer360.EfilingDeadline;
+    var start = new DateTime(Model.FilingYear, 1, 1);
+    var now = DateTime.Now;
+
+    // The calendar runs from the start of the plan year to the e-file deadline.
+    double Pos(DateTime t)
+    {
+        var span = (efile - start).TotalDays;
+        if (span <= 0) return 0;
+        return Math.Clamp((t - start).TotalDays / span * 100, 0, 100);
+    }
+
+    var daysToFurnish = (int)(mail.Date - now.Date).TotalDays;
+    var windowClosed = now > efile;
+}
+
+<div class="fr">
+    <div class="fr-top">
+        <h3>Filing readiness</h3>
+        @if (!string.IsNullOrWhiteSpace(step))
+        {
+            <span class="pill @(windowClosed ? "pill-crit" : "pill-warn")"><span class="dot"></span>@step</span>
+        }
+        else
+        {
+            <span class="pill pill-info"><span class="dot"></span>No active process step</span>
+        }
+        <div class="util-spacer"></div>
+        <div class="fr-pct"><b class="num">@pct%</b> complete</div>
+    </div>
+
+    <div class="fr-phases">
+        @foreach (var ph in EmployerDashboardPageViewModel.ReadinessPhases)
+        {
+            var state = pct > ph.To ? "done" : pct >= ph.From ? "now" : "";
+            var fill = state == "now" && ph.To > ph.From
+            ? Math.Clamp((pct - ph.From) * 100.0 / (ph.To - ph.From), 6, 100)
+            : 0;
+            <div class="fr-ph @state">
+                <div class="fr-bar">
+                    @if (state == "now")
+                    {
+                        <span style="width:@fill.ToString("0")%"></span>
+                    }
+                </div>
+                <div class="fr-nm">@ph.Name</div>
+            </div>
+        }
+    </div>
+
+    <div class="fr-cal">
+        <span class="eyebrow">Filing calendar</span>
+        <div class="fr-track">
+            <div class="fr-fill" style="width:@Pos(now).ToString("0.0")%"></div>
+
+            <div class="fr-mark" style="left:@Pos(yearEnd).ToString("0.0")%">
+                <div class="fr-lab above"><b>Plan year ends</b><s>@yearEnd.ToString("dd MMM yyyy")</s></div>
+                <div class="fr-dot"></div>
+            </div>
+
+            <div class="fr-mark crit" style="left:@Pos(mail).ToString("0.0")%">
+                <div class="fr-lab below"><b>Furnish to employees</b><s>@mail.ToString("dd MMM yyyy")</s></div>
+                <div class="fr-dot"></div>
+            </div>
+
+            <div class="fr-mark crit" style="left:@Pos(efile).ToString("0.0")%">
+                <div class="fr-lab above"><b>IRS e-file</b><s>@efile.ToString("dd MMM yyyy")</s></div>
+                <div class="fr-dot"></div>
+            </div>
+
+            @if (!windowClosed)
+            {
+                <div class="fr-mark today" style="left:@Pos(now).ToString("0.0")%">
+                    <div class="fr-lab below"><b>Today</b><s>@(daysToFurnish >= 0 ? $"{daysToFurnish} days to furnish" : "furnishing passed")</s></div>
+                    <div class="fr-dot"></div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

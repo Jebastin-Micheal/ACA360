@@ -1,0 +1,144 @@
+@* ══ NOTES SECTION (3-Column Layout) ══════════════════════════════════ *@
+
+<div class="card shadow-none border dash-vertical-panel dash-card-rounded" id="notesPanelCard">
+
+    @* ── Header (Fixed) ── *@
+    <div class="card-header py-2 px-3 d-flex flex-shrink-0 align-items-center justify-content-between border-bottom">
+        <div class="d-flex align-items-center gap-2">
+            <span class="avatar avatar-sm rounded-circle bg-label-primary shadow-sm d-flex align-items-center justify-content-center" style="width:32px; height:32px">
+                <i class="bx bx-notepad fs-5"></i>
+            </span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="notes-panel-title">Employer Notes</span>
+                <span class="badge bg-label-secondary rounded-pill notes-count-badge" id="noteCount">0 Total</span>
+            </div>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm shadow-sm px-3 rounded-pill" onclick="openAddNote()">
+            <i class="bx bx-plus me-1"></i>Add Note
+        </button>
+        <button type="button"
+                onclick="toggleNotesPanel()"
+                title="Collapse notes panel"
+                id="notesPanelToggleBtn"
+                class="notes-panel-toggle-btn">
+            <i class="bx bx-chevron-left" id="notesPanelChevron"></i>
+        </button>
+    </div>
+
+
+    @* ── Search + advanced filter (Fixed) ── *@
+    <div class="px-2 py-1 d-flex flex-shrink-0 align-items-center gap-2 border-bottom flex-nowrap">
+        <div class="input-group input-group-merge shadow-none border rounded-pill px-2 bg-light-soft note-search-input-group">
+            <span class="input-group-text border-0 ps-1"><i class="bx bx-search text-muted" style="font-size:.8rem"></i></span>
+            <input type="text" id="noteSearchBox" class="form-control form-control-sm border-0 shadow-none bg-transparent ps-0" 
+                   placeholder="Search..." onkeyup="applyNoteFilters()" style="font-size:0.7rem">
+        </div>
+        <div class="cat-search-wrap" style="flex: 0 1 130px; min-width: 70px;" id="filterCatWrap">
+            <input type="text" class="cat-search-input form-control form-control-sm rounded-pill border shadow-none" id="filterCatInput"
+                   placeholder="Filter..." autocomplete="off"
+                   onfocus="openCatDrop('filter')" oninput="searchCat('filter',this.value)" style="height:30px; font-size:.7rem" />
+            <div class="cat-dropdown shadow-lg mt-1" id="filterCatDrop" style="border-radius:12px; min-width:220px">
+                <div class="cat-option" data-val="" onclick="selectCat('filter','All Categories','')">All Categories</div>
+                <div class="cat-group-label">General</div>
+                <div class="cat-option" data-val="Follow Up" onclick="selectCat('filter','Follow Up','Follow Up')">Follow Up</div>
+                <div class="cat-option" data-val="FTE" onclick="selectCat('filter','FTE','FTE')">FTE</div>
+                <div class="cat-group-label">Employer</div>
+                <div class="cat-option" data-val="Employer Creation" onclick="selectCat('filter','Employer Creation','Employer Creation')">Employer Creation</div>
+                <div class="cat-option" data-val="Employer Name" onclick="selectCat('filter','Employer Name','Employer Name')">Employer Name</div>
+                <div class="cat-option" data-val="EIN" onclick="selectCat('filter','EIN','EIN')">EIN</div>
+                <div class="cat-option" data-val="Affiliate" onclick="selectCat('filter','Affiliate','Affiliate')">Affiliate</div>
+                <div class="cat-option" data-val="Minimum Essential Coverage" onclick="selectCat('filter','Minimum Essential Coverage','Minimum Essential Coverage')">Minimum Essential Coverage</div>
+                <div class="cat-option" data-val="Minimum Value" onclick="selectCat('filter','Minimum Value','Minimum Value')">Minimum Value</div>
+                <div class="cat-option" data-val="Funding" onclick="selectCat('filter','Funding','Funding')">Funding</div>
+                <div class="cat-option" data-val="Premium" onclick="selectCat('filter','Premium','Premium')">Premium</div>
+                <div class="cat-option" data-val="Waiting Period" onclick="selectCat('filter','Waiting Period','Waiting Period')">Waiting Period</div>
+                <div class="cat-option" data-val="Coverage Offered" onclick="selectCat('filter','Coverage Offered','Coverage Offered')">Coverage Offered</div>
+                <div class="cat-option" data-val="Plan Renewal" onclick="selectCat('filter','Plan Renewal','Plan Renewal')">Plan Renewal</div>
+                <div class="cat-group-label">Individual</div>
+                <div class="cat-option" data-val="Employee Note" onclick="selectCat('filter','Employee Note','Employee Note')">Employee Note</div>
+                <div class="cat-option" data-val="Dependent Note" onclick="selectCat('filter','Dependent Note','Dependent Note')">Dependent Note</div>
+                <div class="cat-group-label">Processing</div>
+                <div class="cat-option" data-val="DA-Annual Processing Note" onclick="selectCat('filter','DA-Annual Processing Note','DA-Annual Processing Note')">DA-Annual Processing Note</div>
+                <div class="cat-option" data-val="DA-Special Processing Note" onclick="selectCat('filter','DA-Special Processing Note','DA-Special Processing Note')">DA-Special Processing Note</div>
+                <div class="cat-group-label">System</div>
+                <div class="cat-option" data-val="K System" onclick="selectCat('filter','K System','K System')">K System</div>
+                <div class="cat-option" data-val="ACA Connect" onclick="selectCat('filter','ACA Connect','ACA Connect')">ACA Connect</div>
+                <div class="cat-group-label">Business</div>
+                <div class="cat-option" data-val="Broker" onclick="selectCat('filter','Broker','Broker')">Broker</div>
+                <div class="cat-option" data-val="Service Agreement" onclick="selectCat('filter','Service Agreement','Service Agreement')">Service Agreement</div>
+                <div class="cat-option" data-val="Sales-General" onclick="selectCat('filter','Sales-General','Sales-General')">Sales-General</div>
+                <div class="cat-option" data-val="Sales-Renewal" onclick="selectCat('filter','Sales-Renewal','Sales-Renewal')">Sales-Renewal</div>
+                <div class="cat-option" data-val="Accounting-Billing" onclick="selectCat('filter','Accounting-Billing','Accounting-Billing')">Accounting-Billing</div>
+                <div class="cat-option" data-val="Accounting-Special Date" onclick="selectCat('filter','Accounting-Special Date','Accounting-Special Date')">Accounting-Special Date</div>
+                <div class="cat-option" data-val="Termination" onclick="selectCat('filter','Termination','Termination')">Termination</div>
+                <div class="cat-group-label">Compliance</div>
+                <div class="cat-option" data-val="Penalty-Potential Penalty" onclick="selectCat('filter','Penalty-Potential Penalty','Penalty-Potential Penalty')">Penalty-Potential Penalty</div>
+                <div class="cat-option" data-val="Penalty-Letter Received" onclick="selectCat('filter','Penalty-Letter Received','Penalty-Letter Received')">Penalty-Letter Received</div>
+                <div class="cat-option" data-val="Receipt ID" onclick="selectCat('filter','Receipt ID','Receipt ID')">Receipt ID</div>
+                <div class="cat-option" data-val="FT William" onclick="selectCat('filter','FT William','FT William')">FT William</div>
+                <div class="cat-option" data-val="SourceOne" onclick="selectCat('filter','SourceOne','SourceOne')">SourceOne</div>
+                <div class="cat-option" data-val="State Filing" onclick="selectCat('filter','State Filing','State Filing')">State Filing</div>
+                <div class="cat-option" data-val="Do Not Mail" onclick="selectCat('filter','Do Not Mail','Do Not Mail')">Do Not Mail</div>
+                <div class="cat-option" data-val="E-File Only" onclick="selectCat('filter','E-File Only','E-File Only')">E-File Only</div>
+                <div class="cat-group-label">Management</div>
+                <div class="cat-option" data-val="Management-Special Note" onclick="selectCat('filter','Management-Special Note','Management-Special Note')">Management-Special Note</div>
+                <div class="cat-option" data-val="Escalated Issue" onclick="selectCat('filter','Escalated Issue','Escalated Issue')">Escalated Issue</div>
+                <div class="cat-no-results" id="filterCatNoResults" style="display:none">No matches</div>
+            </div>
+            <i class="bx bx-chevron-down cat-chevron"></i>
+        </div>
+        <input type="hidden" id="noteFilterCategory" value="" />
+        <div class="ms-auto flex-shrink-0 d-flex align-items-center gap-2">
+            <span class="text-nowrap fw-semibold" id="noteFilterStatus" style="color:var(--dash-text-muted); font-size:0.65rem"></span>
+            <button type="button" class="btn btn-sm btn-label-secondary py-0 px-2 notes-clear-btn" onclick="clearNoteFilters()">
+                <i class="bx bx-refresh me-1"></i>Clear
+            </button>
+        </div>
+    </div>
+
+    @* ── Inline Note Form (Fixed to top of list when active) ── *@
+    <div id="inlineNoteContainer" style="display:none" class="p-3 flex-shrink-0 animate__animated animate__fadeIn">
+        <input type="hidden" id="noteEditId" value="0" />
+        <div class="row g-2">
+            <div class="col-md-5">
+                <label class="field-label">Category</label>
+                <div class="cat-search-wrap w-100" id="modalCatWrap">
+                    <input type="text" class="cat-search-input form-control" id="modalCatInput"
+                           placeholder="Select category…" autocomplete="off"
+                           onfocus="openCatDrop('modal')" oninput="searchCat('modal',this.value)"
+                           style="height:34px; font-size:.8rem" />
+                    <i class="bx bx-chevron-down cat-chevron"></i>
+                    <div class="cat-dropdown" id="modalCatDrop"></div>
+                </div>
+                <input type="hidden" id="noteCategory" />
+            </div>
+            <div class="col-12">
+                <textarea id="noteText" class="form-control form-control-sm" rows="4"
+                          placeholder="Enter confirmed facts..."></textarea>
+            </div>
+            <div class="col-12 d-flex justify-content-between align-items-center mt-2">
+                <span class="x-small text-muted" id="noteCharCount">0 chars</span>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-label-secondary" onclick="toggleNoteForm()">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="saveNote()">
+                        <i class="bx bx-save me-1"></i>Save Note
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── Note list (Scrolls independently) ── *@
+@{
+    var fullName = User.FindFirst("FullName")?.Value;
+    if (string.IsNullOrEmpty(fullName))
+    {
+        fullName = User.Identity.Name.Contains("@") 
+            ? char.ToUpper(User.Identity.Name.Split('@')[0][0]) + User.Identity.Name.Split('@')[0].Substring(1) 
+            : User.Identity.Name;
+    }
+}
+<div id="notesScrollWrap">
+    <div id="notesList" data-current-user="@fullName"></div>
+</div>
+</div>

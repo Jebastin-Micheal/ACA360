@@ -1,0 +1,141 @@
+﻿@using ACA360.Core.Models
+@model DatabaseSettingsDto
+
+<div class="p-2">
+
+    <!-- BACKUP NOW -->
+    <h5 class="fw-bold mb-2"><i class="fa fa-database text-primary"></i> Manual Backup</h5>
+
+    <p class="text-muted">Create an immediate database backup. Useful before upgrades or deployments.</p>
+
+    <button id="btnBackupNow" class="btn btn-primary mb-3">
+        <i class="fa fa-save me-2"></i> Run Backup Now
+    </button>
+
+    <hr />
+
+
+    <!-- AUTOMATED BACKUP -->
+    <h5 class="fw-bold mb-2"><i class="fa fa-clock text-warning"></i> Automatic Backup Scheduler</h5>
+
+    <div class="row g-3 mb-3">
+
+        <div class="col-md-6">
+            <label class="form-label">Backup Frequency</label>
+            <select id="backupFrequency" class="form-select">
+                <option value="Daily" selected="@(Model.BackupFrequency == "Daily")">Daily</option>
+                <option value="Weekly" selected="@(Model.BackupFrequency == "Weekly")">Weekly</option>
+                <option value="Monthly" selected="@(Model.BackupFrequency == "Monthly")">Monthly</option>
+            </select>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Execution Time</label>
+            <input type="time" id="backupTime" class="form-control" value="@Model.BackupTime" />
+        </div>
+
+    </div>
+
+    <hr />
+
+    <!-- RETENTION SETTINGS -->
+    <h5 class="fw-bold mb-2"><i class="fa fa-trash text-danger"></i> Backup Retention Policy</h5>
+
+    <p class="text-muted">Old backups will be deleted automatically based on this value.</p>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Keep Backups For (Days)</label>
+            <input type="number" class="form-control" id="retentionDays" min="5" value="@Model.RetentionDays" />
+        </div>
+    </div>
+
+    <div class="text-end">
+        <button id="btnSaveDatabaseSettings" class="btn btn-success">
+            <i class="fa fa-save me-1"></i> Save Settings
+        </button>
+    </div>
+
+
+    <hr />
+
+    <!-- BACKUP HISTORY -->
+    <h5 class="fw-bold mb-2"><i class="fa fa-history text-secondary"></i> Backup History</h5>
+
+    <p class="text-muted mb-3">Recently completed backups.</p>
+
+    <table class="table table-bordered table-hover" id="backupHistoryTable">
+        <thead class="table-light">
+            <tr>
+                <th>Date</th>
+                <th>File Name</th>
+                <th>Size (MB)</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.BackupHistory != null && Model.BackupHistory.Any())
+            {
+                foreach (var row in Model.BackupHistory)
+                {
+                    <tr>
+                        <td>@row.Timestamp</td>
+                        <td>@row.FileName</td>
+                        <td>@row.SizeMb</td>
+                        <td><span class="badge bg-success">Completed</span></td>
+                        <td>
+                            <button class="btn btn-outline-info btn-sm btnRestore" data-file="@row.FileName">
+                                <i class="fa fa-undo"></i> Restore
+                            </button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="5" class="text-center text-muted">No backup history found.</td></tr>
+            }
+        </tbody>
+    </table>
+
+</div>
+<script src="@(Url.Content("~/assets/vendor/libs/jquery/jquery.js"))"></script>
+<script>
+        $("#btnSaveDatabaseSettings").click(function (e) {
+        e.preventDefault();
+
+        var btn = $(this);
+        var originalText = btn.html();
+
+        // 1. Gather the data from the inputs using their IDs
+        var databaseData = {
+            BackupFrequency: $("#backupFrequency").val(), // String (Daily, Weekly, Monthly)
+            BackupTime: $("#backupTime").val(),           // String (HH:mm)
+            RetentionDays: parseInt($("#retentionDays").val()) || 30 // Integer
+        };
+
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+
+        // 2. Send as application/json
+        $.ajax({
+            url: '@Url.Action("SaveDatabaseSettings", "System")', // Ensure "System" is your controller name
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(databaseData),
+            success: function (res) {
+                btn.prop('disabled', false).html(originalText);
+                if (res.success) {
+                    Swal.fire({ title: "Saved", text: res.message, icon: "success", timer: 1500, showConfirmButton: false });
+                } else {
+                    Swal.fire("Error", res.message || "Failed to save settings.", "error");
+                }
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html(originalText);
+                console.error(xhr.responseText);
+                Swal.fire("Error", "An error occurred while saving database settings.", "error");
+            }
+        });
+    });
+</script>

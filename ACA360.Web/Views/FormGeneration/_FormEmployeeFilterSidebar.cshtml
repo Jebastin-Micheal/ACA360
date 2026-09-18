@@ -1,0 +1,263 @@
+﻿<style>
+    /* Filter Sidebar Styles (Sneat Dark Mode Optimized) */
+    .filter-section {
+        border: 1px solid var(--bs-border-color);
+        border-radius: 8px;
+        background: var(--bs-card-bg); /* Adapts to Dark Mode */
+        margin-bottom: 12px;
+    }
+
+    .filter-section-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--bs-heading-color); /* Adapts to Dark Mode */
+        cursor: pointer;
+    }
+
+        .filter-section-head i:first-child {
+            font-size: 1.2rem;
+        }
+
+    .fs-chevron {
+        transition: transform .2s;
+    }
+
+    .filter-section-head[aria-expanded="true"] .fs-chevron {
+        transform: rotate(180deg);
+    }
+
+    .fs-badge {
+        margin-left: auto;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 50px;
+        background: var(--bs-secondary-bg);
+        color: var(--bs-secondary-color);
+        max-width: 100px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+        .fs-badge.on {
+            background: rgba(var(--bs-primary-rgb), 0.15);
+            color: var(--bs-primary);
+        }
+
+    .fs-search {
+        padding: 0 12px 8px;
+    }
+
+    .fs-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        font-size: 12px;
+        color: var(--bs-body-color); /* Adapts to Dark Mode */
+        cursor: pointer;
+    }
+
+        .fs-row:hover {
+            background: var(--bs-hover-bg); /* Subtle hover effect in any mode */
+        }
+
+    .fs-selectall {
+        border-top: 1px solid var(--bs-border-color);
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+
+    .fs-options {
+        max-height: 240px;
+        overflow-y: auto;
+        padding-bottom: 4px;
+    }
+
+    /* Custom Checkboxes */
+    .fs-cb {
+        width: 16px;
+        height: 16px;
+        border: 1px solid var(--bs-border-color);
+        border-radius: 4px;
+        background: transparent; /* No more harsh white box */
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1;
+        color: transparent; /* Text transparent until checked */
+        transition: all 0.2s;
+    }
+
+        .fs-cb.checked, .fs-cb.indet {
+            background: var(--bs-primary);
+            border-color: var(--bs-primary);
+            color: #fff;
+        }
+
+            .fs-cb.checked::after {
+                content: '\2713';
+            }
+
+            .fs-cb.indet::after {
+                content: '\2212';
+            }
+
+    .fs-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .fs-dot-danger {
+        background: var(--bs-danger);
+    }
+
+    .fs-dot-warning {
+        background: var(--bs-warning);
+    }
+
+    .fs-dot-info {
+        background: var(--bs-info);
+    }
+
+    .fs-empty {
+        padding: 10px 12px;
+        font-size: 12px;
+        color: var(--bs-secondary-color);
+        text-align: center;
+    }
+
+    .emp-chip {
+        display: inline-flex;
+        align-items: center;
+        background-color: rgba(var(--bs-primary-rgb), 0.15);
+        color: var(--bs-primary);
+        border-radius: 50px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 600;
+        transition: all 0.2s;
+        margin-bottom: 5px;
+    }
+
+    .emp-chip-remove {
+        margin-left: 6px;
+        cursor: pointer;
+        opacity: 0.6;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+    }
+
+    .filters-disabled {
+        opacity: 0.5;
+        pointer-events: none;
+        user-select: none;
+        transition: opacity 0.3s ease;
+    }
+</style>
+
+<!-- Main Wrapper -->
+<div id="filterSidebarAside" class="d-flex flex-column h-100 filters-disabled w-100" style="max-height: 75vh; overflow: hidden;">
+
+    <!-- Header -->
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center gap-2">
+            <h5 class="fw-bold mb-0 text-dark text-heading">Filters</h5>
+            <!-- Fix / Unfix Button -->
+            <button type="button" class="btn btn-sm btn-icon btn-text-secondary rounded-circle" id="btnPinFilter" title="Pin Filters to Grid">
+                <i class='bx bx-pin fs-5'></i>
+            </button>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <a href="javascript:void(0);" id="btnResetAllFilters" class="text-primary text-decoration-none fw-bold" style="font-size: 12px;" title="Reset everything">Reset All</a>
+            <!-- Close Button -->
+            <button type="button" class="btn-close" id="btnCloseFilter" aria-label="Close"></button>
+        </div>
+    </div>
+
+    <!-- Scrollable Body -->
+  
+   <div class="flex-grow-1 overflow-y-auto custom-scrollbar pe-2" style="min-height: 0; max-height: calc(90vh - 120px);">
+        <form id="filterFormSidebar">
+
+            <div id="activeFilterChips" class="d-flex flex-wrap gap-1 mb-3"></div>
+
+            <div id="filterAccordion">
+                <!-- Plan Filter -->
+                <div class="filter-section shadow-sm">
+                    <div class="filter-section-head" data-bs-toggle="collapse" data-bs-target="#fsBody_plan" role="button" aria-expanded="true">
+                        <i class="bx bx-clipboard text-primary"></i><span>Plan</span><span class="fs-badge" id="fsBadge_plan">All</span><i class="bx bx-chevron-down fs-chevron text-muted"></i>
+                    </div>
+                    <div class="collapse show" id="fsBody_plan">
+                        <div class="fs-search">
+                            <input type="text" class="form-control form-control-sm fs-search-input bg-light border-0" placeholder="Search plans...">
+                        </div>
+                        <div class="fs-row fs-selectall"><span class="fs-cb"></span><span class="fw-semibold">Select all</span><span class="fs-matches ms-auto small text-muted"></span></div>
+                        <div class="fs-options"></div>
+                    </div>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="filter-section shadow-sm">
+                    <div class="filter-section-head" data-bs-toggle="collapse" data-bs-target="#fsBody_status" role="button" aria-expanded="true">
+                        <i class="bx bx-user-check text-primary"></i><span>Status</span><span class="fs-badge" id="fsBadge_status">All</span><i class="bx bx-chevron-down fs-chevron text-muted"></i>
+                    </div>
+                    <div class="collapse show" id="fsBody_status">
+                        <div class="fs-row fs-selectall"><span class="fs-cb"></span><span class="fw-semibold">Select all</span><span class="fs-matches ms-auto small text-muted"></span></div>
+                        <div class="fs-options"></div>
+                    </div>
+                </div>
+
+                <!-- Enrollment Filter -->
+                <div class="filter-section shadow-sm">
+                    <div class="filter-section-head" data-bs-toggle="collapse" data-bs-target="#fsBody_enrollment" role="button" aria-expanded="true">
+                        <i class="bx bx-shield-quarter text-primary"></i><span>Enrollment</span><span class="fs-badge" id="fsBadge_enrollment">All</span><i class="bx bx-chevron-down fs-chevron text-muted"></i>
+                    </div>
+                    <div class="collapse show" id="fsBody_enrollment">
+                        <div class="fs-row fs-selectall"><span class="fs-cb"></span><span class="fw-semibold">Select all</span><span class="fs-matches ms-auto small text-muted"></span></div>
+                        <div class="fs-options"></div>
+                    </div>
+                </div>
+
+                <!-- Flag Filter -->
+                <div class="filter-section shadow-sm">
+                    <div class="filter-section-head" data-bs-toggle="collapse" data-bs-target="#fsBody_flag" role="button" aria-expanded="true">
+                        <i class="bx bx-flag text-primary"></i><span>Flag</span><span class="fs-badge" id="fsBadge_flag">All</span><i class="bx bx-chevron-down fs-chevron text-muted"></i>
+                    </div>
+                    <div class="collapse show" id="fsBody_flag">
+                        <div class="fs-search">
+                            <input type="text" class="form-control form-control-sm fs-search-input bg-light border-0" placeholder="Search flags...">
+                        </div>
+                        <div class="fs-row fs-selectall"><span class="fs-cb"></span><span class="fw-semibold">Select all</span><span class="fs-matches ms-auto small text-muted"></span></div>
+                        <div class="fs-options"></div>
+                    </div>
+                </div>
+
+                <!-- Others Filter -->
+                <div class="filter-section shadow-sm">
+                    <div class="filter-section-head" data-bs-toggle="collapse" data-bs-target="#fsBody_other" role="button" aria-expanded="true">
+                        <i class="bx bx-file text-primary"></i><span>Others</span><span class="fs-badge" id="fsBadge_other">All</span><i class="bx bx-chevron-down fs-chevron text-muted"></i>
+                    </div>
+                    <div class="collapse show" id="fsBody_other">
+                        <div class="fs-row fs-selectall"><span class="fs-cb"></span><span class="fw-semibold">Select all</span><span class="fs-matches ms-auto small text-muted"></span></div>
+                        <div class="fs-options"></div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+   
+</div>

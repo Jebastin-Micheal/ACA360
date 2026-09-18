@@ -1,0 +1,128 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🚧 Scheduled Maintenance</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f8f9fa;
+            font-family: "Segoe UI", Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+        }
+
+        .maintenance-wrapper {
+            text-align: center;
+            max-width: 450px;
+            padding: 40px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @@keyframes fadeIn {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+
+        .maintenance-img {
+            width: 180px;
+            height: auto;
+            margin-bottom: 25px;
+            opacity: 0.9;
+        }
+
+        h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1b4fa3;
+            margin: 0 0 15px 0;
+        }
+
+        p {
+            font-size: 16px;
+            color: #6c757d;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .maintenance-btn {
+            background-color: #1b4fa3;
+            color: white;
+            padding: 12px 25px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+            .maintenance-btn:hover {
+                background-color: #0f3c7c;
+                transform: translateY(-2px);
+            }
+
+        .refresh-link {
+            display: block;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #6c757d;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+            .refresh-link:hover {
+                color: #1b4fa3;
+            }
+    </style>
+</head>
+<body>
+    <div class="maintenance-wrapper">
+        <img src="~/assets/img/illustrations/Under Maintenance.png" alt="Under Maintenance" class="maintenance-img" />
+
+        <h1>Scheduled Maintenance</h1>
+        <p>
+            We are currently improving system performance.<br>
+            The system will be back online shortly.
+        </p>
+
+        <div class="btn-container">
+            <button onclick="window.location.href='/Account/Logout'" class="maintenance-btn">
+                Log In (Admin Access)
+            </button>
+        </div>
+
+        <a onclick="window.location.reload()" class="refresh-link">Just Check Status (Refresh)</a>
+    </div>
+</body>
+</html>

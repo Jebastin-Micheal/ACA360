@@ -1,0 +1,16 @@
+﻿@model ACA360.Core.Models.CountTileModel
+
+<div class="tile stat compact ac-@Model.Accent @Model.Span" data-w="@Model.Key">
+    <div class="tile-head">
+        <h4>@Model.Label</h4>
+        <div class="th-spacer"></div>
+        <div class="tile-tools"></div>
+    </div>
+    <div class="kpi-row">
+        <span class="kpi-ico ic-@Model.Accent"><i class="bx @Model.Icon"></i></span>
+        <div>
+            <div class="val num">@Model.Value.ToString("N0")</div>
+            <div class="sub">@Model.Sub</div>
+        </div>
+    </div>
+</div>

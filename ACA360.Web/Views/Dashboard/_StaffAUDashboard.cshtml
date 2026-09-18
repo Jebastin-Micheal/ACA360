@@ -1,0 +1,125 @@
+﻿@model ACA360.Core.Models.DashboardViewModel
+@{
+    var au = Model.AuditData ?? new ACA360.Core.Models.AuditDashboardData();
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="d-metric accent-@(au.AnomaliesDetected > 0 ? "danger" : "success")">
+            <div class="d-metric-label">Anomalies Detected</div>
+            <div class="d-metric-value counter @(au.AnomaliesDetected > 0 ? "text-danger" : "text-success")"
+                 data-target="@au.AnomaliesDetected">
+                @au.AnomaliesDetected
+            </div>
+            <div class="d-metric-sub mt-2">
+                @if (au.AnomaliesDetected > 0)
+                {
+                    <span class="risk-critical">Suspicious patterns</span>
+                }
+                else
+                {
+
+                    <span class="risk-ok">Clean</span>
+                }
+            </div>
+            <i class='bx bx-radar d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="d-metric accent-info">
+            <div class="d-metric-label">Live Activity</div>
+            <div class="d-metric-value counter" data-target="@au.LiveAuditStream.Count">@au.LiveAuditStream.Count</div>
+            <div class="d-metric-sub mt-2">Recent log entries</div>
+            <i class='bx bx-radio-circle-marked d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="d-metric">
+            <div class="d-metric-label">QC Sampling</div>
+            <div class="d-metric-sub pt-4">
+                <button class="btn btn-primary w-75" onclick="pullSample()">
+                    <i class='bx bx-dice-5 me-2'></i>Pull Random Sample
+                </button>
+            </div>
+            <i class='bx bx-shield-quarter d-metric-icon'></i>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-xl-4">
+        <div class="d-card h-100">
+            <div class="d-card-header">
+                <h6 class="d-card-title"><i class='bx bx-radar me-2 text-warning'></i>Anomaly Detection</h6>
+                @if (au.AnomaliesDetected > 0)
+                {
+                    <span class="badge bg-warning text-dark">Review Required</span>
+                }
+            </div>
+            <div class="card-body">
+                <div class="text-center py-3">
+                    <div class="score-ring-wrap mx-auto position-relative"
+                         data-score="@(Math.Min(au.AnomaliesDetected * 5, 100))"
+                         style="width:120px;height:120px;">
+
+                        <svg width="120" height="120" class="score-ring">
+                            <circle class="score-ring-track" cx="60" cy="60" r="48" stroke-width="10" />
+                            <circle class="score-ring-fill"
+                                    cx="60" cy="60" r="48" stroke-width="10"
+                                    stroke="@(au.AnomaliesDetected > 0 ? "#ff3e1d" : "#71dd37")"
+                                    style="stroke-dasharray:301.6;stroke-dashoffset:301.6;" />
+                        </svg>
+
+                        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center">
+                            <div class="fw-bold @(au.AnomaliesDetected > 0 ? "text-danger" : "text-success")"
+                                 style="font-size:1.5rem;line-height:1;">
+                                @au.AnomaliesDetected
+                            </div>
+                            <div class="text-muted"
+                                 style="font-size:.6rem;text-transform:uppercase;letter-spacing:.5px;">
+                                Flags
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-outline-@(au.AnomaliesDetected > 0 ? "danger" : "secondary") w-100">
+                            <i class='bx bx-zoom-in me-1'></i>Review Flags
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-8">
+        <div class="d-card h-100">
+            <div class="d-card-header">
+                <h6 class="d-card-title"><i class='bx bx-radio-circle-marked me-2 text-primary'></i>Live Audit Stream</h6>
+                <span class="pulse-dot green"></span>
+            </div>
+            <div class="card-body p-0 d-scroll" style="max-height:320px;">
+                @if (au.LiveAuditStream.Any())
+                {
+                    <ul class="d-timeline px-4 py-2">
+                        @foreach (var log in au.LiveAuditStream)
+                        {
+                            <li>
+                                <div class="d-tl-dot bg-primary"></div>
+                                <span class="text-body" style="font-size:.8rem;font-family:monospace;">@log</span>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <div class="text-center text-muted py-5" style="font-size:.82rem;">No recent activity</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function pullSample() { alert('Pulling random QC sample…'); }
+</script>

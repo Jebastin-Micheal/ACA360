@@ -1,0 +1,81 @@
+﻿@using ACA360.Core.Models.Tracker
+@model TrackerProcess
+
+<form id="frmProcess">
+    @Html.AntiForgeryToken()
+    <div class="modal-header">
+        <h5 class="modal-title">@(Model.ProcessId == 0 ? "Add New Process Step" : "Edit Process Step")</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <input type="hidden" asp-for="ProcessId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Process Step Name <span class="text-danger">*</span></label>
+                        <input asp-for="ProcessName" class="form-control" data-val="true" data-val-required="Process Name is required" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Web Name <span class="text-danger">*</span></label>
+                        <input asp-for="WebName" class="form-control" data-val="true" data-val-required="Web Name is required" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Category <span class="text-danger">*</span></label>
+                        <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories" data-val="true" data-val-required="Category is required" required>
+                            <option value="">-- Select --</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Follow Up Days <span class="text-danger">*</span></label>
+                            <input asp-for="FollowUpDays" type="number" class="form-control" data-val="true" data-val-required="Follow Up Days is required" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Display Order <span class="text-danger">*</span></label>
+                            <input asp-for="DisplayOrder" type="number" class="form-control" data-val="true" data-val-required="Display Order is required" required />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Completion % <span class="text-danger">*</span></label>
+                            <input asp-for="CompletionPercentage" type="number" min="0" max="100" class="form-control" data-val="true" data-val-required="Completion Percentage is required" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3 ms-1">
+                        <div class="form-check">
+                            <input asp-for="IsDoNotDisplay" type="checkbox" class="form-check-input" id="chkDoNotDisplay" />
+                            <label class="form-check-label fw-bold" for="chkDoNotDisplay">
+                                Do Not Display Follow Up Days
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+    <div class="modal-footer py-3">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveProcess()">Save Changes</button>
+    </div>
+</form>
+
+<script>
+    $(document).ready(function () {
+        function toggleFollowUpDays() {
+            if ($('#chkDoNotDisplay').is(':checked')) {
+                $('#FollowUpDays').val(0).attr('readonly', true);
+            } else {
+                $('#FollowUpDays').removeAttr('readonly');
+            }
+        }
+
+        toggleFollowUpDays();
+        $('#chkDoNotDisplay').on('change', function () {
+            toggleFollowUpDays();
+        });
+    });
+</script>

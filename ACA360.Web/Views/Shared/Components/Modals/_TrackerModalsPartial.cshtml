@@ -1,0 +1,706 @@
+﻿@* ════════════════════════════════════════════════════════════════════════
+   Shared Tracker Modals  —  Affiliate / Contact / Billing Contact
+   Rendered on BOTH the Employer Add/Edit form and the Dashboard.
+   Contact + Billing are the FULL versions (Connect User / ACA Roles /
+   edit / delete) and post to /TrackerEmployer/SaveContact|DeleteContact.
+   Employer id is resolved from whichever page hosts the modal via
+   getSharedEmployerId().
+   ════════════════════════════════════════════════════════════════════════ *@
+
+@* Add/Edit Affiliate *@
+<div class="modal fade" id="addAffiliateModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary py-3 px-4">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bx bx-link-alt text-white fs-5"></i>
+                    <h5 class="modal-title text-white fw-bold mb-0">
+                        <span id="affModalTitle">Add Affiliate</span>
+                    </h5>
+                </div>
+                <div class="d-flex align-items-center gap-2 ms-auto">
+                    <button type="button"
+                            class="btn btn-sm btn-outline-light"
+                            onclick="copyPrimaryToAffiliate()">
+                        <i class="bx bx-copy-alt me-1"></i>Copy from Primary
+                    </button>
+                    <button type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal"></button>
+                </div>
+            </div>
+
+            <div class="modal-body p-4">
+
+
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <input type="hidden" id="aff_id" value="0" />
+
+
+                            <div class="row g-3 mb-2">
+                                <div class="col-md-7">
+                                    <label class="form-label fw-semibold small">
+                                        Affiliate Name <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group input-group-merge">
+                                        <span class="input-group-text"><i class="bx bx-buildings"></i></span>
+                                        <input type="text" id="aff_name" class="form-control" maxlength="100" oninput="this.value=this.value.replace(/[^A-Za-z0-9 &().'\/-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()"
+                                               placeholder="Full legal employer name" />
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold small">EIN</label>
+                                    <div class="input-group input-group-merge">
+                                        <span class="input-group-text"><i class="bx bx-id-card"></i></span>
+                                        <input type="text" id="aff_ein" class="form-control ein-input" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'').slice(0,9).replace(/^(\d{2})(\d)/,'$1-$2')"
+                                               placeholder="XX-XXXXXXX" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="my-3" />
+
+
+                            <div class="row g-3 mb-2">
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold small">Street Address</label>
+                                    <div class="input-group input-group-merge">
+                                        <span class="input-group-text"><i class="bx bx-map"></i></span>
+                                        <input type="text" id="aff_address" class="form-control" maxlength="150" oninput="this.value=this.value.replace(/[^A-Za-z0-9 #&'(),.\/-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()"
+                                               placeholder="Street address" />
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold small">City</label>
+                                    <div class="input-group input-group-merge">
+                                        <span class="input-group-text"><i class="bx bx-buildings"></i></span>
+                                        <input type="text" id="aff_city" class="form-control" maxlength="50" oninput="this.value=this.value.replace(/[^A-Za-z .'-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()"
+                                               placeholder="City" />
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold small">State</label>
+                                    <select id="aff_state" class="form-select">
+                                        <option value="">— Select —</option>
+                                        @if (ViewData["StateList"] is SelectList stateList)
+                                        {
+                                            foreach (var s in stateList)
+                                            {
+                                                <option value="@s.Value">@s.Text</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold small">Zip</label>
+                                    <div class="input-group input-group-merge">
+                                        <span class="input-group-text"><i class="bx bx-map-pin"></i></span>
+                                        <input type="text" id="aff_zip" class="form-control" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'').slice(0,9).replace(/^(\d{5})(\d)/,'$1-$2')"
+                                               placeholder="Zip" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="my-3" />
+
+
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold small">Phone</label>
+                                    <div class="input-group input-group-merge">
+                                        <span class="input-group-text"><i class="bx bx-phone"></i></span>
+                                        <input type="text" id="aff_phone" class="form-control mask-us-phone" maxlength="12" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10).replace(/^(\d{3})(\d)/,'$1-$2').replace(/^(\d{3}-\d{3})(\d)/,'$1-$2')"
+                                               placeholder="Phone number" />
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold small">Email Address</label>
+                                    <div class="input-group input-group-merge">
+                                        <span class="input-group-text"><i class="bx bx-envelope"></i></span>
+                                        <input type="email" id="aff_email" class="form-control" maxlength="254" oninput="this.value=this.value.replace(/\s/g,'')"
+                                               placeholder="Email address" />
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold small"># Employees</label>
+                                    <div class="input-group input-group-merge">
+                                        <span class="input-group-text"><i class="bx bx-group"></i></span>
+                                        <input type="number" id="aff_empcount" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';"
+                                               class="form-control" placeholder="0" />
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer border-top pt-3 pb-3 py-3">
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    <i class="bx bx-x me-1"></i>Cancel
+                </button>
+                <button type="button"
+                        class="btn btn-primary"
+                        onclick="shared_saveAffiliate()">
+                    <i class="bx bx-save me-1"></i>Save Affiliate
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+@* ── Add / Edit Contact Modal (FULL) ─────────────────────────────────── *@
+<div class="modal fade" id="addContactModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold fs-6"><i class="bx bx-user-plus text-success me-2"></i>Add Contact</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <input type="hidden" id="editContactId" value="0" />
+                            <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                                <span class="field-label mb-0">Employer:</span>
+                                <span class="fw-semibold small text-heading" id="contactEmpName"></span>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold small">Name <span class="text-danger">*</span></label>
+                                    <input type="text" id="addContactName" class="form-control" placeholder="Full name" maxlength="100" oninput="this.value=this.value.replace(/[^A-Za-z0-9 &().'\/-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Phone</label>
+                                    <input type="text" id="addContactPhone" class="form-control" placeholder="(XXX) XXX-XXXX" maxlength="12" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10).replace(/^(\d{3})(\d)/,'$1-$2').replace(/^(\d{3}-\d{3})(\d)/,'$1-$2')" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Email Address</label>
+                                    <input type="email" id="addContactEmail" class="form-control" placeholder="email@domain.com" maxlength="254" oninput="this.value=this.value.replace(/\s/g,'')" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">Connect User</label>
+                                    <input type="text" id="addContactConnectUser" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold small">ACA Roles</label>
+                                    <select id="addContactACARole" class="form-select">
+                                        <option value="">— Select —</option>
+                                        <option value="No Access">No Access</option>
+                                        <option value="Read Only">Read Only</option>
+                                        <option value="Broker-Full Access">Broker-Full Access</option>
+                                        <option value="Editor">Editor</option>
+                                        <option value="Admin">Admin</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light py-3">
+                <button type="button" class="btn btn-outline-danger me-auto" id="btnDeleteContact" style="display:none" onclick="deleteContact()"><i class="bx bx-trash me-1"></i>Delete</button>
+                <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="saveNewContact()"><i class="bx bx-save me-1"></i><span id="btnContactLabel">Add</span></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Add / Edit Billing Contact Modal (FULL) ─────────────────────────── *@
+<div class="modal fade" id="addBillingContactModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold fs-6"><i class="bx bx-credit-card text-warning me-2"></i>Add Billing Contact</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <input type="hidden" id="editBillingId" value="0" />
+                            <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                                <span class="field-label mb-0">Employer:</span>
+                                <span class="fw-semibold small text-heading" id="billingEmpName"></span>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-12"><label class="form-label fw-semibold small">Name <span class="text-danger">*</span></label><input type="text" id="addBillingName" class="form-control" placeholder="Full name" maxlength="100" oninput="this.value=this.value.replace(/[^A-Za-z0-9 &().'\/-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" /></div>
+                                <div class="col-md-6"><label class="form-label fw-semibold small">Phone</label><input type="text" id="addBillingPhone" class="form-control" placeholder="(XXX) XXX-XXXX" maxlength="12" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10).replace(/^(\d{3})(\d)/,'$1-$2').replace(/^(\d{3}-\d{3})(\d)/,'$1-$2')" /></div>
+                                <div class="col-md-6"><label class="form-label fw-semibold small">Email Address</label><input type="email" id="addBillingEmailInput" class="form-control" placeholder="email@domain.com" maxlength="254" oninput="this.value=this.value.replace(/\s/g,'')" /></div>
+                                <div class="col-md-12"><label class="form-label fw-semibold small">Address</label><input type="text" id="addBillingAddress" class="form-control" placeholder="Street address" maxlength="150" oninput="this.value=this.value.replace(/[^A-Za-z0-9 #&'(),.\/-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" /></div>
+                                <div class="col-md-12"><label class="form-label fw-semibold small">Address 2</label><input type="text" id="addBillingAddress2" class="form-control" placeholder="Suite, unit, etc." maxlength="150" oninput="this.value=this.value.replace(/[^A-Za-z0-9 #&'(),.\/-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" /></div>
+                                <div class="col-md-4"><label class="form-label fw-semibold small">City</label><input type="text" id="addBillingCity" class="form-control" /></div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold small">State</label>
+                                    <select id="addBillingState" class="form-select">
+                                        <option value="">— Select —</option>
+                                        @if (ViewBag.StatesACA != null)
+                                        {
+                                            foreach (var s in (SelectList)ViewBag.StatesACA)
+                                            {
+                                                <option value="@s.Value">@s.Text</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-md-4"><label class="form-label fw-semibold small">Zip</label><input type="text" id="addBillingZip" class="form-control" /></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light py-3">
+                <button type="button" class="btn btn-outline-danger me-auto" id="btnDeleteBilling" style="display:none" onclick="deleteBillingContact()"><i class="bx bx-trash me-1"></i>Delete</button>
+                <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="saveNewBillingContact()"><i class="bx bx-save me-1"></i><span id="btnBillingLabel">Add</span></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ─────────────────────────────────────────────────────────────
+       VALIDATION HELPERS
+    ───────────────────────────────────────────────────────────── */
+    $(document).on('input change', '.required-field', function () {
+        $(this).removeClass('border-danger');
+    });
+
+    function validateModalFields(modalSelector) {
+        var isValid = true;
+        var $modal = $(modalSelector);
+        $modal.find('.border-danger').removeClass('border-danger');
+        $modal.find('.required-field').each(function () {
+            var val = $(this).val();
+            if (val === null || val === undefined || val.toString().trim() === '') {
+                $(this).addClass('border-danger');
+                isValid = false;
+            }
+        });
+        if (!isValid) $modal.find('.border-danger').first().focus();
+        return isValid;
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       SHARED EMPLOYER-ID RESOLVER
+       Works on the Add/Edit form (#EmployerId), the Dashboard
+       (#hdnEmployerId) and the legacy Add/Update views.
+    ───────────────────────────────────────────────────────────── */
+    function getSharedEmployerId() {
+        var ids = ['#EmployerId', '#hdnEmployerId', '#hdnUpdateTrackerId', '#Employer_TrackerIdhdn'];
+        for (var i = 0; i < ids.length; i++) {
+            var v = $(ids[i]).val();
+            if (v && v !== '0') return v;
+        }
+        return null;
+    }
+        /* Resolves the contact / billing <select> on whichever page hosts the modal.
+       Dashboard : #ddlContact / #ddlBillingContact  (plain, name=employer_trackerinfo.*)
+       Employer  : #ACAContactId                     (select2)                            */
+    function getSharedContactSelect() {
+        var ids = ['#ACAContactId', '#ddlContact',
+                   '[name="ACAContactId"]', '[name="ContactId"]',
+                   '[name="employer_trackerinfo.ContactId"]'];
+        for (var i = 0; i < ids.length; i++) { var $s = $(ids[i]); if ($s.length) return $s.first(); }
+        return $();
+    }
+
+    function getSharedBillingSelect() {
+        var ids = ['#ddlBillingContact',
+                   '[name="BillingContactId"]',
+                   '[name="employer_trackerinfo.BillingContactId"]'];
+        for (var i = 0; i < ids.length; i++) { var $s = $(ids[i]); if ($s.length) return $s.first(); }
+        return $();
+    }
+
+    // select2-safe add/rename + select
+        // select2-safe add/rename + select, and sync data-* used by the dashboard change handler
+    function upsertSharedOption($sel, id, label, isEdit, data) {
+        if (!$sel || !$sel.length) return;
+        data = data || {};
+
+        var $opt = $sel.find('option[value="' + id + '"]');
+        if (isEdit) {
+            $opt.text(label);
+        } else if (!$opt.length) {
+            $opt = $(new Option(label, id, true, true));   // selected=true matters for select2
+            $sel.append($opt);
+        }
+
+        // keep data-phone / data-email (etc.) in sync — attr for markup, .data for jQuery's cache
+        $.each(data, function (k, v) {
+            v = (v == null) ? '' : v;
+            $opt.attr('data-' + k, v).data(k, v);
+        });
+
+        $sel.val(id).trigger('change');
+        if ($sel.hasClass('select2-hidden-accessible')) $sel.trigger('change.select2');
+    }
+    function checkEmployerIdForModal() {
+        if (!getSharedEmployerId()) {
+            Swal.fire('Save the employer first', 'Add the employer details to generate an ID before adding records.', 'info');
+            return false;
+        }
+        return true;
+    }
+
+    function sharedEmployerName() { return $('#EmployerName').val() || ''; }
+     // --- STATE HELPER ---
+    // Employer.state stores code "GA" but dropdown value is integer id
+    // This finds the matching option id by comparing option text to code
+    function getStateIdByCode(code) {
+        if (!code) return '';
+        var found = '';
+        $('#aff_state option').each(function () {
+            if ($(this).text().trim().toUpperCase() === code.trim().toUpperCase()) {
+                found = $(this).val();
+                return false; // break
+            }
+        });
+        return found;
+    }
+
+    // When saving — read text (code) not value (id)
+    function getStateCodeFromDropdown() {
+        return $('#aff_state option:selected').text().trim();
+    }
+    /* ─────────────────────────────────────────────────────────────
+       AFFILIATE  (unchanged — posts to /Employer/AddAffiliate)
+    ───────────────────────────────────────────────────────────── */
+    // --- AFFILIATE LOGIC ---
+    function openAffiliateModal() {
+        if (!checkEmployerIdForModal()) return;
+        $('#aff_id').val('0');
+        $('#addAffiliateModal input:not([type=hidden])').val('');
+        $('#aff_state').html($('#State').html());
+        $('#affModalTitle').text('Add Affiliate');
+        $('#addAffiliateModal').modal('show');
+    }
+
+    function openEditAffiliateModal() {
+        var affiliateId = $('#affiliateSelect').val();
+        if (!affiliateId || affiliateId === '0') {
+                Swal.fire('Required', 'Please select an affiliate to edit.', 'warning');
+            return;
+        }
+
+            $.get('/Employer/GetAffiliate', { id: affiliateId }, function (res) {
+        if (!res.success) { alert(res.message); return; }
+
+        var d = res.data;
+        var resolvedId = d.affiliateId || affiliateId;
+
+        $('#aff_id').val(resolvedId);
+        $('#aff_name').val(d.affiliateName);
+        $('#aff_ein').val(d.ein);
+        $('#aff_phone').val(d.phone);
+        $('#aff_email').val(d.email);
+        $('#aff_address').val(d.address);
+        $('#aff_city').val(d.city);
+           // openEditAffiliateModal — add this one missing line
+    $('#aff_state').html($('#State').html());
+
+    // ↓ ADD THIS — was the actual bug
+    var found = $('#aff_state option').filter(function() {
+        return $(this).text().trim().toUpperCase() === (d.state || '').trim().toUpperCase();
+    }).val();
+    $('#aff_state').val(found || '').trigger('change');
+            $('#aff_state').val(getStateIdByCode(d.state || ''));
+        $('#aff_zip').val(d.zip);
+        $('#aff_empcount').val(d.numberOfEmployees || 0);
+
+        $('#affModalTitle').text('Edit Affiliate');
+        $('#addAffiliateModal').modal('show');
+    });
+    }
+
+        function shared_saveAffiliate() {
+        var affId  = parseInt($('#aff_id').val()) || 0;
+        var isEdit = affId > 0;
+        var empId  = getSharedEmployerId();
+        var token  = $('input[name="__RequestVerificationToken"]').val();
+
+        var name = $('#aff_name').val().trim();
+            if (!name) { Swal.fire('Required', 'Company name is required.', 'warning'); return; }
+
+        var data = {
+            __RequestVerificationToken : token,
+            AffiliateId                : affId,
+            EmployerId                 : empId,
+            ParentEmployerId           : empId,
+            AffiliateName              : name,
+            EIN                        : $('#aff_ein').val().trim(),
+            Phone                      : $('#aff_phone').val().trim(),
+            Email                      : $('#aff_email').val().trim(),
+            Address                    : $('#aff_address').val().trim(),
+            City                       : $('#aff_city').val().trim(),
+            State                      : getStateCodeFromDropdown(),  // ← text (code) not value (id)
+            Zip                        : $('#aff_zip').val().trim(),
+            NumberOfEmployees          : parseInt($('#aff_empcount').val()) || 0
+        };
+
+        var url = isEdit ? '/Employer/EditAffiliate' : '/Employer/AddAffiliate';
+
+        $.post(url, data, function (res) {
+            if (res.success) {
+                $('#addAffiliateModal').modal('hide');
+                var label = '[AFFILIATE] ' + res.name;
+                     Swal.fire({ icon: 'success', title: isEdit ? 'Affiliate Updated!' : 'Affiliate Added!', timer: 1000, showConfirmButton: false });
+                if (!isEdit) {
+                    $('#affiliateSelect')
+                        .append(new Option(label, res.affiliateId, true, true))
+                        .trigger('change');
+                } else {
+                    $('#affiliateSelect option[value="' + affId + '"]').text(label);
+                }
+            } else {
+                    Swal.fire('Error', res.message, 'error');
+            }
+        }).fail(function () {
+                Swal.fire('Server Error', 'Please try again.', 'error');
+        });
+    }
+
+    function deleteAffiliate() {
+        var affiliateId = $('#affiliateSelect').val();
+        if (!affiliateId || affiliateId === '0') {
+                Swal.fire('Required', 'Please select an affiliate to delete.', 'warning');
+            return;
+        }
+            Swal.fire({
+            title: 'Are you sure?',
+            text: "You want to remove this affiliate? This cannot be undone!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then(function (result) {
+            if (!result.isConfirmed) return;
+
+        var token = $('input[name="__RequestVerificationToken"]').val();
+
+        $.post('/Employer/DeleteAffiliate',
+            { id: affiliateId, __RequestVerificationToken: token },
+            function (res) {
+                if (res.success) {
+                    $('#affiliateSelect option[value="' + affiliateId + '"]').remove();
+                    $('#affiliateSelect').trigger('change');
+                        Swal.fire('Deleted!', res.message || 'Affiliate removed successfully.', 'success');
+                } else {
+                        Swal.fire('Error!', res.message, 'error');
+                }
+            }
+        ).fail(function () {
+                 Swal.fire('Server Error', 'Please try again.', 'error');
+           });
+        });
+    }
+
+    function copyPrimaryToAffiliate() {
+        var empId = getSharedEmployerId();
+            if (!empId) { Swal.fire('Error', 'Employer ID not found.', 'error'); return; }
+
+        $.get('/Employer/GetPrimaryData', { employerId: empId }, function (res) {
+                if (!res.success) { Swal.fire('Error', res.message, 'error'); return; }
+            var d = res.data;
+            $('#aff_address').val(d.address || '');
+            $('#aff_city').val(d.city || '');
+            $('#aff_state').val(getStateIdByCode(d.state || ''));  // ← code → id
+            $('#aff_zip').val(d.zip || '');
+            $('#aff_phone').val(d.phone || '');
+            $('#aff_email').val(d.email || '');
+        }).fail(function () {
+                Swal.fire('Server Error', 'Please try again.', 'error');
+        });
+    }
+    /* ─────────────────────────────────────────────────────────────
+       CONTACT  (full — posts to /TrackerEmployer/SaveContact)
+       Dropdown target: [name="ContactId"], [name="ACAContactId"]
+    ───────────────────────────────────────────────────────────── */
+    function openAddContact() {
+        if (!checkEmployerIdForModal()) return;
+        document.getElementById('editContactId').value = '0';
+        document.getElementById('contactEmpName').textContent = sharedEmployerName();
+        ['addContactName', 'addContactPhone', 'addContactEmail', 'addContactConnectUser'].forEach(function (id) { document.getElementById(id).value = ''; });
+        document.getElementById('addContactACARole').value = '';
+        document.getElementById('btnDeleteContact').style.display = 'none';
+        document.getElementById('btnContactLabel').textContent = 'Add';
+        new bootstrap.Modal(document.getElementById('addContactModal')).show();
+    }
+
+    function openContactLink() {
+       var id = getSharedContactSelect().val();   
+        if (!id) { Swal.fire('Info', 'Please select a contact first.', 'info'); return; }
+        $.getJSON('/TrackerEmployer/GetContactById', { id: id }, function (c) {
+            document.getElementById('editContactId').value = c.contactId || c.id || 0;
+            document.getElementById('contactEmpName').textContent = sharedEmployerName();
+            document.getElementById('addContactName').value = c.name || '';
+            document.getElementById('addContactPhone').value = c.phone || '';
+            document.getElementById('addContactEmail').value = c.email || '';
+            document.getElementById('addContactConnectUser').value = c.acaUsername || '';
+            document.getElementById('addContactACARole').value = c.acaRoles || '';
+            document.getElementById('btnDeleteContact').style.display = '';
+            document.getElementById('btnContactLabel').textContent = 'Update';
+            new bootstrap.Modal(document.getElementById('addContactModal')).show();
+        });
+    }
+
+    function saveNewContact() {
+        var name = document.getElementById('addContactName').value.trim();
+        if (!name) { Swal.fire('Required', 'Please enter a contact name.', 'warning'); return; }
+        var isEdit = parseInt(document.getElementById('editContactId').value) > 0;
+        $.post('/TrackerEmployer/SaveContact', {
+            ContactId: document.getElementById('editContactId').value,
+            EmployerId: getSharedEmployerId(),
+            Name: name,
+            Phone: document.getElementById('addContactPhone').value.trim(),
+            Email: document.getElementById('addContactEmail').value.trim(),
+            AcaUsername: document.getElementById('addContactConnectUser').value.trim(),
+            AcaRoles: document.getElementById('addContactACARole').value,
+            IsBilling: false
+        }).done(function (r) {
+            if (r.success) {
+                bootstrap.Modal.getInstance(document.getElementById('addContactModal')).hide();
+                Swal.fire({ icon: 'success', title: isEdit ? 'Contact Updated!' : 'Contact Added!', timer: 800, showConfirmButton: false });
+              upsertSharedOption(getSharedContactSelect(), r.id, name, isEdit, {
+    phone: document.getElementById('addContactPhone').value.trim(),
+    email: document.getElementById('addContactEmail').value.trim()
+});
+            } else Swal.fire('Error', r.message || 'Save failed', 'error');
+        });
+    }
+
+    function deleteContact() {
+        var id = document.getElementById('editContactId').value;
+        if (!id || id === '0') return;
+        Swal.fire({ title: 'Delete this contact?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Delete', confirmButtonColor: '#d33' })
+            .then(function (r) {
+                if (!r.isConfirmed) return;
+                $.post('/TrackerEmployer/DeleteContact', { id: id }).done(function (res) {
+                    if (res.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('addContactModal')).hide();
+                        Swal.fire({ icon: 'success', title: 'Deleted', timer: 700, showConfirmButton: false });
+                        var $sel = getSharedContactSelect();
+                        $sel.find('option[value="' + id + '"]').remove();
+                        $sel.val('').trigger('change');
+                        if ($sel.hasClass('select2-hidden-accessible')) $sel.trigger('change.select2');
+                    }
+                });
+            });
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       BILLING CONTACT  (full — posts to /TrackerEmployer/SaveContact)
+       Dropdown target: [name="BillingContactId"]
+    ───────────────────────────────────────────────────────────── */
+    function _ensureBillingStates(callback) {
+        if ($('#addBillingState option').length > 1) { callback(); return; }
+        $.getJSON('/TrackerEmployer/GetStatesJson', function (states) {
+            var $sel = $('#addBillingState');
+            $.each(states, function (i, s) { $sel.append(new Option(s.text, s.value)); });
+            callback();
+        }).fail(function () { callback(); });
+    }
+
+    function _showBillingModal() {
+        document.getElementById('editBillingId').value = '0';
+        document.getElementById('billingEmpName').textContent = sharedEmployerName();
+        ['addBillingName', 'addBillingPhone', 'addBillingEmailInput', 'addBillingAddress', 'addBillingAddress2', 'addBillingCity', 'addBillingZip'].forEach(function (id) { document.getElementById(id).value = ''; });
+        $('#addBillingState').val('');
+        document.getElementById('btnDeleteBilling').style.display = 'none';
+        document.getElementById('btnBillingLabel').textContent = 'Add';
+        new bootstrap.Modal(document.getElementById('addBillingContactModal')).show();
+    }
+
+    function openAddBillingContact() {
+        if (!checkEmployerIdForModal()) return;
+        _ensureBillingStates(_showBillingModal);
+    }
+
+    function openBillingContactLink() {
+        var id = getSharedBillingSelect().val();
+        if (!id) { Swal.fire('Info', 'Please select a billing contact first.', 'info'); return; }
+        _ensureBillingStates(function () {
+            $.getJSON('/TrackerEmployer/GetContactById', { id: id }, function (c) {
+                document.getElementById('editBillingId').value = c.contactId || c.id || 0;
+                document.getElementById('billingEmpName').textContent = sharedEmployerName();
+                document.getElementById('addBillingName').value = c.name || '';
+                document.getElementById('addBillingPhone').value = c.phone || '';
+                document.getElementById('addBillingEmailInput').value = c.email || '';
+                document.getElementById('addBillingAddress').value = c.address1 || '';
+                document.getElementById('addBillingAddress2').value = c.address2 || '';
+                document.getElementById('addBillingCity').value = c.city || '';
+                $('#addBillingState').val(c.state || '');
+                document.getElementById('addBillingZip').value = c.zip || '';
+                document.getElementById('btnDeleteBilling').style.display = '';
+                document.getElementById('btnBillingLabel').textContent = 'Update';
+                new bootstrap.Modal(document.getElementById('addBillingContactModal')).show();
+            });
+        });
+    }
+
+    function saveNewBillingContact() {
+        var name = document.getElementById('addBillingName').value.trim();
+        if (!name) { Swal.fire('Required', 'Please enter a billing contact name.', 'warning'); return; }
+        var isEdit = parseInt(document.getElementById('editBillingId').value) > 0;
+        $.post('/TrackerEmployer/SaveContact', {
+            ContactId: document.getElementById('editBillingId').value,
+            EmployerId: getSharedEmployerId(),
+            Name: name,
+            Phone: document.getElementById('addBillingPhone').value.trim(),
+            Email: document.getElementById('addBillingEmailInput').value.trim(),
+            Address1: document.getElementById('addBillingAddress').value.trim(),
+            Address2: document.getElementById('addBillingAddress2').value.trim(),
+            City: document.getElementById('addBillingCity').value.trim(),
+            State: document.getElementById('addBillingState').value,
+            Zip: document.getElementById('addBillingZip').value.trim(),
+            IsBilling: true
+        }).done(function (r) {
+            if (r.success) {
+                bootstrap.Modal.getInstance(document.getElementById('addBillingContactModal')).hide();
+                Swal.fire({ icon: 'success', title: isEdit ? 'Updated!' : 'Added!', timer: 800, showConfirmButton: false });
+                    upsertSharedOption(getSharedBillingSelect(), r.id, name, isEdit, {
+        phone: document.getElementById('addBillingPhone').value.trim(),
+        email: document.getElementById('addBillingEmailInput').value.trim()
+    });
+            } else Swal.fire('Error', r.message || 'Save failed', 'error');
+        });
+    }
+
+    function deleteBillingContact() {
+        var id = document.getElementById('editBillingId').value;
+        if (!id || id === '0') return;
+        Swal.fire({ title: 'Delete billing contact?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Delete', confirmButtonColor: '#d33' })
+            .then(function (r) {
+                if (!r.isConfirmed) return;
+                $.post('/TrackerEmployer/DeleteContact', { id: id }).done(function (res) {
+                    if (res.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('addBillingContactModal')).hide();
+                        Swal.fire({ icon: 'success', title: 'Deleted', timer: 700, showConfirmButton: false });
+                        var $sel = getSharedBillingSelect();
+                        $sel.find('option[value="' + id + '"]').remove();
+                        $sel.val('').trigger('change');
+                        if ($sel.hasClass('select2-hidden-accessible')) $sel.trigger('change.select2');
+                    }
+                });
+            });
+    }
+
+    /* ─────────────────────────────────────────────────────────────
+       BACK-COMPAT ALIASES (old callers kept working)
+    ───────────────────────────────────────────────────────────── */
+    function openContactModal() { openAddContact(); }
+    function openBillingModal() { openAddBillingContact(); }
+    function openEditContact()  { openContactLink(); }
+</script>

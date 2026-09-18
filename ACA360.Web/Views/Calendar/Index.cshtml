@@ -1,0 +1,710 @@
+﻿@{
+    ViewData["Title"] = "Calendar";
+}
+
+<!-- Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<style>
+    :root {
+        --sneat-primary: #696cff;
+        --sneat-primary-hover: #5f61e6;
+        --sneat-text: #566a7f;
+        --sneat-text-light: #a1acb8;
+        --sneat-border: #eceef1;
+        --sneat-bg: #f5f5f9;
+    }
+
+    body {
+        background-color: var(--sneat-bg);
+    }
+
+    /* Page wrapper */
+    .calendar-page {
+        display: flex;
+        gap: 1.5rem;
+        align-items: flex-start;
+    }
+
+    /* Left sidebar */
+    .calendar-sidebar {
+        width: 280px;
+        flex-shrink: 0;
+        background: #fff;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.1875rem 0.75rem rgba(161, 172, 184, 0.12);
+        padding: 1.25rem;
+    }
+
+    .btn-add-event {
+        background-color: var(--sneat-primary);
+        border: none;
+        color: #fff;
+        width: 100%;
+        border-radius: 0.375rem;
+        padding: 0.6rem 1rem;
+        font-weight: 500;
+        font-size: 0.9375rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        margin-bottom: 1.5rem;
+        cursor: pointer;
+        transition: background-color .15s ease;
+    }
+
+        .btn-add-event:hover {
+            background-color: var(--sneat-primary-hover);
+        }
+
+    .mini-calendar {
+        margin-bottom: 1.5rem;
+    }
+
+    .mini-cal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+        color: var(--sneat-text);
+        font-weight: 500;
+    }
+
+        .mini-cal-header button {
+            border: none;
+            background: none;
+            color: var(--sneat-text-light);
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0.2rem 0.4rem;
+        }
+
+            .mini-cal-header button:hover {
+                color: var(--sneat-primary);
+            }
+
+    .mini-cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        row-gap: 0.35rem;
+        text-align: center;
+        font-size: 0.75rem;
+    }
+
+        .mini-cal-grid .dow {
+            color: var(--sneat-text-light);
+            font-weight: 500;
+            padding-bottom: 0.35rem;
+        }
+
+        .mini-cal-grid .day {
+            color: var(--sneat-text);
+            padding: 0.3rem 0;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+            .mini-cal-grid .day.muted {
+                color: #d4d8dd;
+            }
+
+            .mini-cal-grid .day.today {
+                background: var(--sneat-primary);
+                color: #fff;
+                font-weight: 600;
+            }
+
+    .filter-title {
+        color: var(--sneat-text);
+        font-weight: 500;
+        font-size: 0.9375rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .filter-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.4rem 0;
+        cursor: pointer;
+        color: var(--sneat-text);
+        font-size: 0.9375rem;
+    }
+
+        .filter-item input[type="checkbox"] {
+            width: 1.05rem;
+            height: 1.05rem;
+            cursor: pointer;
+            accent-color: var(--sneat-primary);
+        }
+
+        .filter-item.all-view {
+            border-bottom: 1px solid var(--sneat-border);
+            margin-bottom: 0.35rem;
+            padding-bottom: 0.6rem;
+        }
+
+    /* Main calendar */
+    .calendar-main {
+        flex: 1;
+        background: #fff;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.1875rem 0.75rem rgba(161, 172, 184, 0.12);
+        padding: 1.25rem 1.5rem 1.5rem;
+        min-width: 0;
+    }
+
+    #calendar .fc-toolbar {
+        display: none;
+    }
+
+    .fc-custom-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .fc-nav-group {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+        .fc-nav-group button.nav-arrow {
+            border: 1px solid var(--sneat-border);
+            background: #fff;
+            color: var(--sneat-text);
+            width: 2.1rem;
+            height: 2.1rem;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fc-nav-group .fc-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--sneat-text);
+            min-width: 150px;
+        }
+
+        .fc-nav-group .today-btn {
+            border: 1px solid var(--sneat-border);
+            background: #fff;
+            color: var(--sneat-text);
+            border-radius: 0.375rem;
+            padding: 0.4rem 0.9rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            text-transform: capitalize;
+        }
+
+    .view-switch {
+        display: flex;
+        background: var(--sneat-bg);
+        border-radius: 0.375rem;
+        padding: 0.25rem;
+        gap: 0.15rem;
+    }
+
+        .view-switch button {
+            border: none;
+            background: transparent;
+            color: var(--sneat-text);
+            padding: 0.4rem 0.9rem;
+            border-radius: 0.3rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+            .view-switch button.active {
+                background: #fff;
+                color: var(--sneat-primary);
+                box-shadow: 0 0.125rem 0.25rem rgba(161,172,184,.25);
+            }
+
+    /* Sneat Event Base Styling */
+    .fc-event {
+        border: none !important;
+        border-radius: 0.25rem !important;
+        padding: 0.2rem 0.5rem !important;
+        font-size: 0.8125rem !important;
+        font-weight: 600 !important;
+        margin: 2px 4px !important;
+        cursor: pointer;
+    }
+
+        /* Target inner text elements in FullCalendar */
+        .fc-event .fc-event-main,
+        .fc-event .fc-event-main-frame,
+        .fc-event .fc-event-title,
+        .fc-event .fc-event-time {
+            color: inherit !important;
+            font-weight: 700 !important;
+        }
+
+    .fc-daygrid-event-dot {
+        display: none !important;
+    }
+
+    .fc-timegrid-axis-cushion, .fc-timegrid-slot-label-cushion {
+        text-transform: capitalize !important;
+    }
+
+    /* Sneat Soft Label Colors & Bold Text Contrast */
+    .event-bg-696cff, .event-bg-696cff .fc-event-main {
+        background-color: #e7e7ff !important;
+        color: #5658d6 !important;
+    }
+    /* Business */
+
+    .event-bg-ff3e1d, .event-bg-ff3e1d .fc-event-main {
+        background-color: #ffe5e5 !important;
+        color: #d92608 !important;
+    }
+    /* Personal */
+
+    .event-bg-ffab00, .event-bg-ffab00 .fc-event-main {
+        background-color: #fff2d6 !important;
+        color: #c78500 !important;
+    }
+    /* Family */
+
+    .event-bg-71dd37, .event-bg-71dd37 .fc-event-main {
+        background-color: #e8fad2 !important;
+        color: #52b818 !important;
+    }
+    /* Holiday */
+
+    .event-bg-03c3ec, .event-bg-03c3ec .fc-event-main {
+        background-color: #d7f5fc !important;
+        color: #029cbe !important;
+    }
+    /* ETC */
+
+    /* Unselected / Hidden Event State */
+    .fc-event.d-none {
+        display: none !important;
+    }
+
+    .label-select-wrapper {
+        position: relative;
+    }
+
+    .label-color-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+
+    #eventLabel {
+        padding-left: 32px;
+    }
+</style>
+
+<div class="calendar-page">
+    <!-- LEFT SIDEBAR -->
+    <div class="calendar-sidebar">
+        <button type="button" class="btn-add-event" id="sidebarAddEventBtn">
+            <span>+</span> Add Event
+        </button>
+
+        <div class="mini-calendar">
+            <div class="mini-cal-header">
+                <button id="miniPrev">&lsaquo;</button>
+                <span id="miniCalLabel">July 2026</span>
+                <button id="miniNext">&rsaquo;</button>
+            </div>
+            <div class="mini-cal-grid" id="miniCalGrid"></div>
+        </div>
+
+        <div class="filter-title">Event Filters</div>
+        <label class="filter-item all-view">
+            <input type="checkbox" id="filterAll" checked />
+            <span>View All</span>
+        </label>
+        <label class="filter-item">
+            <input type="checkbox" class="label-filter" value="#ff3e1d" checked />
+            <span>IRS Filing Deadlines</span>
+        </label>
+        <label class="filter-item">
+            <input type="checkbox" class="label-filter" value="#696cff" checked />
+            <span>Open Enrollment</span>
+        </label>
+        <label class="filter-item">
+            <input type="checkbox" class="label-filter" value="#ffab00" checked />
+            <span>Compliance Audits</span>
+        </label>
+        <label class="filter-item">
+            <input type="checkbox" class="label-filter" value="#03c3ec" checked />
+            <span>Plan Reviews</span>
+        </label>
+        <label class="filter-item">
+            <input type="checkbox" class="label-filter" value="#71dd37" checked />
+            <span>Client Meetings</span>
+        </label>
+    </div>
+
+    <!-- MAIN CALENDAR -->
+    <div class="calendar-main">
+        <div class="fc-custom-toolbar">
+            <div class="fc-nav-group">
+                <button class="nav-arrow" id="prevBtn">&lsaquo;</button>
+                <button class="nav-arrow" id="nextBtn">&rsaquo;</button>
+                <button class="today-btn" id="todayBtn">Today</button>
+                <span class="fc-title" id="calTitle"></span>
+            </div>
+            <div class="view-switch">
+                <button data-view="dayGridMonth" class="active">Month</button>
+                <button data-view="timeGridWeek">Week</button>
+                <button data-view="timeGridDay">Day</button>
+                <button data-view="listMonth">List</button>
+            </div>
+        </div>
+
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<!-- Add/Edit Event Offcanvas -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="eventOffcanvas">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="offcanvasTitle">Add Event</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <input type="hidden" id="eventId" />
+
+        <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input type="text" class="form-control" id="eventTitle" placeholder="Event Title" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Label</label>
+            <div class="label-select-wrapper">
+                <span class="label-color-dot" id="labelColorDot" style="background-color:#696cff;"></span>
+                <select class="form-select" id="eventLabel">
+                    <option value="#ff3e1d">IRS Filing Deadlines</option>
+                    <option value="#696cff">Open Enrollment</option>
+                    <option value="#ffab00">Compliance Audits</option>
+                    <option value="#03c3ec">Plan Reviews</option>
+                    <option value="#71dd37">Client Meetings</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Start Date</label>
+            <input type="text" class="form-control" id="eventStart" placeholder="YYYY-MM-DD HH:MM" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">End Date</label>
+            <input type="text" class="form-control" id="eventEnd" placeholder="YYYY-MM-DD HH:MM" />
+        </div>
+
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="eventAllDay" />
+            <label class="form-check-label">All Day</label>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Event URL</label>
+            <input type="text" class="form-control" id="eventUrl" placeholder="https://www.google.com" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Add Guests</label>
+            <input type="text" class="form-control" id="eventGuests" placeholder="Select value / Emails" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Location</label>
+            <input type="text" class="form-control" id="eventLocation" placeholder="Enter Location" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" id="eventDescription" rows="3"></textarea>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+            <button type="button" class="btn btn-primary" id="saveEventBtn">Add</button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Cancel</button>
+            <button type="button" class="btn btn-danger d-none" id="deleteEventBtn">Delete</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.21/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendarEl = document.getElementById('calendar');
+            var offcanvasEl = document.getElementById('eventOffcanvas');
+            var eventOffcanvas = new bootstrap.Offcanvas(offcanvasEl);
+            var labelSelect = document.getElementById('eventLabel');
+            var labelDot = document.getElementById('labelColorDot');
+            var calTitleEl = document.getElementById('calTitle');
+
+            var filterAll = document.getElementById('filterAll');
+            var labelFilters = document.querySelectorAll('.label-filter');
+
+            var startPicker = flatpickr('#eventStart', { enableTime: true, dateFormat: 'Y-m-d H:i' });
+            var endPicker = flatpickr('#eventEnd', { enableTime: true, dateFormat: 'Y-m-d H:i' });
+
+            function updateLabelDot() { labelDot.style.backgroundColor = labelSelect.value; }
+            labelSelect.addEventListener('change', updateLabelDot);
+
+            // FullCalendar Initialization
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: false,
+                events: '/Calendar/GetEvents',
+                editable: true,
+                selectable: true,
+                allDayText: 'All-Day',
+
+                eventClassNames: function(arg) {
+                    var color = (arg.event.backgroundColor || arg.event.borderColor || '#696cff').replace('#', '').toLowerCase();
+                    var activeColors = Array.from(labelFilters)
+                        .filter(cb => cb.checked)
+                        .map(cb => cb.value.replace('#', '').toLowerCase());
+
+                    var isVisible = activeColors.includes(color);
+
+                    return [
+                        'event-bg-' + color,
+                        isVisible ? '' : 'd-none'
+                    ];
+                },
+
+                datesSet: function (info) {
+                    calTitleEl.textContent = info.view.title;
+                    syncMiniCalendar(calendar.getDate());
+                },
+
+                dateClick: function (info) {
+                    resetForm();
+                    startPicker.setDate(info.date, true);
+                    document.getElementById('offcanvasTitle').innerText = 'Add Event';
+                    document.getElementById('saveEventBtn').innerText = 'Add';
+                    document.getElementById('deleteEventBtn').classList.add('d-none');
+                    eventOffcanvas.show();
+                },
+
+                eventClick: function (info) {
+                    document.getElementById('eventId').value = info.event.id;
+                    document.getElementById('eventTitle').value = info.event.title;
+                    document.getElementById('eventDescription').value = info.event.extendedProps.description || '';
+                    document.getElementById('eventUrl').value = info.event.extendedProps.eventUrl || '';
+                    document.getElementById('eventLocation').value = info.event.extendedProps.location || '';
+                    document.getElementById('eventGuests').value = info.event.extendedProps.guests || '';
+
+                    startPicker.setDate(info.event.start, true);
+                    endPicker.setDate(info.event.end || null, true);
+                    document.getElementById('eventAllDay').checked = info.event.allDay;
+
+                    var color = info.event.backgroundColor || info.event.borderColor || '#696cff';
+                    setLabelByColor(color);
+
+                    document.getElementById('offcanvasTitle').innerText = 'Update Event';
+                    document.getElementById('saveEventBtn').innerText = 'Update';
+                    document.getElementById('deleteEventBtn').classList.remove('d-none');
+                    eventOffcanvas.show();
+                }
+            });
+
+            calendar.render();
+
+            // ---------- Filter Toggle Logic ----------
+            filterAll.addEventListener('change', function () {
+                labelFilters.forEach(function (cb) {
+                    cb.checked = filterAll.checked;
+                });
+                calendar.render();
+            });
+
+            labelFilters.forEach(function (cb) {
+                cb.addEventListener('change', function () {
+                    filterAll.checked = Array.from(labelFilters).every(c => c.checked);
+                    calendar.render();
+                });
+            });
+
+            // ---------- Toolbar Navigation ----------
+            document.getElementById('prevBtn').onclick = () => calendar.prev();
+            document.getElementById('nextBtn').onclick = () => calendar.next();
+            document.getElementById('todayBtn').onclick = () => calendar.today();
+
+            document.querySelectorAll('.view-switch button').forEach(btn => {
+                btn.onclick = function () {
+                    document.querySelectorAll('.view-switch button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    calendar.changeView(btn.dataset.view);
+                };
+            });
+
+            document.getElementById('sidebarAddEventBtn').onclick = function () {
+                resetForm();
+                document.getElementById('offcanvasTitle').innerText = 'Add Event';
+                document.getElementById('saveEventBtn').innerText = 'Add';
+                document.getElementById('deleteEventBtn').classList.add('d-none');
+                eventOffcanvas.show();
+            };
+
+            // ---------- Mini Calendar Engine ----------
+            var miniCalDate = new Date();
+            function renderMiniCalendar(date) {
+                var year = date.getFullYear(), month = date.getMonth();
+                var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+                document.getElementById('miniCalLabel').textContent = monthNames[month] + ' ' + year;
+
+                var grid = document.getElementById('miniCalGrid');
+                grid.innerHTML = '';
+                ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => {
+                    var el = document.createElement('div');
+                    el.className = 'dow'; el.textContent = d;
+                    grid.appendChild(el);
+                });
+
+                var firstDay = new Date(year, month, 1).getDay();
+                var daysInMonth = new Date(year, month + 1, 0).getDate();
+                var daysInPrevMonth = new Date(year, month, 0).getDate();
+                var today = new Date();
+
+                for (var i = firstDay - 1; i >= 0; i--) grid.appendChild(makeDayCell(daysInPrevMonth - i, true, false));
+                for (var d = 1; d <= daysInMonth; d++) {
+                    var isToday = (d === today.getDate() && month === today.getMonth() && year === today.getFullYear());
+                    grid.appendChild(makeDayCell(d, false, isToday));
+                }
+                var remaining = 42 - (firstDay + daysInMonth);
+                for (var n = 1; n <= remaining; n++) grid.appendChild(makeDayCell(n, true, false));
+            }
+
+            function makeDayCell(num, muted, isToday) {
+                var el = document.createElement('div');
+                el.className = 'day' + (muted ? ' muted' : '') + (isToday ? ' today' : '');
+                el.textContent = num;
+                return el;
+            }
+
+            function syncMiniCalendar(mainCalDate) {
+                miniCalDate = mainCalDate;
+                renderMiniCalendar(miniCalDate);
+            }
+
+            document.getElementById('miniPrev').onclick = () => { miniCalDate.setMonth(miniCalDate.getMonth() - 1); renderMiniCalendar(miniCalDate); };
+            document.getElementById('miniNext').onclick = () => { miniCalDate.setMonth(miniCalDate.getMonth() + 1); renderMiniCalendar(miniCalDate); };
+            renderMiniCalendar(miniCalDate);
+
+            // ISO Format Helper for C# Controller
+            function formatToIso(dateStr) {
+                if (!dateStr) return null;
+                var d = new Date(dateStr);
+                if (isNaN(d.getTime())) return dateStr;
+                return d.getFullYear() + '-' +
+                       String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                       String(d.getDate()).padStart(2, '0') + 'T' +
+                       String(d.getHours()).padStart(2, '0') + ':' +
+                       String(d.getMinutes()).padStart(2, '0') + ':00';
+            }
+
+            function resetForm() {
+                document.getElementById('eventId').value = '';
+                document.getElementById('eventTitle').value = '';
+                document.getElementById('eventDescription').value = '';
+                document.getElementById('eventUrl').value = '';
+                document.getElementById('eventLocation').value = '';
+                document.getElementById('eventGuests').value = '';
+                startPicker.clear();
+                endPicker.clear();
+                document.getElementById('eventAllDay').checked = false;
+                labelSelect.selectedIndex = 0;
+                updateLabelDot();
+            }
+
+            function setLabelByColor(color) {
+                for (var i = 0; i < labelSelect.options.length; i++) {
+                    if (labelSelect.options[i].value.toLowerCase() === color.toLowerCase()) {
+                        labelSelect.selectedIndex = i;
+                        updateLabelDot();
+                        return;
+                    }
+                }
+            }
+
+            // ---------- Save Event Handler ----------
+            document.getElementById('saveEventBtn').onclick = function () {
+                var id = document.getElementById('eventId').value;
+                var title = document.getElementById('eventTitle').value.trim();
+                var rawStart = document.getElementById('eventStart').value;
+                var rawEnd = document.getElementById('eventEnd').value;
+
+                if (!title || !rawStart) {
+                    alert('Title and Start Date are required.');
+                    return;
+                }
+
+                var model = {
+                    id: id ? parseInt(id) : 0,
+                    title: title,
+                    description: document.getElementById('eventDescription').value,
+                    startDate: formatToIso(rawStart),
+                    endDate: formatToIso(rawEnd),
+                    isAllDay: document.getElementById('eventAllDay').checked,
+                    colorCode: labelSelect.value,
+                    eventUrl: document.getElementById('eventUrl').value,
+                    location: document.getElementById('eventLocation').value,
+                    guests: document.getElementById('eventGuests').value
+                };
+
+                var url = id ? '/Calendar/UpdateEvent' : '/Calendar/AddEvent';
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(model)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success === false) {
+                        alert(data.message || 'Error occurred.');
+                        return;
+                    }
+                    eventOffcanvas.hide();
+                    calendar.refetchEvents();
+                });
+            };
+
+            // ---------- Delete Event Handler ----------
+            document.getElementById('deleteEventBtn').onclick = function () {
+                var id = document.getElementById('eventId').value;
+                if (!id || !confirm('Delete this event?')) return;
+
+                fetch('/Calendar/DeleteEvent?id=' + id, { method: 'POST' })
+                .then(res => res.json())
+                .then(() => {
+                    eventOffcanvas.hide();
+                    calendar.refetchEvents();
+                });
+            };
+        });
+    </script>
+}

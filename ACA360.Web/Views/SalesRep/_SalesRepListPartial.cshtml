@@ -1,0 +1,66 @@
+﻿@using ACA360.Core.ViewModels
+@model SalesRepListViewModel
+
+@{
+    var metadata = Model?.Metadata;
+    int countIndex = metadata != null ? ((metadata.CurrentPage - 1) * metadata.PageSize) + 1 : 1;
+}
+
+<div class="salesrep-table-container ui-table-responsive">
+    <table class="table table-bordered table-hover mb-0 ui-table">
+        <thead>
+            <tr class="align-middle">
+                <th style="width: 60px;">#</th>
+                <th class="cursor-pointer" onclick="sortGrid('SalesRepName')">
+                    Sales Rep Name @(Model.SortColumn == "SalesRepName" ? (Model.SortOrder == "ASC" ? "▲" : "▼") : "")
+                </th>
+                <th style="width: 150px;">Status</th>
+                <th class="text-center" style="width: 120px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.SalesReps != null && Model.SalesReps.Any())
+            {
+                foreach (var item in Model.SalesReps)
+                {
+                    <tr>
+                        <td class="text-muted">@(countIndex++)</td>
+                        <td class="cursor-pointer text-primary" onclick="openModal(@item.SalesRepId)">@item.SalesRepName</td>
+                        <td>
+                            @if (item.IsActive)
+                            {
+                                <span class="badge bg-label-success rounded-pill">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-label-secondary rounded-pill">Inactive</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <button class="btn p-1 me-1" onclick="openModal(@item.SalesRepId)" title="Edit Sales Rep">
+                                <i class="icon-base bx bx-edit bg-info icon-sm fs-4 text-secondary"></i>
+                            </button>
+                            <a href="javascript:;" class="btn btn-icon dropdown-toggle hide-arrow action-dots-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="icon-base bx bx-dots-vertical-rounded icon-md"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end m-0">
+                                <a href="javascript:;" class="dropdown-item" onclick="deleteSalesRep(@item.SalesRepId)">
+                                    <i class="icon-base bx bx-trash bg-danger icon-md me-1"></i> Delete
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4" class="text-center text-danger">No sales representatives found.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@* Reuse the same common pagination partial used by Role *@
+@await Html.PartialAsync("_GridPagination", Model.Metadata)

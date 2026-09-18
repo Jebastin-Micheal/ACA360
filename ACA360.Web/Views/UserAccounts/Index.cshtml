@@ -1,0 +1,549 @@
+﻿@using ACA360.Core.Extensions
+@using ACA360.Web.ViewComponents
+@model ACA360.Web.Models.UserAccountsViewModel
+
+@{
+    ViewData["Title"] = "User Accounts Management";
+}
+
+@await Component.InvokeAsync("Breadcrumb",  new {
+pageTitle = "User Accounts Management",
+    items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem { Title = "Employer", Url = Url.Action("Index", "Employer"), IsActive = false },
+        new BreadcrumbItem { Title = "User Accounts", Url = "", IsActive = true }
+    }
+})
+
+<style>
+    .hover-card:hover {
+        background-color: #f8f9fa;
+        border-color: #696cff !important;
+        transform: translateY(-2px);
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    /* Smooth transition for filter panel */
+    #filterPanel {
+        display: none; /* Hidden by default */
+        border-radius: 0.375rem;
+    }
+
+    .filter-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+        color: #a1acb8;
+        margin-bottom: 0.5rem;
+    }
+</style>
+
+
+
+<div class="row mb-5">
+    <div class="col-xxl-8 order-0">
+        <div class="card">
+
+            <div class="card-header border-bottom d-flex justify-content-between align-items-center flex-wrap gap-3 py-3">
+                <div>
+                    <h5 class="mb-0">User Management</h5>
+                    <small class="text-muted">Manage system access and roles</small>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-outline-secondary" id="btnToggleFilter">
+                        <i class="bx bx-filter-alt me-1"></i> Filter
+                    </button>
+
+                    <button class="btn btn-primary" type="button" id="add_UserAccounts_controls">
+                        <i class="bx bx-plus me-1"></i> Add User
+                    </button>
+                </div>
+            </div>
+
+            <div class="card-body border-bottom p-3" id="filterPanel">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <span class="filter-label">Filter Options</span>
+                    </div>
+                    <div class="col-md-6 user_role">
+                        <label class="form-label">By Role</label>
+                        <select class="form-select drp_user_role select2" asp-items="ViewBag.RoleOptions">
+                            <option value="0">All Roles</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 user_status">
+                        <label class="form-label">By Status</label>
+                        <select class="form-select drop_user_status select2" asp-items="ViewBag.StatusOptions">
+                            <option value="0">All Statuses</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="UserAccountsListContainerWrapper" class="dynamic-list"
+                 data-action="UserAccountsListPartial" data-controller="UserAccounts" data-container="#UserAccountsListContainer"
+                 data-search=".txt_search" data-page-size=".drpPageSize" data-pagination=".page-link"
+                 data-sort=".sortable" data-role=".drp_user_role" data-status=".drop_user_status">
+
+                <div class="card-datatable">
+                    <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                        <div class="d-flex align-items-center gap-2">
+                            <select class="form-select form-select-sm drpPageSize w-auto" style="min-width: 70px;">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="input-group input-group-merge input-group-sm" style="width: 200px;">
+                                <span class="input-group-text"><i class="bx bx-search"></i></span>
+                                <input type="text" class="form-control txt_search" placeholder="Search users...">
+                            </div>
+
+                            <div class="dropdown grid-export-wrapper"
+                                 data-export-url="/UserAccounts/Export"
+                                 data-file-base-name="UserAccounts">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle hide-arrow" type="button" data-bs-toggle="dropdown">
+                                    <i class="bx bx-export me-1"></i> Export
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end grid-export-menu">
+                                    <li><a class="dropdown-item grid-export-action" href="#" data-format="print"><i class="bx bx-printer me-2"></i>Print</a></li>
+                                    <li><a class="dropdown-item grid-export-action" href="#" data-format="csv"><i class="bx bx-file me-2"></i>CSV</a></li>
+                                    <li><a class="dropdown-item grid-export-action" href="#" data-format="excel"><i class="bx bxs-file-export me-2"></i>Excel</a></li>
+                                    <li><a class="dropdown-item grid-export-action" href="#" data-format="pdf"><i class="bx bxs-file-pdf me-2"></i>PDF</a></li>
+                                </ul>
+                            </div>
+
+                            <button class="btn btn-sm btn-icon btn-outline-secondary btn_refresh" title="Refresh">
+                                <i class="bx bx-refresh"></i>
+                            </button>
+                        </div>
+                    </div>
+
+
+
+                    <div id="UserAccountsListContainer">
+                        @await Html.PartialAsync("_UserAccountsListPartial", Model)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xxl-4 order-1">
+        <div class="card h-100">
+            <div class="card-header border-bottom">
+                <h5 class="mb-0 text-center">Overview</h5>
+            </div>
+            <div class="card-body p-3">
+                <div class="row g-4">
+                    <div class="col-12">
+                        <a href="Role/Index" class="d-flex align-items-center border p-3 rounded text-decoration-none hover-card w-100" style="border-style: dashed !important;">
+                            <div class="avatar me-3">
+                                <span class="avatar-initial rounded bg-label-secondary text-secondary">
+                                    <img src="/assets/img/illustrations/lady-with-laptop-light.png" class="img-fluid" alt="Image" width="120" data-app-light-img="illustrations/lady-with-laptop-light.png" data-app-dark-img="illustrations/lady-with-laptop-dark.png" style="visibility: visible;">
+                                </span>
+                            </div>
+                            <div class="role-heading">
+                                <span class="d-block fw-semibold text-body">Add New Role</span>
+                                <small class="text-muted">Create role if not exists</small>
+                            </div>
+                        </a>
+                    </div>
+                    @foreach (var role in Model.RoleSummary)
+                    {
+                        // Logic to generate initials (e.g., "Sales Manager" -> "SM")
+                        string initials = role.RoleName?.Substring(0, 1).ToUpper() ?? "U";
+                        if (!string.IsNullOrEmpty(role.RoleName) && role.RoleName.Contains(" "))
+                        {
+                            var parts = role.RoleName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (parts.Length > 1)
+                            {
+                                initials = $"{parts[0][0]}{parts[1][0]}".ToUpper();
+                            }
+                        }
+
+                        <div class="col-xl-6 col-lg-4 col-md-6">
+                            <a href="javascript:void(0);" class="d-flex align-items-center border p-3 rounded text-decoration-none hover-card h-100 role-filter-card" data-role-id="@role.UserAccounts_Role">
+                                <div class="avatar me-3">
+                                    <span class="avatar-initial rounded bg-label-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="@role.RoleName">
+                                        <i class="icon-base bx @DesingHelpers.GetRoleIcon(role.UserAccounts_Role)"></i>
+                                    </span>
+                                </div>
+                                <div class="role-heading">
+                                    <span class="d-block fw-semibold text-body">@role.RoleName</span>
+                                    <small class="text-muted">Total @role.TotalUsers users</small>
+                                </div>
+                            </a>
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- UserAccounts Form Modal -->
+<div class="modal fade" id="UserAccountsFormModal" tabindex="-1" aria-labelledby="UserAccountsFormModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="UserAccountsFormModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"></div>
+        </div>
+    </div>
+</div>
+<!-- UserAccounts Form Modal -->
+<!-- ManageAssignment Form Modal -->
+<div class="modal fade" id="ManageAssignmentsFormModal" tabindex="-1" aria-labelledby="ManageAssignmentsFormModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ManageAssignmentsFormModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"></div>
+        </div>
+    </div>
+</div>
+<!-- ManageAssignment Form Modal -->
+<script src="@(Url.Content("~/assets/vendor/libs/jquery/jquery.js"))"></script>
+<script src="@(Url.Content("~/assets/vendor/libs/select2/select2.js"))"></script>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <script>
+        $(document).ready(function () {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: '@TempData["SuccessMessage"]',
+                timer: 2000,
+                showConfirmButton: false,
+                customClass: {
+                    container: 'high-z-index'
+                }
+            });
+        });
+    </script>
+}
+
+<script>
+        $(document).ready(function () {
+
+            // --- 1. Filter Toggle Logic ---
+            $("#btnToggleFilter").click(function(e) {
+                e.preventDefault();
+                $(this).toggleClass('active');
+                $("#filterPanel").slideToggle(200);
+            });
+
+            // --- 2. Initialize Select2 ---
+            if($('.select2').length) {
+                $('.select2').select2({
+                    minimumResultsForSearch: 10,
+                    width: '100%'
+                });
+            }
+
+            // --- 3. Dynamic List Logic (FIXED) ---
+            $(".dynamic-list").each(function () {
+                const $list = $(this);
+                // Store default HTML for reset
+                $list.data("default-html", $($list.data("container")).html());
+                bindListEvents($list);
+            });
+        });
+
+        function bindListEvents($list) {
+            const pageSizeSelector = $list.data("page-size");
+            const paginationSelector = $list.data("pagination");
+            const sortSelector = $list.data("sort");
+            const searchSelector = $list.data("search");
+            const roleSelector = $list.data("role");
+            const statusSelector = $list.data("status");
+
+            // 1. Page Size Change
+            // (Inside list because it's usually part of the toolbar inside)
+            $list.on("change", pageSizeSelector, function () { loadListData($list, 1); });
+
+            // 2. Search Input
+            if (searchSelector) {
+                var timeout;
+                // Use global document binding or specific selector if outside list
+                $(document).on("input", searchSelector, function () {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(function() { loadListData($list, 1); }, 500);
+                });
+            }
+
+            // 3. Pagination Click
+            $list.on("click", paginationSelector, function (e) {
+                e.preventDefault();
+                const page = $(this).data("pageindex");
+                if (page && !$(this).closest("li").hasClass("disabled")) {
+                    loadListData($list, page);
+                }
+            });
+
+            // 4. Sorting Click
+            $list.on("click", sortSelector, function () {
+                let $this = $(this);
+                let sortDirection;
+
+                // Toggle logic
+                if ($this.hasClass('active') && $this.hasClass('asc')) {
+                    $this.removeClass('asc').addClass('desc');
+                    sortDirection = 'desc';
+                } else if ($this.hasClass('active') && $this.hasClass('desc')) {
+                    $this.removeClass('desc').addClass('asc');
+                    sortDirection = 'asc';
+                } else {
+                    $('.sortable').removeClass('asc desc active');
+                    $this.addClass('asc active');
+                    sortDirection = 'asc';
+                }
+
+                const sortColumn = $this.data("column");
+                sessionStorage.setItem("sortOrder", sortDirection);
+                sessionStorage.setItem("sortColumn", sortColumn);
+                loadListData($list, 1);
+            });
+
+            // 5. Filter Changes (FIXED: Bind directly to the selector, not $list.find)
+            if (roleSelector) {
+                $(document).on("change", roleSelector, function () {
+                    loadListData($list, 1);
+                });
+            }
+            if (statusSelector) {
+                $(document).on("change", statusSelector, function () {
+                    loadListData($list, 1);
+                });
+            }
+        }
+
+        function loadListData($list, pageIndex) {
+            const action = $list.data("action");
+            const controller = $list.data("controller");
+            const container = $list.data("container");
+
+            // Selectors
+            const searchSelector = $list.data("search");
+            const pageSizeSelector = $list.data("page-size");
+            const roleSelector = $list.data("role");
+            const statusSelector = $list.data("status");
+
+            // Values (FIXED: Use global jQuery selector $() instead of $list.find())
+            const searchTerm = searchSelector ? $(searchSelector).val() : "";
+            const pageSize = pageSizeSelector ? $list.find(pageSizeSelector).val() : 10; // Page size is usually inside
+            const roleId = roleSelector ? $(roleSelector).val() : 0;
+            const statusId = statusSelector ? $(statusSelector).val() : 0;
+
+            const sortOrder = sessionStorage.getItem("sortOrder");
+            const sortColumn = sessionStorage.getItem("sortColumn");
+
+            // Debugging: Check console to see if values are correct now
+            //console.log("Loading Data:", { roleId, statusId, searchTerm, pageIndex });
+
+            // Show Loader
+            $('#loader').show();
+            $(container).css('opacity', '0.5');
+
+            $.ajax({
+                url: `/${controller}/${action}`,
+                type: 'GET', // Ensure GET request
+                data: {
+                    pageIndex: pageIndex,
+                    PageSize: pageSize,
+                    search: searchTerm,
+                    sortOrder: sortOrder,
+                    sortColumn: sortColumn,
+                    roleId: roleId,
+                    statusId: statusId
+                },
+                success: function (data) {
+                    $(container).html(data);
+                    toggleSort(sortOrder, sortColumn);
+                    $('#loader').hide();
+                    $(container).css('opacity', '1');
+                },
+                error: function (xhr) {
+                     console.error("Error loading data:", xhr);
+                     $('#loader').hide();
+                     $(container).css('opacity', '1');
+                }
+            });
+        }
+
+        function toggleSort(columnIndex, direction) {
+            $('.sort').removeClass('opacity-25 pointer-events-none');
+            $(`.sort[data-order="${columnIndex}"][data-sort="${direction}"]`).addClass('opacity-25 pointer-events-none');
+        }
+
+        // Refresh Button Logic
+        $(document).on('click', '.btn_refresh', function () {
+            const $list = $(this).closest('.dynamic-list');
+            const roleSelector = $list.data("role");
+            const statusSelector = $list.data("status");
+            const searchSelector = $list.data("search");
+
+            // Reset Inputs
+            if (searchSelector) $(searchSelector).val("");
+            if (roleSelector) $(roleSelector).val("0").trigger('change.select2'); // Trigger Select2 update
+            if (statusSelector) $(statusSelector).val("0").trigger('change.select2');
+
+            // Reset Sort
+            sessionStorage.setItem("sortOrder", "asc");
+            sessionStorage.setItem("sortColumn", 0);
+
+            // Reload
+            loadListData($list, 1);
+        });
+
+        // --- Modal Logic (Kept same as before) ---
+        // (Ensure your existing modal logic for Add/Edit/Delete is here)
+        $(document).ready(function () {
+                // Function to open modal for Add
+        $("#add_UserAccounts_controls").click(function () {
+            var add_url = '/UserAccounts/Add_New';
+            $.ajax({
+                type: "GET",
+                url: add_url,
+                success: function (data) {
+                    $('#UserAccountsFormModal .modal-body').html(data);
+                    $('#UserAccountsFormModalLabel').text('Add User Accounts');
+                    var modal = new bootstrap.Modal(document.getElementById('UserAccountsFormModal'));
+                    modal.show();
+                    $.validator.unobtrusive.parse('#UserAccountsForm');
+                },
+                error: function (xhr) {
+                    alert('Failed to load form. Please try again.');
+                }
+            });
+        });
+
+        // Edit UserAccounts
+        $(document).on('click', '.edit-UserAccounts-btn', function () {
+            var id = $(this).data('id');
+            var roleId = $(this).data('role-id');
+            $.ajax({
+                type: 'GET',
+                url: '/UserAccounts/GetUserAccountsById',
+                data: { id: id , roleId: roleId },
+                success: function (data) {
+                    if (typeof data === 'string' && data.startsWith("Invalid UserAccounts Request")) {
+                        alert(data);
+                        return;
+                    }
+                    $('#UserAccountsFormModal .modal-body').html(data);
+                    $('#UserAccountsFormModalLabel').text('Edit User Accounts');
+                    var modal = new bootstrap.Modal(document.getElementById('UserAccountsFormModal'));
+                    modal.show();
+                    $.validator.unobtrusive.parse('#UserAccountsForm');
+                },
+                error: function (xhr) {
+                    alert('Failed to load UserAccounts data.');
+                }
+            });
+        });
+
+        // View UserAccounts
+        $(document).on('click', '.view-UserAccounts-btn', function () {
+            var id = $(this).data('id');
+            var roleId = $(this).data('role-id');
+            $.ajax({
+                type: 'GET',
+                url: '/UserAccounts/GetUserAccountsByIdView',
+                data: { id: id , roleId: roleId },
+                success: function (data) {
+                    $('#UserAccountsFormModal .modal-body').html(data);
+                    $('#UserAccountsFormModalLabel').text('View User Accounts');
+                    var modal = new bootstrap.Modal(document.getElementById('UserAccountsFormModal'));
+                    modal.show();
+                },
+                error: function (xhr) {
+                    alert('Failed to load data.');
+                }
+            });
+        });
+
+        // Delete UserAccounts
+        $(document).on('click', '.delete-UserAccounts-btn', function () {
+            const id = $(this).data('id');
+            var roleId = $(this).data('role-id');
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'You want to delete this UserAccount?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                     $.ajax({
+                        type: 'POST',
+                        url: '/UserAccounts/Delete',
+                        data: { id: id, roleId: roleId  },
+                        success: function (response) {
+                            if (response.success) {
+                                location.reload();
+                            } else {
+                                alert("Error: " + response.message);
+                            }
+                        },
+                        error: function (xhr) {
+                            alert("Failed: " + xhr.responseText);
+                        }
+                    });
+                }
+            });
+        });
+
+        // Manage Assignments
+        $(document).on('click', '.assgin-UserAccounts-btn', function () {
+            var id = $(this).data('id');
+            var roleId = $(this).data('role-id');
+            $.ajax({
+                type: 'GET',
+                url: '/Assignment/ManageAssignments',
+                data: { id: id, roleId: roleId },
+                success: function (data) {
+                    $('#ManageAssignmentsFormModal .modal-body').html(data);
+                    $('#ManageAssignmentsFormModalLabel').text('Manage Assignments');
+                    var modal = new bootstrap.Modal(document.getElementById('ManageAssignmentsFormModal'));
+                    modal.show();
+                },
+                error: function (xhr) {
+                    alert('Error loading assignments.');
+                }
+            });
+        });
+
+        // Overview Card Click to Filter ---
+        $(document).on('click', '.role-filter-card', function (e) {
+            e.preventDefault();
+
+            // 1. Get the Role ID from the clicked card
+            const selectedRoleId = $(this).data('role-id');
+
+            // 2. Set the dropdown value and trigger the change event
+            // The .trigger('change') tells Select2 to update its UI AND fires your existing filter listener
+            $('.drp_user_role').val(selectedRoleId).trigger('change');
+
+            // 3. (Optional but recommended) Show the filter panel so the user sees the dropdown changed
+            if (!$("#btnToggleFilter").hasClass('active')) {
+                $("#btnToggleFilter").addClass('active');
+                $("#filterPanel").slideDown(200);
+            }
+        });
+    });
+</script>

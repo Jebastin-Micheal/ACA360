@@ -1,0 +1,130 @@
+﻿@using ACA360.Core.Models
+@model SecuritySettingsDto
+
+<div class="p-2">
+
+    <!-- PASSWORD POLICY -->
+    <h5 class="fw-bold mb-2"><i class="fa fa-user-shield text-primary"></i> Password Policy</h5>
+
+    <div class="row g-3 mb-3">
+
+        <div class="col-md-4">
+            <label class="form-label">Minimum Password Length</label>
+            <input type="number" min="6" class="form-control" id="minPasswordLength" value="@Model.MinPasswordLength" />
+            <small class="text-muted">Minimum recommended: 8+</small>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Require Uppercase Characters</label>
+            <select id="requireUppercase" class="form-select">
+                <option value="true" selected="@(Model.RequireUppercase)">Yes</option>
+                <option value="false" selected="@(!Model.RequireUppercase)">No</option>
+
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Require Numbers</label>
+            <select id="requireDigits" class="form-select">
+                <option value="true" selected="@(Model.RequireDigits)">Yes</option>
+                <option value="false" selected="@(!Model.RequireDigits)">No</option>
+            </select>
+        </div>
+
+    </div>
+
+    <hr />
+
+    <!-- ACCOUNT LOCKOUT -->
+    <h5 class="fw-bold mb-2"><i class="fa fa-lock text-danger"></i> Account Lockout Rules</h5>
+
+    <div class="row g-3 mb-3">
+
+        <div class="col-md-6">
+            <label class="form-label">Failed Login Attempts Allowed</label>
+            <input type="number" min="1" class="form-control" id="lockoutThreshold" value="@Model.LockoutThreshold" />
+            <small class="text-muted">Example: Lock after 5 failed attempts</small>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Lockout Duration (Minutes)</label>
+            <input type="number" min="5" class="form-control" id="lockoutDuration" value="@Model.LockoutDuration" />
+        </div>
+
+    </div>
+
+    <hr />
+
+    <!-- SESSION SETTINGS -->
+    <h5 class="fw-bold mb-2"><i class="fa fa-clock text-warning"></i> Session Control</h5>
+
+    <div class="row g-3 mb-3">
+
+        <div class="col-md-6">
+            <label class="form-label">Session Timeout (Minutes)</label>
+            <input type="number" min="10" class="form-control" id="sessionTimeout" value="@Model.SessionTimeout" />
+            <small class="text-muted">After this period of inactivity user will be logged out.</small>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Allow Concurrent Sessions</label>
+            <select id="allowConcurrent" class="form-select">
+                <option value="true" selected="@(Model.AllowConcurrentSessions)">Yes</option>
+                <option value="false" selected="@(!Model.AllowConcurrentSessions)">No</option>
+            </select>
+            <small class="text-muted">Recommended: Disabled for security.</small>
+        </div>
+
+    </div>
+
+    <!-- SAVE BUTTON -->
+    <div class="text-end mt-4">
+        <button id="btnSaveSecurity" class="btn btn-success">
+            <i class="fa fa-save me-1"></i> Save Security Settings
+        </button>
+    </div>
+
+</div>
+<script src="@(Url.Content("~/assets/vendor/libs/jquery/jquery.js"))"></script>
+<script>
+        $("#btnSaveSecurity").click(function (e) {
+        e.preventDefault();
+
+        var btn = $(this);
+        var originalText = btn.html();
+
+        // 1. Gather the data from the inputs using their IDs
+        var securityData = {
+            MinPasswordLength: parseInt($("#minPasswordLength").val()) || null,
+            RequireUppercase: $("#requireUppercase").val() === "true",
+            RequireDigits: $("#requireDigits").val() === "true",
+            LockoutThreshold: parseInt($("#lockoutThreshold").val()) || null,
+            LockoutDuration: parseInt($("#lockoutDuration").val()) || null,
+            SessionTimeout: parseInt($("#sessionTimeout").val()) || null,
+            AllowConcurrentSessions: $("#allowConcurrent").val() === "true"
+        };
+
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+
+        // 2. Send as application/json because of [FromBody]
+        $.ajax({
+            url: '@Url.Action("SaveSecuritySettings", "System")', // Ensure "System" is your correct controller name
+            type: 'POST',
+            contentType: 'application/json', // Crucial for [FromBody]
+            data: JSON.stringify(securityData), // Crucial for [FromBody]
+            success: function (res) {
+                btn.prop('disabled', false).html(originalText);
+                if (res.success) {
+                    Swal.fire({ title: "Saved", text: res.message, icon: "success", timer: 1500, showConfirmButton: false });
+                } else {
+                    Swal.fire("Error", res.message || "Failed to save settings.", "error");
+                }
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html(originalText);
+                console.error(xhr.responseText);
+                Swal.fire("Error", "An error occurred while saving security settings.", "error");
+            }
+        });
+    });
+</script>

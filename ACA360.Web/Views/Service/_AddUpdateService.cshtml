@@ -1,0 +1,38 @@
+﻿@using ACA360.Core.Models.Tracker
+@model ServiceItem
+
+<form id="frmService">
+    @Html.AntiForgeryToken() 
+    <div class="modal-header">
+        <h5 class="modal-title">@(Model.ServiceId == 0 ? "Add Service" : "Edit Service")</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+      <div class="col-12">
+       <div class="card">
+          <div class="card-body">
+             <input type="hidden" asp-for="ServiceId" />
+
+             <div class="mb-3">
+            <label class="form-label fw-bold">Service Name <span class="text-danger">*</span></label>
+            <input asp-for="ServiceName" class="form-control" required />
+        </div>       
+
+             <div class="mb-3">
+            <label class="form-label fw-bold">Description</label>
+            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+        </div>
+
+             <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" asp-for="IsActive" />
+            <label class="form-check-label" asp-for="IsActive">Active</label>
+        </div>
+          </div>
+       </div>
+      </div>
+    </div>
+    <div class="modal-footer py-3">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveService()">Save Service</button>
+    </div>
+</form>

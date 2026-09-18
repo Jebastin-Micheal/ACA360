@@ -1,0 +1,697 @@
+﻿@using ACA360.Core.Models
+@using ACA360.Core.Models.Dashboard
+@model EmployerDashboardPageViewModel
+@{
+    ViewData["Title"] = "Employer Dashboard";
+    var p = Model.Portfolio;
+    var d = Model.Employer360;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/aca360-dashboard.css" asp-append-version="true" />
+}
+<div id="dashboard-content" class="p-2">
+@Html.AntiForgeryToken()
+
+<div class="container-fluid px-4 pb-5">
+
+    @* ============================================================
+       PAGE HEAD
+       ============================================================ *@
+    <div class="row">
+        <div class="col-2">
+            <h4 class="fw-bold mb-1">
+                Welcome back, @* <span class="text-primary">@Model.Context.ActorName</span> *@
+            </h4>
+            <p class="text-muted mb-0 small">
+                @DateTime.Now.ToString("D")
+                @* Role: <span class="fw-semibold text-primary">@Model.Context.ActorRole</span> *@
+            </p>
+        </div>
+
+        <div class="pagehead-actions col-10">
+            @await Html.PartialAsync("_ViewAsPicker", Model)
+            @await Html.PartialAsync("_DashboardActions", Model)
+            <button class="btn btn-facebook" id="btnEdit" type="button"><i class="bx bx-grid me-1"></i> Customize layout</button>
+            <button class="btn btn-primary" id="btnSave" type="button" hidden>Save layout</button>
+            <button class="btn btn-ghost" id="btnCancel" type="button" hidden>Cancel</button>
+            <button class="btn btn-ghost" id="btnReset" type="button" hidden>Reset to default</button>
+        </div>
+    </div>
+
+
+    @* ============================================================
+       SCOPE 1 — PORTFOLIO. Hidden for the Employer role: one client.
+       ============================================================ *@
+    @if (Model.ShowPortfolioBand)
+    {
+        <section class="scope">
+            <div class="scope-bar">
+                <h2>My book of business</h2>
+                <span class="pill pill-info"><span class="dot"></span>@p.TotalClientsMainEins clients assigned</span>
+                <div class="sb-spacer"></div>
+                <span class="hint">Every EIN you have access to, filing year @Model.FilingYear</span>
+            </div>
+
+            <div class="grid" id="gridPortfolio">
+
+                <div class="tile stat c2 ac-navy" data-w="clients-all">
+                    <div class="tile-head"><h4>Total clients (all EINs)</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                    <div class="kpi-row">
+                        <span class="kpi-ico ic-navy"><i class="bx bx-buildings"></i></span>
+                        <div>
+                            <div class="val num">@p.TotalClientsAllEins.ToString("N0")</div>
+                            <div class="sub">Includes affiliate EINs</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tile stat c2 ac-blue" data-w="clients-main">
+                    <div class="tile-head"><h4>Total clients (main EINs)</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                    <div class="kpi-row">
+                        <span class="kpi-ico ic-blue"><i class="bx bx-building-house"></i></span>
+                        <div>
+                            <div class="val num">@p.TotalClientsMainEins.ToString("N0")</div>
+                            <div class="sub">Excludes affiliates</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tile stat c2 ac-sky" data-w="clients-mailed">
+                    <div class="tile-head"><h4>1095 forms mailed</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                    <div class="kpi-row">
+                        <span class="kpi-ico ic-sky"><i class="bx bx-envelope"></i></span>
+                        <div>
+                            <div class="val num">@p.ClientsFormsMailed.ToString("N0")</div>
+                            <div class="sub">of @p.TotalClientsMainEins clients@(p.TotalClientsMainEins > 0 ? $" · {p.ClientsFormsMailed * 100 / p.TotalClientsMainEins}%" : "")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tile stat c2 ac-cyan" data-w="clients-efiled">
+                    <div class="tile-head"><h4>1094/1095 eFiled with IRS</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                    <div class="kpi-row">
+                        <span class="kpi-ico ic-cyan"><i class="bx bx-cloud-upload"></i></span>
+                        <div>
+                            <div class="val num">@p.ClientsEfiled.ToString("N0")</div>
+                            <div class="sub">of @p.TotalClientsMainEins clients@(p.TotalClientsMainEins > 0 ? $" · {p.ClientsEfiled * 100 / p.TotalClientsMainEins}%" : "")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tile stat c2 @(p.ClientsWithPenalties > 0 ? "ac-warn" : "ac-indigo")" data-w="clients-penalty">
+                    <div class="tile-head"><h4>Clients with penalties</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                    <div class="kpi-row">
+                        <span class="kpi-ico @(p.ClientsWithPenalties > 0 ? "ic-warn" : "ic-indigo")"><i class="bx bx-dollar-circle"></i></span>
+                        <div>
+                            <div class="val num">@p.ClientsWithPenalties.ToString("N0")</div>
+                            <div class="sub">
+                                @if (p.TotalPenaltyExposure > 0)
+                                {
+                                    <span class="pill pill-warn"><span class="dot"></span>@p.TotalPenaltyExposure.ToString("C0") exposure</span>
+                                }
+                                else
+                                {
+                                    <span class="pill pill-good"><span class="dot"></span>No exposure</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tile stat c2 @(p.PastDueClients > 0 ? "ac-danger" : "ac-cyan")" data-w="clients-pastdue">
+                    <div class="tile-head"><h4>Past due clients</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                    <div class="kpi-row">
+                        <span class="kpi-ico @(p.PastDueClients > 0 ? "ic-danger" : "ic-cyan")"><i class="bx bx-time-five"></i></span>
+                        <div>
+                            <div class="val num">@p.PastDueClients.ToString("N0")</div>
+                            <div class="sub">
+                                @if (p.PastDueClients > 0)
+                                {
+                                    <span class="pill pill-crit"><span class="dot"></span>Oldest @p.OldestPastDueDays days</span>
+                                }
+                                else
+                                {
+                                    <span class="pill pill-good"><span class="dot"></span>All on track</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tile c12 hb @(Model.ProcessRows.Any(r => r.DaysOverdue > 0) ? "hb-warn" : "hb-9")" data-w="process-table">
+                    <div class="tile-head">
+                        <h4><i class="bx bx-list-check"></i> Current Process Step</h4>
+                        <div class="th-spacer"></div>
+                        <div class="tbl-tools">
+                            <select class="tbl-filter" data-filter-col="5" aria-label="Filter by status">
+                                <option value="">All statuses</option>
+                                <option value="Past due">Past due</option>
+                                <option value="On track">On track</option>
+                            </select>
+                            <input type="search" class="tbl-search" placeholder="Search employer, EIN or step…" aria-label="Search table" />
+                        </div>
+                        <div class="tile-tools"></div>
+                    </div>
+                    <div class="tile-body">
+                        <div class="table-wrap has-foot">
+                        <table class="tbl-interactive">
+                            <thead>
+                                <tr>
+                                    <th data-sort="text">Employer</th>
+                                    <th data-sort="text">EIN</th>
+                                    <th data-sort="text">Process step</th>
+                                    <th data-sort="num">Due date</th>
+                                    <th class="n" data-sort="num">Days</th>
+                                    <th data-sort="text">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var r in Model.ProcessRows)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a class="emp-link" href="@Url.Action("Dashboard", "Employer", new { id = r.EmployerId, year = Model.FilingYear })">
+                                                @r.EmployerName
+                                            </a>
+                                        </td>
+                                        <td class="mono">@r.Ein</td>
+                                        <td>@r.ProcessStep</td>
+                                        @* Sort keys are explicit: "20 Jul 2026" and "15 overdue" do not
+                                           sort correctly as text. *@
+                                        <td class="num" data-sort="@(r.DueDate?.ToString("yyyyMMdd") ?? "99999999")">@(r.DueDate?.ToString("dd MMM yyyy") ?? "—")</td>
+                                        <td class="n" data-sort="@r.DaysOverdue">@(r.DaysOverdue > 0 ? $"{r.DaysOverdue} overdue" : $"{Math.Abs(r.DaysOverdue)} left")</td>
+                                        <td>
+                                            <span class="pill pill-@(r.Severity == "crit" ? "crit" : r.Severity == "warn" ? "warn" : "good")">
+                                                <span class="dot"></span>@(r.DaysOverdue > 0 ? "Past due" : "On track")
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="tbl-foot"></div>
+                </div>
+
+            </div>
+
+            <div class="tray" id="trayPortfolio">
+                <h4>Hidden tiles &mdash; click to restore</h4>
+                <div class="tray-items"></div>
+            </div>
+        </section>
+    }
+
+
+    @* ============================================================
+       SCOPE 2 — SINGLE EMPLOYER
+       ============================================================ *@
+    <section class="scope">
+        <div class="scope-bar">
+            <h2>Employer detail</h2>
+            <div class="sb-spacer"></div>
+
+            @* An impersonated employer has no choice of employer to make. *@
+            @if (Model.Context.Mode != ImpersonationMode.Employer && Model.SelectableEmployers.Count > 1)
+            {
+                <div class="field">
+                    <label for="employerSel">Employer</label>
+                    @* id is passed explicitly as a token. Url.Action reuses ambient route
+                       values, and this page always has id in RouteData, so omitting it
+                       bakes the CURRENT employer into the path — where route values beat
+                       the query string during model binding. *@
+                    <select id="employerSel"
+                            onchange="window.location = '@Url.Action("Dashboard", "Employer", new { id = "__EMPID__", year = Model.FilingYear })'.replace('__EMPID__', encodeURIComponent(this.value));">
+                        @foreach (var e in Model.SelectableEmployers)
+                        {
+                            <option value="@e.Id" selected="@(e.Id == Model.Employer?.Id)">@e.Name</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            <div class="field">
+                <label for="planYear">Plan year</label>
+                <select id="planYear"
+                        onchange="window.location = '@Url.Action("Dashboard", "Employer", new { id = Model.EmployerIdValue, year = "__YEAR__" })'.replace('__YEAR__', encodeURIComponent(this.value));">
+                    @foreach (var y in Model.AvailableYears)
+                    {
+                        var yv = y.FilingYear ?? y.Year;
+                        <option value="@yv" selected="@(yv == Model.FilingYear)">@yv</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-head">
+                <h3>@(Model.Employer?.Name ?? "No employer selected")</h3>
+                @if (Model.Employer != null)
+                {
+                    <span class="ein mono">EIN @Model.Employer.TaxId</span>
+                    <span class="pill pill-info"><span class="dot"></span>@(Model.Employer.FormType ?? "1094-C")</span>
+                }
+                <div class="util-spacer"></div>
+                <span class="eyebrow">Plan year @Model.FilingYear</span>
+            </div>
+
+            @if (Model.Employer == null)
+            {
+                <div class="year-empty">
+                    <span class="kpi-ico ic-warn"><i class="bx bx-calendar-x"></i></span>
+                    <div>
+                        <h4>No employer record for plan year @Model.FilingYear</h4>
+                        <p>
+                            Employers are held per filing year. The employer you had selected
+                            has no record for @Model.FilingYear. Pick a different year, or choose
+                            an employer from the list above.
+                        </p>
+                    </div>
+                </div>
+            }
+            else if (d.TotalEmployees == 0)
+            {
+                <div class="year-empty">
+                    <span class="kpi-ico ic-indigo"><i class="bx bx-folder-open"></i></span>
+                    <div>
+                        <h4>No employee data for plan year @Model.FilingYear</h4>
+                        <p>
+                            @Model.Employer.Name has no employee records loaded for this year.
+                            Choose a different plan year above, or upload a file to get started.
+                        </p>
+                        <a class="btn btn-primary" href="@Url.Action("Index", "FileUpload")">Upload a file</a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                @await Html.PartialAsync("_FilingReadiness", Model)
+                @* ---- GROUP A: workforce ------------------------------------ *@
+                <div class="group">
+                    <div class="group-label"><span class="eyebrow">Workforce</span></div>
+                    <div class="grid" id="gridWorkforce">
+                        @await Html.PartialAsync("_CountTile", new CountTileModel { Key = "total-employees", Accent = "blue", Icon = "bx-group", Label = "Total employees", Value = d.TotalEmployees, Sub = "Active during plan year" })
+                        @await Html.PartialAsync("_CountTile", new CountTileModel { Key = "enrolled", Accent = "sky", Icon = "bx-user-check", Label = "Enrolled", Value = d.TotalEnrolled, Sub = Pct(d.TotalEnrolled, d.TotalEmployees) })
+                        @await Html.PartialAsync("_CountTile", new CountTileModel { Key = "waived", Accent = "cyan", Icon = "bx-user-x", Label = "Waived", Value = d.TotalWaived, Sub = Pct(d.TotalWaived, d.TotalEmployees) })
+                        @await Html.PartialAsync("_CountTile", new CountTileModel { Key = "cobra", Accent = "indigo", Icon = "bx-shield-quarter", Label = "COBRA participants", Value = d.TotalCobra, Sub = "Part III reportable" })
+                        @await Html.PartialAsync("_CountTile", new CountTileModel { Key = "retiree", Accent = "navy", Icon = "bx-user-voice", Label = "Retiree participants", Value = d.TotalRetiree, Sub = "Part III reportable" })
+                        @await Html.PartialAsync("_CountTile", new CountTileModel { Key = "total-ft", Accent = "blue", Icon = "bx-briefcase", Label = "Full-time employees", Value = d.TotalFullTime, Sub = Pct(d.TotalFullTime, d.TotalEmployees) })
+                        @await Html.PartialAsync("_CountTile", new CountTileModel { Key = "ft-forms", Accent = "blue", Icon = "bx-file", Label = "Full-time receiving forms", Value = d.FtReceivingForms, Sub = "1095-C recipients" })
+                        @await Html.PartialAsync("_CountTile", new CountTileModel { Key = "total-pt", Accent = "sky", Icon = "bx-time-five", Label = "Part-time employees", Value = d.TotalPartTime, Sub = Pct(d.TotalPartTime, d.TotalEmployees) })
+                        @await Html.PartialAsync("_CountTile", new CountTileModel { Key = "pt-forms", Accent = "sky", Icon = "bx-file", Label = "Part-time receiving forms", Value = d.PtReceivingForms, Sub = "Enrolled in coverage" })
+                        @await Html.PartialAsync("_CountTile", new CountTileModel { Key = "union", Accent = "cyan", Icon = "bx-buildings", Label = "Union members", Value = d.TotalUnion, Sub = "Employer contributes" })
+                    </div>
+                </div>
+
+                @* ---- GROUP B: filing status -------------------------------- *@
+                <div class="group">
+                    <div class="group-label"><span class="eyebrow">Filing status</span></div>
+                    <div class="grid" id="gridStatus">
+
+                        <div class="tile c4 hb @(Model.PenaltyExposure > 0 ? "hb-crit ac-danger" : "hb-ok ac-cyan")"
+                             data-w="penalty-exposure" id="riskCardContainer">
+                            <div class="tile-head">
+                                <h4><i class="bx bx-dollar-circle"></i> Penalty Exposure</h4>
+                                <div class="th-spacer"></div>
+                                <div class="dropdown">
+                                    <button class="icon-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Penalty options">&#8942;</button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="javascript:void(0);" onclick="loadPenaltyRisk()"><i class="bx bx-refresh me-2"></i>Re-Assess Risk</a></li>
+                                        <li><a class="dropdown-item" href="@Url.Action("PenaltyRisk", "ACA", new { employerId = Model.EmployerIdValue, year = Model.FilingYear })"><i class="bx bx-bar-chart-alt-2 me-2"></i>View Full Report</a></li>
+                                    </ul>
+                                </div>
+                                <div class="tile-tools"></div>
+                            </div>
+
+                            @* .tile-body supplies the padding .tile.hb removes; .pen-body the centring. *@
+                            <div class="tile-body pen-body">
+                                <div class="pen-total num @(Model.PenaltyExposure > 0 ? "is-bad" : "is-good")" id="totalRiskDisplay">
+                                    @Model.PenaltyExposure.ToString("C0")
+                                </div>
+                                <div class="pen-cap">Total potential assessment</div>
+                                <div class="pen-when">
+                                    @(Model.PenaltyCalculatedDate.HasValue
+                                                                    ? $"Last calculated {Model.PenaltyCalculatedDate.Value:dd MMM yyyy 'at' h:mm tt}"
+                                                                    : "Not yet calculated for this year")
+                            </div>
+
+                                <div class="pen-split">
+                                    <div class="pen-box">
+                                        <div class="pen-box-lbl">&sect;4980H(a) risk</div>
+                                        <span id="typeABadge" class="pill @(Model.PenaltyTypeATriggered ? "pill-crit" : "pill-good")">
+                                            <span class="dot"></span>@(Model.PenaltyTypeATriggered ? "Triggered" : "MEC met (95%)")
+                                        </span>
+                                        <div id="typeAAmount" class="pen-box-amt num @(Model.PenaltyTypeA > 0 ? "" : "d-none")">
+                                            @Model.PenaltyTypeA.ToString("C0")
+                                        </div>
+                                    </div>
+                                    <div class="pen-box">
+                                        <div class="pen-box-lbl">&sect;4980H(b) risk</div>
+                                        <div class="pen-box-num num @(Model.PenaltyTypeBViolations > 0 ? "is-bad" : "")" id="typeBCount">@Model.PenaltyTypeBViolations</div>
+                                        <div class="pen-box-sub">Violations</div>
+                                    </div>
+                                </div>
+
+                                <a class="btn pen-details btn-outline-primary btn-md" href="@Url.Action("PenaltyRisk", "ACA", new { employerId = Model.EmployerIdValue, year = Model.FilingYear })">
+                                    <i class="bx bx-bar-chart-alt-2 me-1"></i> View details
+                                </a>
+                            </div>
+                        </div>
+
+                    @{
+                            var mailPassed = Model.Employer360.MailingDeadline < DateTime.Now;
+                            var efilePassed = Model.Employer360.EfilingDeadline < DateTime.Now;
+
+                            // Both gone: nothing left to act on, so slate rather than red —
+                            // red implies something can still be fixed. One gone: still
+                            // actionable and genuinely urgent.
+                            var datesBar = (mailPassed && efilePassed) ? "hb-closed ac-navy"
+                            : (mailPassed || efilePassed) ? "hb-crit ac-danger"
+                            : "hb-amber ac-warn";
+                            var datesPill = (mailPassed && efilePassed) ? "pill-info"
+                            : (mailPassed || efilePassed) ? "pill-crit"
+                            : "pill-warn";
+                            var datesLabel = (mailPassed && efilePassed) ? "Filing window closed"
+                            : (mailPassed || efilePassed) ? "Deadline passed"
+                            : "Open";
+                        }
+
+                        <div class="tile c5 hb @datesBar" data-w="important-dates" id="datesTile">
+                            <div class="tile-head">
+                                <h4><i class="bx bx-calendar-event"></i> Important Dates</h4>
+                                <div class="th-spacer"></div>
+                                <span class="pill @datesPill" id="datesStatePill"><span class="dot"></span>@datesLabel</span>
+                                <div class="tile-tools"></div>
+                            </div>
+
+                            <div class="tile-body">
+                                <article class="fd-card">
+                                    <div class="fd-title-row">
+                                        <span class="fd-chip"><i class="bx bx-envelope" style="font-size:1rem"></i></span>
+                                        <div>
+                                            <h3 class="fd-title">1095 mailing deadline</h3>
+                                            <p class="fd-target">Target date: <strong id="txtMailDate">--</strong></p>
+                                        </div>
+                                    </div>
+                                    <div class="cd-wrap" id="mailCd"></div>
+                                    <div class="fd-rail"><span id="mailRail" style="width:0%"></span></div>
+                                </article>
+
+                                <article class="fd-card fd-card--cyan">
+                                    <div class="fd-title-row">
+                                        <span class="fd-chip fd-chip--green"><i class="bx bx-send" style="font-size:1rem"></i></span>
+                                        <div>
+                                            <h3 class="fd-title">1094 &amp; 1095 e-filing deadline</h3>
+                                            <p class="fd-target">Target date: <strong id="txtEfileDate">--</strong></p>
+                                        </div>
+                                    </div>
+                                    <div class="cd-wrap" id="efileCd"></div>
+                                    <div class="fd-rail is-green"><span id="efileRail" style="width:0%"></span></div>
+                                </article>
+                            </div>
+                        </div>
+
+                        <div class="tile c3 ac-indigo" data-w="proc-step">
+                            <div class="tile-head"><h4>Process step</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                            <div class="kpi-row">
+                                <span class="kpi-ico ic-indigo"><i class="bx bx-flag"></i></span>
+                                <div>
+                                    <div style="font-size:15px;font-weight:750;line-height:1.25">@(d.CurrentProcessStep ?? "No active process step")</div>
+                                    <div class="sub">
+                                        @(d.ProcessDueDate.HasValue ? $"Follow-up {d.ProcessDueDate:dd MMM yyyy}" : "No follow-up date")
+                                        &middot; @d.ProcessCompletePercent%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tile c4 ac-sky" data-w="filing-comms">
+                            <div class="tile-head"><h4>Filing communications</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                            <div class="comms">
+                                <div class="c">
+                                    <div class="n num" style="color:var(--brand)">@d.MessagesUnread</div>
+                                    <div class="eyebrow" style="margin-top:2px">Unread</div>
+                                </div>
+                                <div class="c">
+                                    <div class="n num" style="color:var(--ink-3)">@d.MessagesRead</div>
+                                    <div class="eyebrow" style="margin-top:2px">Read</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tile stat c4 ac-blue" data-w="recent-hire">
+                            <div class="tile-head"><h4>Most recent hire</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                            <div class="kpi-row">
+                                <span class="kpi-ico ic-blue"><i class="bx bx-user-plus"></i></span>
+                                <div>
+                                    <div class="val date num">@(d.MostRecentHire?.ToString("dd MMM yyyy") ?? "None recorded")</div>
+                                @if (d.MostRecentHire.HasValue)
+                                    {
+                                        <div class="sub">@((int)(DateTime.Today - d.MostRecentHire.Value.Date).TotalDays) days ago</div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tile stat c4 ac-danger" data-w="recent-term">
+                            <div class="tile-head"><h4>Most recent termination</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                            <div class="kpi-row">
+                                <span class="kpi-ico ic-danger"><i class="bx bx-user-minus"></i></span>
+                                <div>
+                                    <div class="val date num">@(d.MostRecentTermination?.ToString("dd MMM yyyy") ?? "None recorded")</div>
+                                    @if (d.MostRecentTermination.HasValue)
+                                    {
+                                        <div class="sub">@((int)(DateTime.Today - d.MostRecentTermination.Value.Date).TotalDays) days ago</div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                @* ---- GROUP C: trends --------------------------------------- *@
+                <div class="group">
+                    <div class="group-label"><span class="eyebrow">Trends</span></div>
+                    <div class="grid" id="gridTrends">
+
+                        <div class="tile c8 hb hb-6" data-w="workforce-composition">
+                            <div class="tile-head">
+                                <h4><i class="bx bx-doughnut-chart"></i> Workforce Composition</h4>
+                                <div class="th-spacer"></div>
+                                <span class="eyebrow">@d.TotalEmployees active</span>
+                                <div class="tile-tools"></div>
+                            </div>
+                            <div class="tile-body">
+                                <svg class="chart" id="chWorkforce" height="118" role="img" aria-label="Workforce composition"></svg>
+                                <div class="legend" id="lgWorkforce"></div>
+                            </div>
+                        </div>
+
+                        <div class="tile c4 hb hb-4" data-w="chart-proc">
+                            <div class="tile-head">
+                                <h4><i class="bx bx-pie-chart-alt-2"></i> Current Percentage in Process</h4>
+                                <div class="th-spacer"></div>
+                                <div class="tile-tools"></div>
+                            </div>
+                            <div class="tile-body">
+                                <svg class="chart" id="chDonut" height="152" role="img" aria-label="Process completion"></svg>
+                            </div>
+                        </div>
+
+                        <div class="tile c6 hb hb-1" data-w="chart-enr-waived">
+                            <div class="tile-head">
+                                <h4><i class="bx bx-bar-chart-alt-2"></i> Total Employees (Enrolled / Waived)</h4>
+                                <div class="th-spacer"></div>
+                                <div class="tile-tools"></div>
+                            </div>
+                            <div class="tile-body">
+                                <svg class="chart" id="chEnrWaived" height="176" role="img" aria-label="Monthly enrolled and waived"></svg>
+                                <div class="legend" id="lgEnrWaived"></div>
+                            </div>
+                        </div>
+
+                        <div class="tile c6 hb hb-2" data-w="chart-ft-total">
+                            <div class="tile-head">
+                                <h4><i class="bx bx-trending-up"></i> Employees Per Month (Full-Time / Total)</h4>
+                                <div class="th-spacer"></div>
+                                <div class="tile-tools"></div>
+                            </div>
+                            <div class="tile-body">
+                                <svg class="chart" id="chFtTotal" height="176" role="img" aria-label="Monthly full-time and total"></svg>
+                                <div class="legend" id="lgFtTotal"></div>
+                            </div>
+                        </div>
+
+                        <div class="tile c6 hb hb-3" data-w="chart-cru">
+                            <div class="tile-head">
+                                <h4><i class="bx bx-shield-quarter"></i> Total Count (COBRA / Retiree / Union)</h4>
+                                <div class="th-spacer"></div>
+                                <div class="tile-tools"></div>
+                            </div>
+                            <div class="tile-body">
+                                <svg class="chart" id="chCru" height="176" role="img" aria-label="Monthly COBRA, retiree and union"></svg>
+                                <div class="legend" id="lgCru"></div>
+                            </div>
+                        </div>
+
+                        <div class="tile c6 hb hb-5" data-w="ale-trend">
+                            <div class="tile-head">
+                                <h4><i class="bx bx-trending-up"></i> ALE Monthly Headcount &amp; &sect;4980H Trend</h4>
+                                <div class="th-spacer"></div>
+                                <span class="eyebrow">@Model.FilingYear</span>
+                                <div class="tile-tools"></div>
+                            </div>
+                            <div class="tile-body">
+                                <svg class="chart" id="chAle" height="176" role="img" aria-label="Monthly full-time headcount against the ALE threshold"></svg>
+                                <div class="legend" id="lgAle"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                @* ---- GROUP D: data & plans --------------------------------- *@
+                <div class="group">
+                    <div class="group-label"><span class="eyebrow">Data &amp; plans</span></div>
+                    <div class="grid" id="gridDetail">
+
+                        <div class="tile c12 hb hb-7" data-w="data-integrity">
+                            <div class="tile-head">
+                                <h4><i class="bx bx-calendar-check"></i> Data Integrity / Coverage Map</h4>
+                                <div class="th-spacer"></div>
+                                <span class="eyebrow">@Model.FilingYear</span>
+                                <div class="tile-tools"></div>
+                            </div>
+                            <div class="tile-body">
+                                <div class="cov" id="covMap"></div>
+                                <div class="cov-legend">
+                                    <span><i style="background:var(--good)"></i>Complete &mdash; 100%</span>
+                                    <span><i style="background:var(--warn)"></i>Partial &mdash; 90&ndash;99%</span>
+                                    <span><i style="background:var(--crit)"></i>Gaps &mdash; below 90%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tile c12 hb hb-8" data-w="plan-info">
+                            <div class="tile-head">
+                                <h4><i class="bx bx-clipboard"></i> Plan Information</h4>
+                                <div class="th-spacer"></div>
+                                <span class="eyebrow">@Model.Plans.Count plans on file</span>
+                                <div class="tile-tools"></div>
+                            </div>
+                            <div class="tile-body">
+                                <div class="table-wrap">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Plan name</th>
+                                                <th>Type</th>
+                                                <th>Funding</th>
+                                                <th>Banding</th>
+                                                <th class="n">Renewal</th>
+                                                <th>Waiting period</th>
+                                                <th>Spouse</th>
+                                                <th>Dependents</th>
+                                                <th class="n">Min. cost</th>
+                                                <th>MV</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var pl in Model.Plans)
+                                            {
+                                                <tr>
+                                                    <td style="font-weight:600">@pl.PlanName</td>
+                                                    <td>@pl.PlanType</td>
+                                                    <td>@pl.FundingType</td>
+                                                    <td>@pl.BandingType</td>
+                                                    <td class="n">@pl.RenewalMonthName</td>
+                                                    <td>@(pl.WaitingPeriod ?? "—")</td>
+                                                    <td>@(pl.OfferedSpouse ? "Offered" : "Not offered")</td>
+                                                    <td>@(pl.OfferedDependents ? "Offered" : "Not offered")</td>
+                                                    <td class="n num">@(pl.LowestCost?.ToString("C2") ?? "—")</td>
+                                                    <td>
+                                                        <span class="pill pill-@(pl.MinimumValue ? "good" : "crit")">
+                                                            <span class="dot"></span>@(pl.MinimumValue ? "Yes" : "No")
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="tray" id="trayEmployer">
+                    <h4>Hidden tiles &mdash; click to restore</h4>
+                    <div class="tray-items"></div>
+                </div>
+            }
+        </div>
+    </section>
+
+
+    @* ============================================================
+       MODALS + FLOATING LAYERS
+       ============================================================ *@
+    <div class="modal fade" id="scanModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-scan me-2"></i>Data Scan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="scanResultBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tip" id="tip"></div>
+
+</div>
+
+</div>
+@section Scripts {
+    <script>
+        window.ACA360_DASHBOARD = {
+            config: {
+                dashboardKey:     "employer",
+                saveLayoutUrl:    "@Url.Action("SaveDashboardLayout", "TrackerEmployer")",
+                getLayoutUrl:     "@Url.Action("GetDashboardLayout", "TrackerEmployer")",
+                beginViewAsUrl:   "@Url.Action("Begin", "ViewAs")",
+                endViewAsUrl:     "@Url.Action("End", "ViewAs")",
+                riskAnalysisUrl:  "@Url.Action("GetRiskAnalysis", "FormGeneration", new { employerId = Model.EmployerIdValue, year = Model.FilingYear })",
+                anomalyUrl:       "@Url.Action("RunAnomalyCheck", "Employer", new { id = Model.EmployerIdValue, year = Model.FilingYear })",
+                antiForgeryToken: document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            monthly:        @Html.Raw(Json.Serialize(Model.Employer360.Monthly)),
+            coverage:       @Html.Raw(Json.Serialize(Model.CoveragePercent)),
+            aleTrend:       @Html.Raw(Json.Serialize(Model.AleTrend)),
+            processPercent: @Model.Employer360.ProcessCompletePercent,
+            workforce: {
+                fullTime: @Model.WorkforceFullTime,
+                partTime: @Model.WorkforcePartTime,
+                variable: @Model.WorkforceVariable,
+                cobra:    @Model.WorkforceCobra
+            },
+            deadlines: {
+                mailing: "@Model.Employer360.MailingDeadline.ToString("yyyy-MM-ddTHH:mm:ss")",
+                efiling: "@Model.Employer360.EfilingDeadline.ToString("yyyy-MM-ddTHH:mm:ss")"
+            }
+        };
+    </script>
+    <script src="~/js/aca360-dashboard.js" asp-append-version="true"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+}
+
+
+@functions {
+    static string Pct(int part, int whole) =>
+        whole > 0 ? $"{part * 100 / whole}% of workforce" : "—";
+}

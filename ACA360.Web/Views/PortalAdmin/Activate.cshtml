@@ -1,0 +1,77 @@
+@{
+    ViewData["Title"] = "Activate Portal Access";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-warning d-flex align-items-center">
+                    <i class="bx bx-error-circle me-2"></i> @ViewBag.Error
+                </div>
+                <a href="@Url.Action("Index", "Employee")" class="btn btn-outline-secondary">
+                    <i class="bx bx-arrow-back me-1"></i> Back to Employee List
+                </a>
+            }
+            else if (ViewBag.AlreadyActive == true)
+            {
+                <div class="card">
+                    <div class="card-body text-center">
+                        <span class="avatar avatar-xl mb-3">
+                            <span class="avatar-initial rounded-circle bg-label-info"><i class="bx bx-user-check bx-lg"></i></span>
+                        </span>
+                        <h4 class="mb-1">Portal Access Already Active</h4>
+                        <p class="text-muted">@ViewBag.EmployeeName already has a working login and signs in with their own password.</p>
+
+                        <div class="alert alert-info text-start mt-3">
+                            <table class="table table-borderless mb-0">
+                                <tr><td class="text-muted" style="width:120px;">Login URL</td><td class="fw-medium"><a href="@ViewBag.LoginUrl" target="_blank">@ViewBag.LoginUrl</a></td></tr>
+                                <tr><td class="text-muted">Email</td><td class="fw-medium">@ViewBag.Email</td></tr>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-warning text-start small">
+                            <i class="bx bx-error-circle me-1"></i> Only reset the password if the employee is locked out or forgot it. Resetting generates a new temporary password and <strong>invalidates their current one</strong>.
+                        </div>
+
+                        <a href="@ViewBag.ResetUrl" class="btn btn-outline-danger"
+                           onclick="return confirm('Reset this employee\'s password? Their current password will stop working.');">
+                            <i class="bx bx-reset me-1"></i> Reset Password
+                        </a>
+                        <a href="@Url.Action("Index", "Employee")" class="btn btn-outline-secondary ms-1">
+                            <i class="bx bx-arrow-back me-1"></i> Back to Employee List
+                        </a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card">
+                    <div class="card-body text-center">
+                        <span class="avatar avatar-xl mb-3">
+                            <span class="avatar-initial rounded-circle bg-label-success"><i class="bx bx-check-shield bx-lg"></i></span>
+                        </span>
+                        <h4 class="mb-1">@(ViewBag.WasReset == true ? "Password Reset" : "Portal Access Activated")</h4>
+                        <p class="text-muted">@ViewBag.EmployeeName can now sign in to the employee portal.</p>
+
+                        <div class="alert alert-info text-start mt-4">
+                            <div class="mb-2"><i class="bx bx-info-circle me-1"></i> Share these one-time credentials with the employee. They'll set their own password on first login.</div>
+                            <table class="table table-borderless mb-0">
+                                <tr><td class="text-muted" style="width:170px;">Login URL</td><td class="fw-medium"><a href="@ViewBag.LoginUrl" target="_blank">@ViewBag.LoginUrl</a></td></tr>
+                                <tr><td class="text-muted">Email</td><td class="fw-medium">@ViewBag.Email</td></tr>
+                                <tr><td class="text-muted">Temporary password</td><td><span class="badge bg-label-primary fs-6">@ViewBag.TempPassword</span></td></tr>
+                            </table>
+                        </div>
+
+                        <a href="@Url.Action("Index", "Employee")" class="btn btn-primary mt-2">
+                            <i class="bx bx-arrow-back me-1"></i> Back to Employee List
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

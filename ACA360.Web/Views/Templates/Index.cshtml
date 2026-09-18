@@ -1,0 +1,118 @@
+﻿@using ACA360.Core.Extensions
+@model IEnumerable<ACA360.Core.Models.ImportTemplate>
+@using ACA360.Web.ViewComponents
+@{
+    ViewData["Title"] = "Import Templates";
+    int countIndex = 1;
+}
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Import Templates",
+    items = new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Title = "Employer", Url = Url.Action("Index", "Employer"), IsActive = false },
+    new BreadcrumbItem { Title = "Master Settings", Url = "", IsActive = false },
+    new BreadcrumbItem { Title = "Data Templates", Url = "", IsActive = true }
+}
+})
+
+<div class="card mb-6">
+    <div class="card-header border-bottom">
+        <h5 class="card-title mb-0">Available File Formats</h5>
+        <small class="text-muted">Manage how different Excel files map to the database.</small>
+
+        <button class="btn btn-primary float-end" data-bs-toggle="modal" data-bs-target="#newTemplateModal">
+            <i class="bx bx-plus me-1"></i> New Template
+
+        </button>        
+    </div>
+   
+    <div class="table-responsive text-nowrap ui-table-responsive">
+        <table class="table table-hover ui-table">
+            <thead>
+                <tr>
+                    <th width="5%">#</th>
+                    <th width="25%">Template Name</th>
+                    <th width="40%">Description</th>
+                    <th width="10%">Status</th>
+                    <th width="20%" class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="table-border-bottom-0">
+               
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@(countIndex++)</td>
+                        @* <td><strong>@item.TemplateId</strong></td> *@
+                        <td>
+                            <span class="fw-semibold">@item.TemplateName</span>
+                        </td>
+                        <td>
+                            <span class="text-muted text-wrap">@item.Description</span>
+                        </td>
+                        <td>
+                            @if (item.IsActive)
+                            {
+                                <span class="badge bg-label-success me-1">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-label-secondary me-1">Inactive</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="Configuration" asp-route-id="@item.TemplateId" class="btn btn-sm btn-outline-primary">
+                                <i class="bx bx-cog me-1"></i> Configure Mapping
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<div class="modal fade" id="newTemplateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form asp-action="Create" method="post">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Template Name</label>
+                                    <input name="templateName" class="form-control" placeholder="e.g. Paychex Export" required />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Description</label>
+                                    <textarea name="description" class="form-control" rows="2"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer py-3">
+                    <button type="button"
+                            class="btn btn-label-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">Create & Configure</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    const templateModal = document.getElementById('newTemplateModal');
+
+    templateModal.addEventListener('hidden.bs.modal', function () {
+        this.querySelector('form').reset();
+    });
+</script>

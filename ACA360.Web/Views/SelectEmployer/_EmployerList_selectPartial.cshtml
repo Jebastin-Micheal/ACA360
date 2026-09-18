@@ -1,0 +1,236 @@
+﻿@model ACA360.Web.Models.EmployerListViewModel
+@{
+    var pageSize = Model.Metadata?.PageSize ?? 10;
+    var pageSizes = new[] { 10, 25, 50 };
+}
+<div id="Select_employerListContainer" class="Select_employerListContainer">
+<div class="card">
+  
+    <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="card-title m-0 me-2">Employer List</h5>
+        </div>
+
+   
+    <div class="card-body">
+        <form id="searchForm" class="mb-3 searchForm">
+            <div class="row align-items-center g-2 searchRowContainer">
+
+                @* <!-- Search label -->
+                <div class="col-auto">
+                    <label for="searchInput" class="col-form-label fw-bold">Search</label>
+                </div> *@
+
+                <!-- Search input (takes more width) -->
+@*                 <div class="col-md-4">
+                        <input type="text" class="form-control searchInput" id="searchInput" name="search" placeholder="Search..." value="@Model.Search" />
+                        
+                </div>
+ *@
+            <div class="col-md-4">
+                <div class="input-group">
+                    <input type="text" class="form-control searchInput" id="searchInput" name="search" placeholder="Search..." value="@Model.Search" />
+                    <span class="input-group-text">
+                        <i class="bx bx-search"></i> <!-- Use any icon here -->
+                    </span>
+                </div>
+            </div>
+
+
+               @*  <!-- Search button -->
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </div> *@
+
+                <!--Refresh Button-->
+                 <div class="col-auto d-flex align-items-center">
+                 
+                    <button type="button" id="btnRefresh" class="btn btn-outline-secondary d-flex align-items-center justify-content-center btnRefresh">
+                        <i class='bx bx-refresh'></i>
+                    </button>
+                </div>
+
+                <!-- Type label with extra left margin -->
+                <div class="col-auto ms-4">
+                    <label for="typeFilter" class="col-form-label me-2 fw-bold">Type</label>
+                </div>
+
+                <!-- Type dropdown -->
+                <div class="col-md-2">  
+                  <select id="typeFilter" name="TypeFilter" class="form-select w-auto me-2 typeFilter">
+                        
+                            @foreach (var item in Model.TypeFilters)
+                            {
+                                @: <option value="@item.Value" @(item.Value == Model.TypeFilter ? "selected" : "")>  @item.Text </option>
+                            }
+                  </select>
+                </div>
+                   
+
+               
+
+
+
+
+                <!-- Page size dropdown -->
+                <div class="col-auto">
+                    <select name="drpPageSize" class="form-select w-auto drpPageSize" id="drpPageSize">
+                        @* <option value="10">10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option> *@
+                           
+                        @foreach (var size in new[] { 10, 15,20,25,50, 100 })
+                        {
+                            @:<option value="@size" @(Model.Metadata.PageSize == size ? "selected" : null)>@size</option>
+                        }
+                    </select>
+
+                   
+                </div>
+
+            </div>
+        </form>
+
+
+
+
+      
+            <table class="table table-bordered table-hover select_Employertable" id="select_Employertable">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        @* <th>Employer Name</th>
+            <th>Tax ID</th> *@
+                        <th class="sortable @(Model.SortColumn == 0 ? "active " + Model.SortOrder : "")" data-sort="0">Employer Name</th>
+
+                        <th class="sortable @(Model.SortColumn == 1 ? "active " + Model.SortOrder : "")" data-sort="1">Tax ID</th>
+
+                        <th>Type</th>
+                        @* <th>Contact</th>
+            <th>Phone</th> *@
+
+                        <th>Select</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Employers?.Any(e => !string.IsNullOrEmpty(e.Id)) ?? false)
+                    {
+                        int index = 1 + ((Model.Metadata.PageNumber - 1) * Model.Metadata.PageSize);
+                        foreach (var employer in Model.Employers.Where(e => !string.IsNullOrEmpty(e.Id)))
+                        {
+
+                            <tr>
+                                <td>@index</td>
+                                <td>@employer.Name</td>
+                                <td>@(CanViewSSNorEIN ? employer.TaxId : DataMasker.MaskEIN(employer.TaxId))</td>
+<td>@employer.Type</td>
+                                @* <td>@employer.ContactName</td>
+                    <td>@employer.PhoneNumber</td> *@
+                            <td>
+                                @*<button type="button"
+                class="btn btn-sm btn-success select-employer-btn"
+                data-id="@employer.Id"
+                data-name="@employer.Name"
+                data-filingyear="@employer.FilingYear">
+            Select
+        </button>*@
+                                <a asp-controller="SelectEmployer" asp-action="SelectThis" asp-route-id="@employer.Id" asp-route-empname="@employer.Name" class="btn btn-mini btn-sm btn-success">
+                                    <span class="icon"><i class="icon-eye-open icon-white"></i> Select</span>
+                                </a>
+                            </td>
+                            </tr>
+                            index++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+    <td colspan="6" class="text-center text-muted py-4">
+        <i class="icon-info-sign me-1"></i>@(ViewBag.EmptyMessage as string ?? "No employers found.")
+    </td>
+</tr>
+                    }
+                </tbody>
+            </table>
+
+
+
+
+            @if (Model.Metadata != null && Model.Metadata.TotalPages > 1)
+            {
+                var start = ((Model.Metadata.PageNumber - 1) * Model.Metadata.PageSize) + 1;
+                var end = Math.Min(start + Model.Metadata.PageSize - 1, Model.Metadata.TotalCount);
+
+                <div class="row mt-3 justify-content-between">
+                    <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto mt-0">
+                        <div class="dt-info" role="status">
+                            Showing @start to @end of @Model.Metadata.TotalCount entries
+                        </div>
+                    </div>
+                    <div class="mt-1 d-md-flex align-items-center dt-layout-end col-md-auto justify-content-md-between justify-content-center d-flex flex-wrap gap-2 mb-md-0 mb-4 mt-0">
+                        <div class="dt-paging">
+                            <nav aria-label="pagination">
+                                <ul class="pagination">
+
+                                    <!-- First -->
+                                    <li class="dt-paging-button page-item @(Model.Metadata.PageNumber == 1 ? "disabled" : "")">
+                                        <button class="page-link" type="button" data-pageindex="1" aria-disabled="@(Model.Metadata.PageNumber == 1)">
+                                            First
+                                        </button>
+                                    </li>
+
+                                    <!-- Previous -->
+                                    <li class="dt-paging-button page-item @(Model.Metadata.PageNumber == 1 ? "disabled" : "")">
+                                        <button class="page-link previous" type="button" data-pageindex="@(Model.Metadata.PageNumber - 1)" aria-label="Previous" aria-disabled="@(Model.Metadata.PageNumber == 1)">
+                                            <i class="icon-base bx bx-chevron-left scaleX-n1-rtl icon-18px"></i>
+                                        </button>
+                                    </li>
+
+                                    <!-- Page Numbers -->
+                                    @{
+                                        int totalPages = Model.Metadata.TotalPages;
+                                        int currentPage = Model.Metadata.PageNumber;
+                                        int displayRange = 5;
+                                        int startPage = Math.Max(1, currentPage - displayRange / 2);
+                                        int endPage = Math.Min(totalPages, startPage + displayRange - 1);
+
+                                        if (endPage - startPage < displayRange)
+                                            startPage = Math.Max(1, endPage - displayRange + 1);
+
+                                        for (int i = startPage; i <= endPage; i++)
+                                        {
+                                            <li class="dt-paging-button page-item @(i == currentPage ? "active" : "")">
+                                                <button class="page-link" type="button" data-pageindex="@i" aria-current="@(i == currentPage ? "page" : null)">
+                                                    @i
+                                                </button>
+                                            </li>
+                                        }
+                                    }
+
+                                    <!-- Next -->
+                                    <li class="dt-paging-button page-item @(Model.Metadata.PageNumber == totalPages ? "disabled" : "")">
+                                        <button class="page-link next" type="button" data-pageindex="@(Model.Metadata.PageNumber + 1)" aria-label="Next" aria-disabled="@(Model.Metadata.PageNumber == totalPages)">
+                                            <i class="icon-base bx bx-chevron-right scaleX-n1-rtl icon-18px"></i>
+                                        </button>
+                                    </li>
+
+                                    <!-- Last -->
+                                    <li class="dt-paging-button page-item @(Model.Metadata.PageNumber == totalPages ? "disabled" : "")">
+                                        <button class="page-link" type="button" data-pageindex="@totalPages" aria-disabled="@(Model.Metadata.PageNumber == totalPages)">
+                                            Last
+                                        </button>
+                                    </li>
+
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+ </div> 
+
+

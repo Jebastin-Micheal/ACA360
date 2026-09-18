@@ -1,0 +1,78 @@
+﻿@model ACA360.Core.Models.DashboardViewModel
+@{
+    var ac = Model.AccountingData ?? new ACA360.Core.Models.AccountingDashboardData();
+    var totalUnbilled = ac.UnbilledClients.Sum(x => x.Amount);
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="d-metric accent-success">
+            <div class="d-metric-label">Unbilled Revenue</div>
+            <div class="d-metric-value text-success" style="font-size:1.7rem;">$@ac.TotalUnbilledRevenue.ToString("N0")</div>
+            <div class="d-metric-sub mt-2">Ready to invoice</div>
+            <i class='bx bx-dollar-circle d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="d-metric accent-warning">
+            <div class="d-metric-label">Expiring Contracts</div>
+            <div class="d-metric-value counter text-warning" data-target="@ac.ContractsExpiringSoon">@ac.ContractsExpiringSoon</div>
+            <div class="d-metric-sub mt-2">Renewing within 60 days</div>
+            <i class='bx bx-time d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="d-metric">
+            <div class="d-metric-label">Invoices in Queue</div>
+            <div class="d-metric-value counter" data-target="@ac.UnbilledClients.Count">@ac.UnbilledClients.Count</div>
+            <div class="d-metric-sub mt-2">Awaiting generation</div>
+            <i class='bx bx-receipt d-metric-icon'></i>
+        </div>
+    </div>
+</div>
+
+<div class="d-card">
+    <div class="d-card-header">
+        <h6 class="d-card-title"><i class='bx bx-receipt me-2 text-primary'></i>Unbilled Filings Queue</h6>
+        <div class="d-flex gap-2 align-items-center">
+            <span class="text-muted" style="font-size:.75rem;">Total: <strong>$@totalUnbilled.ToString("N2")</strong></span>
+            <button class="btn btn-sm btn-dark">
+                <i class='bx bx-transfer me-1'></i>Sync to QuickBooks
+            </button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size:.82rem;">
+            <thead style="background:rgba(105,108,255,.04);">
+                <tr>
+                    <th class="ps-4 py-3" style="font-size:.68rem;letter-spacing:.5px;">#</th>
+                    <th class="py-3" style="font-size:.68rem;letter-spacing:.5px;">CLIENT NAME</th>
+                    <th class="py-3" style="font-size:.68rem;letter-spacing:.5px;">AMOUNT</th>
+                    <th class="py-3" style="font-size:.68rem;letter-spacing:.5px;">FILING STATUS</th>
+                    <th class="pe-4 py-3" style="font-size:.68rem;letter-spacing:.5px;">ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < ac.UnbilledClients.Count; i++)
+                {
+                    var item = ac.UnbilledClients[i];
+                    <tr>
+                        <td class="ps-4 text-muted">@(i + 1)</td>
+                        <td class="fw-semibold">@item.Client</td>
+                        <td class="text-success fw-bold">$@item.Amount.ToString("N2")</td>
+                        <td><span class="risk-ok">Filed</span></td>
+                        <td class="pe-4">
+                            <button class="btn btn-sm btn-outline-primary" style="font-size:.72rem;padding:3px 10px;">
+                                <i class='bx bx-receipt me-1'></i>Invoice
+                            </button>
+                        </td>
+                    </tr>
+                }
+                @if (!ac.UnbilledClients.Any())
+                {
+                    <tr><td colspan="5" class="text-center py-5 text-muted">No unbilled clients.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

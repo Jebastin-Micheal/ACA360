@@ -1,0 +1,72 @@
+@model List<ACA360.Core.Models.FlaggedEmployeeGrid>
+<link rel="stylesheet" href="~/css/flag-fix.css" asp-append-version="true" />
+<div id="ffg-root" class="flag-fix-modal-container"
+     data-employer-ids="@ViewBag.EmployerIds" data-filing-year="@ViewBag.FilingYear"
+     data-get-url="@Url.Action("GetFlaggedGridData", "Flags")"
+     data-save-url="@Url.Action("SaveFlaggedGrid", "Flags")"
+     data-counts-url="@Url.Action("GetFlaggedGridFlagCounts", "Flags")">
+    @Html.AntiForgeryToken()
+    <div class="modal-header ff-header">
+        <div><h5 class="modal-title">Fix Flagged Employees</h5>
+            <p class="ff-subtitle">Choose a tab and a record. Edit highlighted fields, then save your changes.</p></div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="ff-toolbar">
+        <label for="filterFlag" class="ff-flag-label">Flag
+            <select class="form-select form-select-sm" id="filterFlag"><option value="">All flags</option></select>
+        </label>
+        <label for="ffPageSize">Show
+            <select class="form-select form-select-sm" id="ffPageSize">
+                <option value="10">10</option><option value="25">25</option>
+                <option value="50">50</option><option value="100">100</option>
+            </select> entries
+        </label>
+        <label for="filterSeverity">Status
+            <select id="filterSeverity" class="form-select form-select-sm">
+                <option value="">All</option><option value="critical">Critical</option>
+                <option value="warning">Warning</option><option value="info">Info</option>
+                <option value="editable">Editable</option><option value="edited">Edited (unsaved)</option>
+            </select>
+        </label>
+        <span class="ff-total"><strong id="lblEmpCount">0</strong> employee records with validation issues</span>
+    </div>
+    <div class="ff-status-row">
+        <div class="ff-status-bar" aria-live="polite">
+            <span id="ffCountsStatus"></span>
+            <button type="button" id="ffRetryCounts" class="btn btn-sm btn-link" hidden>Retry flag counts</button>
+            <button type="button" id="ffRetryPage" class="btn btn-sm btn-link" hidden>Retry page</button>
+        </div>
+        <div class="ff-legend-bar" aria-label="Filter by cell status">
+            <button type="button" class="ff-legend-filter" data-severity="critical" aria-pressed="false"><span class="ff-legend-box flag-crit"></span>Critical</button>
+            <button type="button" class="ff-legend-filter" data-severity="warning" aria-pressed="false"><span class="ff-legend-box flag-warn"></span>Warning</button>
+            <button type="button" class="ff-legend-filter" data-severity="info" aria-pressed="false"><span class="ff-legend-box flag-info"></span>Info</button>
+            <button type="button" class="ff-legend-filter" data-severity="editable" aria-pressed="false"><span class="ff-legend-box ff-editable-swatch"></span>Editable</button>
+            <button type="button" class="ff-legend-filter" data-severity="edited" aria-pressed="false"><span class="ff-legend-box cell-edited"></span>Edited</button>
+        </div>
+    </div>
+    <div id="ffGridError" class="alert alert-danger m-2" role="alert" hidden></div>
+    <div id="ffSaveStatus" class="ff-save-status" role="status" hidden></div>
+    <div id="ffFlagDetails" class="ff-flag-details" role="region" aria-label="Flag descriptions">
+        <div class="ff-details-heading"><strong id="ffFlagDetailsHeading">Flag details</strong>
+            <button type="button" id="ffResetDetails" class="btn btn-sm btn-link" hidden>Reset</button></div>
+        <div id="ffFlagDetailsText" class="ff-details-text" aria-live="polite">
+            Hover a highlighted field or row to see its flags. Click a field or row to read the descriptions here.
+        </div>
+    </div>
+    <div class="ff-tabs" role="tablist" aria-label="Employee details">
+        <button type="button" id="ff-tab-employee" role="tab" aria-controls="ffGridWrap" aria-selected="true" data-tab="employee">Employee Info</button>
+        <button type="button" id="ff-tab-hire" role="tab" aria-controls="ffGridWrap" aria-selected="false" data-tab="hire">Hire</button>
+        <button type="button" id="ff-tab-status" role="tab" aria-controls="ffGridWrap" aria-selected="false" data-tab="status">Status</button>
+        <button type="button" id="ff-tab-payroll" role="tab" aria-controls="ffGridWrap" aria-selected="false" data-tab="payroll">Payroll</button>
+        <button type="button" id="ff-tab-enrollment" role="tab" aria-controls="ffGridWrap" aria-selected="false" data-tab="enrollment">Enrollment</button>
+        <button type="button" id="ff-tab-dependent" role="tab" aria-controls="ffGridWrap" aria-selected="false" data-tab="dependent">Covered Individuals</button>
+    </div>
+    <div id="ffGridWrap" class="ff-grid-container" role="tabpanel" aria-labelledby="ff-tab-employee">
+        <table id="ffGrid" class="table m-0"><thead><tr></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="modal-footer ff-footer">
+        <span><strong id="changeCount">0</strong> changed cells <span class="ff-key-hint">· Tab moves to the next field</span></span>
+        <div><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" id="btnSaveAllBatch" class="btn ff-save-button" disabled>Save all</button></div>
+    </div>
+</div>

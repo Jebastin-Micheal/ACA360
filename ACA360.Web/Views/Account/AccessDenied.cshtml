@@ -1,0 +1,34 @@
+﻿@{
+    ViewData["Title"] = "Access Denied";
+}
+
+<div class="container-xxl container-p-y">
+    <div class="misc-wrapper text-center">
+
+        <h2 class="mb-2 mx-2">You are not authorized! 🔐</h2>
+
+        <p class="mb-4 mx-2">
+            You do not have permission to view this page using your current credentials.<br>
+            Please contact your administrator or switch to an account with the required privileges.
+        </p>
+
+        <div class="d-flex justify-content-center gap-3">
+            <a href="@Url.Action("Index", "Dashboard")" class="btn btn-primary">
+                <i class="bx bx-home-circle me-1"></i> Back to Home
+            </a>
+
+            <a href="@Url.Action("Logout", "Account")" class="btn btn-outline-secondary">
+                <i class="bx bx bx-power-off me-1"></i> Logout & Switch Account
+            </a>
+        </div>
+
+        <div class="mt-5">
+            <img src="~/assets/img/illustrations/access_denied-light.jpg"
+                 alt="page-misc-not-authorized-light"
+                 width="450"
+                 class="img-fluid"
+                 data-app-dark-img="illustrations/access_denied-dark.jpg"
+                 data-app-light-img="illustrations/access_denied-light.jpg" />
+        </div>
+    </div>
+</div>

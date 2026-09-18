@@ -1,0 +1,268 @@
+@model ACA360.Core.Models.DashboardViewModel
+@{
+    var d = Model.DirectorData ?? new ACA360.Core.Models.DirectorDashboardData();
+    var totalIrs = Math.Max(d.IrsAccepted + d.IrsRejected + d.IrsProcessing, 1);
+    var acceptPct = (d.IrsAccepted * 100) / totalIrs;
+    var rejectPct = (d.IrsRejected * 100) / totalIrs;
+    var deadlineDays = (new DateTime(DateTime.Now.Year, 3, 31) - DateTime.Now).Days;
+    if (deadlineDays < 0) deadlineDays = (new DateTime(DateTime.Now.Year + 1, 3, 31) - DateTime.Now).Days;
+    var affiliates = d.TotalEINs - d.TotalUniqueClients;
+}
+
+@* ── Row 1: Top KPIs ──────────────────────────────────── *@
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-2">
+        <div class="d-metric accent-danger">
+            <div class="d-metric-label">Past Due</div>
+            <div class="d-metric-value counter text-danger" data-target="@d.PastDueClients">@d.PastDueClients</div>
+            <div class="d-metric-sub">Clients at risk</div>
+            <i class='bx bx-alarm-exclamation d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="d-metric">
+            <div class="d-metric-label">Main Clients</div>
+            <div class="d-metric-value counter" data-target="@d.TotalUniqueClients">@d.TotalUniqueClients</div>
+            <div class="d-metric-sub">+ @affiliates affiliates</div>
+            <i class='bx bx-buildings d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="d-metric accent-info">
+            <div class="d-metric-label">Forms Mailed</div>
+            <div class="d-metric-value counter" data-target="@d.FormsMailedCount">@d.FormsMailedCount</div>
+            <div class="d-metric-sub">1095-C to employees</div>
+            <i class='bx bx-mail-send d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="d-metric accent-success">
+            <div class="d-metric-label">e-Filed</div>
+            <div class="d-metric-value counter" data-target="@d.FormsEfiledCount">@d.FormsEfiledCount</div>
+            <div class="d-metric-sub">1094/1095 transmitted</div>
+            <i class='bx bx-cloud-upload d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-12 col-lg-4">
+        <div class="d-metric h-100" style="display:flex;flex-direction:column;justify-content:center;">
+            <div class="d-metric-label mb-2">IRS Submission Status</div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-center">
+                    <div class="fw-bold fs-4 text-success">@d.IrsAccepted</div>
+                    <div style="font-size:.65rem;" class="text-muted text-uppercase fw-semibold">Accepted</div>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-progress mb-1" style="height:8px; border-radius:4px;">
+                        <div class="d-progress-fill" data-pct="@acceptPct" style="--fill-color:#71dd37; border-radius:4px 0 0 4px;"></div>
+                    </div>
+                    <div class="d-progress" style="height:8px; border-radius:4px; background:transparent;">
+                        <div style="height:100%; border-radius:4px; background:#ff3e1d; width:@rejectPct%; transition:width 1s;"></div>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="fw-bold fs-4 text-danger">@d.IrsRejected</div>
+                    <div style="font-size:.65rem;" class="text-muted text-uppercase fw-semibold">Rejected</div>
+                </div>
+            </div>
+            @if (d.IrsProcessing > 0)
+            {
+                <div class="mt-2">
+                    <span class="badge bg-label-warning"><i class='bx bx-loader-alt bx-spin me-1'></i>@d.IrsProcessing processing</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@* ── Row 2: Pipeline chart + Alerts + Deadline ───────── *@
+<div class="row g-3 mb-4">
+
+    @* Process distribution *@
+    <div class="col-12 col-xl-5">
+        <div class="d-card h-100">
+            <div class="d-card-header">
+                <h6 class="d-card-title"><i class='bx bx-git-branch me-2 text-primary'></i>Client Process Pipeline</h6>
+                <span class="badge bg-label-primary">@d.TotalEINs Total EINs</span>
+            </div>
+            <div class="card-body">
+                <div id="dirProcessChart" style="height:230px;"></div>
+            </div>
+        </div>
+    </div>
+
+    @* Critical alerts *@
+    <div class="col-12 col-xl-4">
+        <div class="d-card h-100 d-flex flex-column">
+            <div class="d-card-header">
+                <h6 class="d-card-title"><i class='bx bx-error me-2 text-danger'></i>Critical Alerts</h6>
+                <span class="badge bg-danger">@d.CriticalAlerts.Count</span>
+            </div>
+            <div class="card-body flex-grow-1 d-scroll" style="max-height:220px;">
+                @if (d.CriticalAlerts.Any())
+                {
+                    <ul class="d-timeline">
+                        @foreach (var alert in d.CriticalAlerts)
+                        {
+                            <li>
+                                <div class="d-tl-dot bg-danger" style="margin-top:5px;"></div>
+                                <span class="text-body" style="font-size:.82rem;">@alert</span>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class='bx bx-check-shield bx-lg text-success d-block mb-2 mx-auto'></i>
+                        <p class="fw-semibold text-success mb-0" style="font-size:.82rem;">No critical issues</p>
+                    </div>
+                }
+            </div>
+            <div class="card-footer border-top p-3 d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary flex-grow-1" onclick="openUserModal('add')">
+                    <i class='bx bx-user-plus me-1'></i> Add User
+                </button>
+                <button class="btn btn-sm btn-outline-secondary flex-grow-1" onclick="openUserModal('reset')">
+                    <i class='bx bx-lock-open-alt me-1'></i> Reset Pwd
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @* Deadline + acceptance ring *@
+    <div class="col-12 col-xl-3">
+        <div class="d-card h-100">
+            <div class="d-card-header">
+                <h6 class="d-card-title"><i class='bx bx-target-lock me-2 text-warning'></i>Filing Deadline</h6>
+            </div>
+            <div class="card-body text-center d-flex flex-column justify-content-center gap-3 py-4">
+                <div class="deadline-block">
+                    <div class="deadline-days">@deadlineDays</div>
+                    <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--d-muted);">
+                        Days Until March 31
+                    </div>
+                </div>
+                @* Score ring *@
+                <div class="d-flex flex-column align-items-center">
+                    <div class="score-ring-wrap position-relative" data-score="@acceptPct" style="width:90px;height:90px;">
+                        <svg width="90" height="90" class="score-ring">
+                            <circle class="score-ring-track" cx="45" cy="45" r="36" stroke-width="8" />
+                            <circle class="score-ring-fill" cx="45" cy="45" r="36" stroke-width="8"
+                                    stroke="#71dd37"
+                                    style="stroke-dasharray:226; stroke-dashoffset:226;" />
+                        </svg>
+                        <div class="position-absolute top-50 start-50 translate-middle text-center">
+                            <div class="fw-bold text-success" style="font-size:1.1rem;line-height:1;">@acceptPct%</div>
+                            <div style="font-size:.58rem;text-transform:uppercase;letter-spacing:.5px;" class="text-muted">Accepted</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Row 3: Production tracking table ────────────────── *@
+<div class="d-card">
+    <div class="d-card-header">
+        <h6 class="d-card-title"><i class='bx bx-table me-2 text-primary'></i>Production Tracking</h6>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-danger active-filter" data-filter="1">
+                <i class='bx bx-error-circle me-1'></i>Past Due
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" data-filter="0" onclick="window.dirTable && window.dirTable.search('').draw()">
+                All Clients
+            </button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table id="directorTable" class="table table-hover align-middle mb-0" style="font-size:.82rem;">
+            <thead style="background:rgba(105,108,255,.04);">
+                <tr>
+                    <th class="ps-4 py-3 text-muted" style="font-size:.68rem;letter-spacing:.5px;">EMPLOYER</th>
+                    <th class="py-3 text-muted" style="font-size:.68rem;letter-spacing:.5px;">TYPE</th>
+                    <th class="py-3 text-muted" style="font-size:.68rem;letter-spacing:.5px;">CURRENT STEP</th>
+                    <th class="py-3 text-muted" style="font-size:.68rem;letter-spacing:.5px;">DUE DATE</th>
+                    <th class="py-3 text-muted" style="font-size:.68rem;letter-spacing:.5px;">STATUS</th>
+                    <th class="pe-4 py-3 text-muted"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in d.ClientStatusList ?? new List<ACA360.Core.Models.ClientProcessStatusRow>())
+                {
+                    <tr>
+                        <td class="ps-4 fw-semibold">@row.EmployerName</td>
+                        <td>
+                            <span class="badge bg-label-@(row.IsAffiliate ? "secondary" : "primary")" style="font-size:.68rem;">
+                                @(row.IsAffiliate ? "Affiliate" : "Main HQ")
+                            </span>
+                        </td>
+                        <td><span class="badge bg-@row.StepColor" style="font-size:.72rem;">@row.CurrentStep</span></td>
+                        <td>
+                            @if (row.IsPastDue)
+                            {
+                                <span class="text-danger fw-bold">
+                                    <i class='bx bxs-error-circle me-1'></i>@row.DueDate.ToString("MMM dd")
+                                </span>
+                            }
+                            else
+                            {
+                                <span>@row.DueDate.ToString("MMM dd")</span>
+                            }
+                        </td>
+                        <td>
+                            @if (row.IsPastDue)
+                            {
+                                <span class="risk-critical">Past Due</span>
+                            }
+                            else
+                            {
+                                <span class="risk-ok">On Track</span>
+                            }
+                        </td>
+                        <td class="pe-4">
+                            <a href="@Url.Action("Dashboard", "Employer", new { id = row.EmployerId })"
+                               class="btn btn-sm btn-icon btn-outline-secondary">
+                                <i class='bx bx-show'></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script id="dirChartLabels" type="application/json">@Json.Serialize(d.ProcessStepDistribution?.Keys ?? Enumerable.Empty<string>())</script>
+
+<script id="dirChartValues" type="application/json">@Json.Serialize(d.ProcessStepDistribution?.Values ?? Enumerable.Empty<int>())</script>
+<script>
+    $(document).ready(function() {
+        window.dirTable = $('#directorTable').DataTable({
+            pageLength: 10,
+            order: [[3, 'asc']],
+            language: { search: '', searchPlaceholder: 'Search clients…' },
+            dom: '<"d-flex justify-content-between align-items-center px-4 py-3"f>t<"d-flex justify-content-between align-items-center px-4 py-3"ip>'
+        });
+
+        $('.active-filter').on('click', function() {
+            window.dirTable.column(4).search('Past Due').draw();
+        });
+        new ApexCharts(document.querySelector('#dirProcessChart'), {
+            series: JSON.parse(document.getElementById('dirChartValues').textContent),
+            labels: JSON.parse(document.getElementById('dirChartLabels').textContent),
+            chart: { type: 'donut', height: 230 },
+            colors: ['#8592a3','#ffab00','#696cff','#03c3ec','#71dd37','#ff3e1d'],
+            legend: { position: 'right', fontSize: '12px' },
+            plotOptions: { pie: { donut: { size: '60%', labels: { show: true,
+                total: { show: true, label: 'Clients', fontWeight: 700 } } } } },
+            dataLabels: { enabled: false },
+            stroke: { width: 0 }
+        }).render();
+    });
+
+    function openUserModal(action) { alert('Opening ' + action + ' user modal…'); }
+</script>

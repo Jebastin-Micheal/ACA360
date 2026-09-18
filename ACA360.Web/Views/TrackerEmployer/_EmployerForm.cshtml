@@ -1,0 +1,888 @@
+﻿@using ACA360.Web.Helpers
+@using ACA360.Core.Constants
+
+@model ACA360.Core.Models.Tracker.TrackerEmployerItem
+<form id="frmMain" class="browser-default-validation" autocomplete="off">
+    <div class="modal-header border-bottom py-3 bg-label-dark frmMain-header">
+        <div class="d-flex align-items-center">
+            <div class="avatar avatar-md me-3">
+                <span class="avatar-initial rounded-circle bg-dark shadow-sm">
+                    <i class="bx bx-buildings fs-3"></i>
+                </span>
+            </div>
+            <div>
+                <h5 class="modal-title fw-bold mb-0">Employer Overview</h5>                
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+
+    <div class="modal-body py-4" style="max-height: 70vh; overflow-y: auto; overflow-x: hidden;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+
+                    <input type="hidden" asp-for="EmployerId" />
+                    <input type="hidden" asp-for="Filingyear" />
+                    <div class="d-flex align-items-center mb-4">
+                        <span class="badge badge-center rounded-pill bg-label-primary me-2"><i class="bx bx-info-circle"></i></span>
+                        <h6 class="text-uppercase fw-bold mb-0 small">Account Identity</h6>
+                        <hr class="flex-grow-1 ms-3 opacity-25" />
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" asp-for="EmployerName">Employer Name <span class="text-danger">*</span></label>
+                            <input asp-for="EmployerName" class="form-control" placeholder="Acme Corp" maxlength="75" oninput="this.value=this.value.replace(/[^A-Za-z0-9 &().'\/-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" required />
+                        </div>
+                        @* FIRM *@
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" asp-for="FirmId">Firm Name</label>
+                            <div class="field-with-actions">
+                                <select asp-for="FirmId" asp-items="ViewBag.Firms" class="form-select select2"><option value="">— Select Firm —</option></select>
+                                <button type="button" class="btn btn-label-primary btn-sm btn-act" title="Add Firm" onclick="openAddFirm()"><i class="bx bx-plus"></i></button>
+                                <button type="button" class="btn btn-label-secondary btn-sm btn-act" title="Edit / Delete Firm" onclick="openEditFirm()"><i class="bx bx-edit"></i></button>
+                            </div>
+                        </div>
+
+                        @* BROKER *@
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" asp-for="BrokerId">Broker Name</label>
+                            <div class="field-with-actions">
+                                <select asp-for="BrokerId" asp-items="ViewBag.Brokers" class="form-select select2"><option value="">— Select Broker —</option></select>
+                                <button type="button" class="btn btn-label-primary btn-act btn-sm" title="Add Broker" onclick="openAddBroker()"><i class="bx bx-plus"></i></button>
+                                <button type="button" class="btn btn-label-secondary btn-act btn-sm" title="Edit / Delete Broker" onclick="openEditBroker()"><i class="bx bx-edit"></i></button>
+                            </div>
+                        </div>
+                        @{
+                            bool showFullDirectly = Model.EmployerId == 0 || CanViewSSNorEIN;
+                        }
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">EIN</label>
+                            <div class="input-group">
+                                <input type="text" id="txtEIN" class="form-control ein-input"
+                                       value="@(showFullDirectly? Model.EIN: DataMasker.MaskEIN(Model.EIN))"
+                                       data-display-real="@(CanViewSSNorEIN? Model.EIN: DataMasker.MaskEIN(Model.EIN))"
+                                       placeholder="XX-XXXXXXX" maxlength="10"
+                                       @(showFullDirectly ? "" : "readonly") />
+                                <span class="input-group-text cursor-pointer" id="btnToggleEIN" title="Show/Hide EIN"
+                                      style="@(showFullDirectly ? "display:none" : "")">
+                                    <i class="bx bx-hide" id="iconEIN"></i>
+                                </span>
+                            </div>
+                            <input type="hidden" name="EIN" id="hdnTrackerEIN" value="@Model.EIN" />
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" asp-for="IndustryId">Industry </label>
+                            <select asp-for="IndustryId" asp-items="ViewBag.Industries" class="form-select select2">
+                                <option value="">Select Industry...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" asp-for="PlanYear">Plan Start Date</label>
+                            <input asp-for="PlanYear" class="form-control" placeholder="MM/DD" maxlength="5" oninput="validatePlanYear(this)" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center mb-4">
+                        <span class="badge badge-center rounded-pill bg-label-success me-2"><i class="bx bx-map-pin"></i></span>
+                        <h6 class="text-uppercase fw-bold mb-0 small">Location & Contact</h6>
+                        <hr class="flex-grow-1 ms-3 opacity-25" />
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" asp-for="Address">Address1</label>
+                                <input asp-for="Address"
+                                       id="Address"
+                                       name="Address"
+                                       class="form-control"
+                                       placeholder="123 Main St" maxlength="150" oninput="this.value=this.value.replace(/[^A-Za-z0-9 #&'(),.\/-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" asp-for="Address2">Address2</label>
+                                <input asp-for="Address2"
+                                       id="Address2"
+                                       name="Address2"
+                                       class="form-control"
+                                       placeholder="Suite/Apt" maxlength="150" oninput="this.value=this.value.replace(/[^A-Za-z0-9 #&'(),.\/-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" asp-for="City">City</label>
+                            <input asp-for="City" class="form-control" placeholder="City" maxlength="50" oninput="this.value=this.value.replace(/[^A-Za-z .'-]/g,'').replace(/^\s+/,'').replace(/\s{2,}/g,' ')" onblur="this.value=this.value.trim()" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" asp-for="State">State</label>
+                            <select asp-for="State" asp-items="ViewBag.States" class="form-select select2">
+                                <option value="">Select State</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" asp-for="Zip">Zip</label>
+                            <input type="number" asp-for="Zip" class="form-control" placeholder="Zip" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" asp-for="Email">Email Address </label>
+                            <input type="email" asp-for="Email" class="form-control" maxlength="254" oninput="this.value=this.value.replace(/\s/g,'')" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" asp-for="Phone">Phone </label>
+                            <input type="text" asp-for="Phone" class="form-control" placeholder="(XXX) XXX-XXXX" maxlength="12" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10).replace(/^(\d{3})(\d)/,'$1-$2').replace(/^(\d{3}-\d{3})(\d)/,'$1-$2')" />
+                        </div>
+                    </div>
+
+
+                    <div class="d-flex align-items-center mb-4">
+                        <span class="badge badge-center rounded-pill bg-label-primary me-2"><i class="bx bx-user"></i></span>
+                        <h6 class="text-uppercase fw-bold mb-0 small">Primary Contact</h6>
+                        <hr class="flex-grow-1 ms-3 opacity-25" />
+                    </div>
+
+                    @if (Model.EmployerId == 0)
+                    {
+                        @* CREATE: one contact only — no dropdown, no add-more, no modal *@
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold" asp-for="ACAContactName">Name</label>
+                                <input asp-for="ACAContactName" class="form-control" placeholder="Full name" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold" asp-for="ACAContactPhone">Phone</label>
+                                <input asp-for="ACAContactPhone" class="form-control" placeholder="(XXX) XXX-XXXX" maxlength="12" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10).replace(/^(\d{3})(\d)/,'$1-$2').replace(/^(\d{3}-\d{3})(\d)/,'$1-$2')" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold" asp-for="ACAContactEmail">Email Address</label>
+                                <input type="email" asp-for="ACAContactEmail" class="form-control" maxlength="254" oninput="this.value=this.value.replace(/\s/g,'')" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold" asp-for="ConnectUser">Connect User</label>
+                                <input asp-for="ConnectUser" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold" asp-for="ACARole">ACA Role</label>
+                                <select asp-for="ACARole" class="form-select">
+                                    <option value="">— Select —</option>
+                                    <option value="No Access">No Access</option>
+                                    <option value="Read Only">Read Only</option>
+                                    <option value="Broker-Full Access">Broker-Full Access</option>
+                                    <option value="Editor">Editor</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                            </div>
+                          
+                        </div>
+                    }
+                    else
+                    {
+                        @* EDIT: existing employer — full dropdown + add/edit modal + detail fields *@
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold" asp-for="ACAContactId">Contact</label>
+                                <div class="field-with-actions">
+                                    <select asp-for="ACAContactId" asp-items="ViewBag.Contacts" class="form-select select2"><option value="">— Select Contact —</option></select>
+                                    <button type="button" class="btn btn-label-primary btn-act btn-sm" title="Add Contact" onclick="openAddContact()"><i class="bx bx-plus"></i></button>
+                                    <button type="button" class="btn btn-label-secondary btn-act btn-sm" title="Edit / Delete Contact" onclick="openEditContact()"><i class="bx bx-edit"></i></button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold" asp-for="ACAContactPhone">Phone</label>
+                                <input asp-for="ACAContactPhone" class="form-control" maxlength="12" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10).replace(/^(\d{3})(\d)/,'$1-$2').replace(/^(\d{3}-\d{3})(\d)/,'$1-$2')" readonly />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold" asp-for="ACAContactEmail">Email</label>
+                                <input type="email" asp-for="ACAContactEmail" class="form-control" maxlength="254" oninput="this.value=this.value.replace(/\s/g,'')" readonly />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold" asp-for="ConnectUser">Connect User</label>
+                                <input asp-for="ConnectUser" class="form-control" readonly />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold" asp-for="ACARole">ACA Role</label>
+
+                                <select asp-for="ACARole" class="form-select bg-lighter"
+                                        style="pointer-events:none" tabindex="-1" aria-readonly="true">
+                                    <option value="">— Select —</option>
+                                    <option value="No Access">No Access</option>
+                                    <option value="Read Only">Read Only</option>
+                                    <option value="Broker-Full Access">Broker-Full Access</option>
+                                    <option value="Editor">Editor</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                            </div>
+                            
+                        </div>
+                    }
+                    <div class="d-flex align-items-center mb-4">
+                        <span class="badge badge-center rounded-pill bg-label-warning me-2"><i class="bx bx-user-voice"></i></span>
+                        <h6 class="text-uppercase fw-bold mb-0 small">Team & Data Specifications</h6>
+                        <hr class="flex-grow-1 ms-3 opacity-25" />
+                    </div>
+                    <div class="row g-3 mb-4">
+
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold" asp-for="AcctManagerId">Account Manager
+                                @if (Model.EmployerId > 0)
+                                {
+                                    <a href="javascript:void(0)" class="ms-1" title="View Account Manager history" onclick="openAssignmentHistory('AM')"><i class="bx bx-history"></i></a>
+                                }
+                            </label>
+                            <select asp-for="AcctManagerId" asp-items="ViewBag.AcctManagers" class="form-select select2">
+                                <option value="">Select Account Manager...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold" asp-for="SalesRepId">Sales Representative </label>
+                            <select asp-for="SalesRepId" asp-items="ViewBag.SalesReps" class="form-select select2">
+                                <option value="">Select Sales Representative...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold" asp-for="DataAnalystId">Data Analyst
+                                @if (Model.EmployerId > 0)
+                                {
+                                    <a href="javascript:void(0)" class="ms-1" title="View Data Analyst history" onclick="openAssignmentHistory('DA')"><i class="bx bx-history"></i></a>
+                                }
+                            </label>
+                            <select asp-for="DataAnalystId" asp-items="ViewBag.DataAnalysts" class="form-select select2">
+                                <option value="">Select Data Analyst...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold" asp-for="Vendor">Vendor</label>
+                            <input asp-for="Vendor" class="form-control" placeholder="Employer Vendor" />
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold" asp-for="DataTypeId">Data Type</label>
+                            <select asp-for="DataTypeId" asp-items="ViewBag.DataTypes" class="form-select select2">
+                                <option value="">Select Data Type...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold" asp-for="FundingType">Funding Type</label>
+                            <select asp-for="FundingType" class="form-select">
+                                <option value="">Select Funding Type...</option>
+                                <option>Self-Funded</option>
+                                <option>Fully-Insured</option>
+                                <option>Mixed: Self-Funded & Fully-Insured</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold" asp-for="FormType">Form Type</label>
+                            <select asp-for="FormType" class="form-select">
+                                <option value="">Select Form Type...</option>
+                                <option>1095-C</option>
+                                <option>1095-B</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold" asp-for="DataFrequency">Data Frequency</label>
+                            <select asp-for="DataFrequency" asp-items="ViewBag.DataFrequencies" class="form-select">
+                                <option value="">Select Data Frequency...</option>
+                            </select>
+                        </div>
+
+                    </div>
+                    <div class="d-flex align-items-center mb-4">
+                        <span class="badge badge-center rounded-pill bg-label-info me-2"><i class="bx bx-dollar"></i></span>
+                        <h6 class="text-uppercase fw-bold mb-0 small">Pricing & Counts</h6>
+                        <hr class="flex-grow-1 ms-3 opacity-25" />
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">
+                                Number of Forms Proposed
+                            </label>
+                            <input type="number" asp-for="FormsProposed" class="form-control" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Number Of 1095Cs</label>
+                            <input type="number" min="0" asp-for="NumberOf1095Cs" class="form-control" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">20% Over Proposed Form Count</label>
+                            <input type="number" asp-for="OverProposedFormCount" class="form-control" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">20% Over Proposed Form Count Price</label>
+                            <div class="input-group input-group-merge">
+                                <span class="input-group-text">$</span>
+                                <input type="number" asp-for="OverProposedFormPrice" class="form-control" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center mb-4">
+                        <span class="badge badge-center rounded-pill bg-label-secondary me-2"><i class="bx bx-cog"></i></span>
+                        <h6 class="text-uppercase fw-bold mb-0 small">Account Configuration</h6>
+                        <hr class="flex-grow-1 ms-3 opacity-25" />
+                    </div>
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" asp-for="IsPriority"><label class="form-check-label small" asp-for="IsPriority">Priority</label></div></div>
+                        <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" asp-for="ConditionalOffer"><label class="form-check-label small" asp-for="ConditionalOffer">Conditional Offer</label></div></div>
+                        <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" asp-for="SFTP"><label class="form-check-label small" asp-for="SFTP">SFTP Access</label></div></div>
+                        <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" asp-for="AnnualPO"><label class="form-check-label small" asp-for="AnnualPO">Annual PO Required</label></div></div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" asp-for="AnnualCOI"><label class="form-check-label small" asp-for="AnnualCOI">Annual COI</label></div></div>
+                        <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" asp-for="NoAutoRenewal"><label class="form-check-label small" asp-for="NoAutoRenewal">No Auto Renewal</label></div></div>
+                    </div>
+                    @* ══════════════════════════════════════════════════════════════
+                       PORTAL LOGIN  (no MFA)
+                       Reuses the section-band pattern, Sneat badge chips and the
+                       input-group-merge eye toggle. Only one credential block ever
+                       renders per request, so IDs are safely reused across branches.
+                       ══════════════════════════════════════════════════════════════ *@
+                    <div class="d-flex align-items-center mb-4 mt-4">
+                        <span class="badge badge-center rounded-pill bg-label-primary me-2"><i class="bx bx-lock-alt"></i></span>
+                        <h6 class="text-uppercase fw-bold mb-0 small">Portal Login</h6>
+                        <hr class="flex-grow-1 ms-3 opacity-25" />
+                    </div>
+
+                    @if (Model.EmployerId != 0)
+                    {
+                        <input type="hidden" asp-for="HasPortalLogin" />
+                    }
+
+                    @if (Model.EmployerId != 0 && Model.HasPortalLogin)
+                    {
+                        @* EDIT — a login already exists: username is read-only, password change is opt-in *@
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" asp-for="PortalUserName">User Name</label>
+                                <input asp-for="PortalUserName" class="form-control" readonly />
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="chkChangePortalPassword" asp-for="ChangePortalPassword">
+                                    <label class="form-check-label small" for="chkChangePortalPassword">Change Password</label>
+                                </div>
+                            </div>
+                            <div class="col-12 d-none" id="changePortalPwdFields">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold" asp-for="PortalPassword">
+                                            Password <span class="text-danger">*</span>
+                                            <a href="javascript:;" id="genPortalPass" class="ms-2 small">Generate Random Password</a>
+                                        </label>
+                                        <div class="input-group input-group-merge">
+                                            <input asp-for="PortalPassword" type="password" class="form-control" autocomplete="new-password" />
+                                            <span class="input-group-text cursor-pointer" onclick="togglePortalPassword(this)"><i class="bx bx-hide"></i></span>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-1 mt-2">
+                                            <span class="badge bg-label-secondary" id="prLenRule"><i class="bx bx-x-circle"></i> Min 8 chars</span>
+                                            <span class="badge bg-label-secondary" id="prUpperRule"><i class="bx bx-x-circle"></i> 1 uppercase</span>
+                                            <span class="badge bg-label-secondary" id="prDigitRule"><i class="bx bx-x-circle"></i> 1 number</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+                                        <div class="input-group input-group-merge">
+                                            <input type="password" class="form-control" id="PortalConfirmPassword" autocomplete="new-password" />
+                                            <span class="input-group-text cursor-pointer" onclick="togglePortalPassword(this)"><i class="bx bx-hide"></i></span>
+                                        </div>
+                                        <small class="text-danger d-none mt-1" id="portalPwdMatch">Passwords do not match.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        @* CREATE (or EDIT with no existing login) — offer to create a portal login *@
+                        <div class="row g-3 mb-2">
+                            <div class="col-md-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="chkNoPortalLogin">
+                                    <label class="form-check-label small" for="chkNoPortalLogin">Don't create a portal login</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-4" id="portalLoginFields">
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold" asp-for="PortalUserName">User Name <span class="text-danger">*</span></label>
+                                <input asp-for="PortalUserName" class="form-control" placeholder="name@company.com" autocomplete="off" />
+                                <small class="text-muted">Use the employer's email address as the username.</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" asp-for="PortalPassword">
+                                    Password <span class="text-danger">*</span>
+                                    <a href="javascript:;" id="genPortalPass" class="ms-2 small">Generate Random Password</a>
+                                </label>
+                                <div class="input-group input-group-merge">
+                                    <input asp-for="PortalPassword" type="password" class="form-control" autocomplete="new-password" />
+                                    <span class="input-group-text cursor-pointer" onclick="togglePortalPassword(this)"><i class="bx bx-hide"></i></span>
+                                </div>
+                                <div class="d-flex flex-wrap gap-1 mt-2">
+                                    <span class="badge bg-label-secondary" id="prLenRule"><i class="bx bx-x-circle"></i> Min 8 chars</span>
+                                    <span class="badge bg-label-secondary" id="prUpperRule"><i class="bx bx-x-circle"></i> 1 uppercase</span>
+                                    <span class="badge bg-label-secondary" id="prDigitRule"><i class="bx bx-x-circle"></i> 1 number</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+                                <div class="input-group input-group-merge">
+                                    <input type="password" class="form-control" id="PortalConfirmPassword" autocomplete="new-password" />
+                                    <span class="input-group-text cursor-pointer" onclick="togglePortalPassword(this)"><i class="bx bx-hide"></i></span>
+                                </div>
+                                <small class="text-danger d-none mt-1" id="portalPwdMatch">Passwords do not match.</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (Model.EmployerId == 0)
+    {
+        <div class="modal-body border-top pt-1 pb-1 pe-9">
+            
+            <div class="card border shadow-none rounded-3">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="badge badge-center rounded-pill bg-label-secondary me-2"><i class="bx bx-notepad"></i></span>
+                            <h6 class="text-uppercase fw-bold mb-0 small">Initial Note</h6>
+                        </div>
+                        <div class="col-md-12">
+                           @*  <label class="form-label fw-semibold small mb-1">Notes</label> *@
+                            <textarea id="noteAddText" class="form-control form-control-sm"
+                                  rows="3" placeholder="Enter an initial note for this employer…"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    <div class="modal-footer border-top bg-lighter p-3 py-3">
+        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-dark px-5 shadow" onclick="saveEmployerWithPortal()">
+            <i class="bx bx-save me-1"></i> Save Employer
+        </button>
+    </div>
+</form>
+<!-- Firm Add/Edit -->
+<div class="modal fade" id="firmFormModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" id="firmFormContent"></div>
+    </div>
+</div>
+
+<!-- Broker Add/Edit -->
+<div class="modal fade" id="brokerFormModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" id="brokerFormContent"></div>
+    </div>
+</div>
+<!-- AM / DA assignment history popup-->
+@if (Model.EmployerId > 0)
+{
+    <!-- AM / DA assignment history popup (content loaded on demand); sits above the employer modal -->
+    <div class="modal fade" id="AssignmentHistoryModal" tabindex="-1" aria-hidden="true" style="z-index: 1090;"></div>
+    <script>
+        window.openAssignmentHistory = function (section) {
+            $.get('/Assignment/AssignmentHistory', { employerId: @Model.EmployerId, section: section || '' }, function (html) {
+                $('#AssignmentHistoryModal').html(html);
+                new bootstrap.Modal(document.getElementById('AssignmentHistoryModal')).show();
+            }).fail(function () {
+                Swal.fire('Error', 'Failed to load assignment history.', 'error');
+            });
+        };
+
+        // the employer modal stays open underneath - keep body scroll-locked when this popup closes
+        $(document).on('hidden.bs.modal', '#AssignmentHistoryModal', function () {
+            $(this).empty();
+            if ($('.modal.show').length) document.body.classList.add('modal-open');
+        });
+    </script>
+}
+<script>
+    (function () {
+        // ── Firm → Broker Cascade ──────────────────────────────────────
+        var $firm   = $('#FirmId');
+        var $broker = $('#BrokerId');
+
+        var preselectedBrokerId = $broker.val();
+
+        $firm.on('change', function () {
+            loadBrokersByFirm($(this).val(), null);
+        });
+
+        function loadBrokersByFirm(firmId, selectedBrokerId) {
+            $broker.html('<option value="">-- Select Broker --</option>').prop('disabled', true);
+
+            if (!firmId || firmId === '0') return;
+
+            $.get('/TrackerEmployer/GetBrokersForFirm', { firmId: firmId })
+                .done(function (data) {
+                    if (!data || data.length === 0) {
+                        $broker.html('<option value="">-- No brokers found --</option>');
+                        return;
+                    }
+                    $.each(data, function (i, b) {
+                        var isSelected = (selectedBrokerId && b.id == selectedBrokerId) ? 'selected' : '';
+                        $broker.append(`<option value="${b.id}" ${isSelected}>${b.name}</option>`);
+                    });
+                    $broker.prop('disabled', false);
+                    if ($.validator && $.validator.unobtrusive) {
+                        $.validator.unobtrusive.parse('#frmMain');
+                    }
+                })
+                .fail(function () {
+                    $broker.html('<option value="">-- Error loading brokers --</option>');
+                });
+        }
+
+        if ($firm.val() && $firm.val() !== '0') {
+            loadBrokersByFirm($firm.val(), preselectedBrokerId);
+        }
+
+        // ── EIN Mask / Reveal Toggle ───────────────────────────────────
+        var revealed = false;
+        var $txt     = $('#txtEIN');
+        var $hidden  = $('#hdnTrackerEIN');
+        var $icon    = $('#iconEIN');
+
+        function maskEIN(ein) {
+            if (!ein) return '';
+            var clean = ein.replace(/\D/g, '');
+            if (clean.length !== 9) return ein;
+            return '**-***' + clean.substr(5, 4);
+        }
+
+        // Prevent blur firing when clicking the eye button
+        $('#btnToggleEIN').on('mousedown', function (e) {
+            e.preventDefault();
+        });
+
+           $('#btnToggleEIN').on('click', function () {
+        revealed = !revealed;
+        if (revealed) {
+                    $txt.val($txt.data('display-real')).removeAttr('readonly');
+        } else {
+            $hidden.val($txt.val());
+            $txt.val(maskEIN($txt.val())).attr('readonly', true);  // lock it
+        }
+        $icon.toggleClass('bx-hide', !revealed)
+             .toggleClass('bx-show',  revealed);
+        $txt.focus();
+    });
+
+            // Sync hidden field while user types
+    $txt.on('input', function () {
+
+        if (revealed || !$(this).prop('readonly')) {
+            $hidden.val($(this).val());
+        }
+    });
+
+        // Only mask when focus truly leaves the input-group
+        $txt.on('blur', function () {
+            setTimeout(function () {
+                if (revealed && !$('#btnToggleEIN').is(':focus')) {
+                    revealed = false;
+                    $hidden.val($txt.val());
+                    $txt.val(maskEIN($txt.val()));
+                    $icon.removeClass('bx-show').addClass('bx-hide');
+                }
+            }, 150);
+        });
+        // ── Firm / Broker Add-Edit Modals ──────────────────────────────
+        function token() { return $('input[name="__RequestVerificationToken"]').first().val() || ''; }
+
+        // lift the modal shells out of the (nested) employer modal so they overlay the whole viewport
+        ['firmFormModal', 'brokerFormModal'].forEach(function (id) {
+            $('body > #' + id).remove();      // drop any stale copy from a previous open
+            $('#' + id).appendTo('body');     // lift this shell out to <body>
+        });
+
+        function loadForm(url, modalId, contentId) {
+            $.get(url).done(function (resp) {
+                if (typeof resp === 'object' && resp.success === false)
+                    return Swal.fire('Error', resp.message || 'Could not load form.', 'error');
+                $('#' + contentId).html(resp);
+                $('#' + contentId + ' [id^="btnSave"]').removeAttr('onclick');     // drop dead saveFirm()/saveBroker()
+                $('#' + contentId + ' .select2').each(function () {
+                    $(this).select2({ dropdownParent: $('#' + modalId) });          // stacked-modal fix
+                });
+                bootstrap.Modal.getOrCreateInstance(document.getElementById(modalId)).show();
+            }).fail(function () { Swal.fire('Error', 'Could not load form.', 'error'); });
+        }
+
+        function savePartner($btn, formSel, url, onSaved) {
+            var $modal = $btn.closest('.modal');
+            var $form  = $modal.find(formSel);
+            if (!$form.length) return;
+            if ($form[0] && !$form[0].checkValidity()) { $form[0].reportValidity(); return; }
+            if ($btn.data('saving')) return;                          // block re-entry
+            $btn.data('saving', true).prop('disabled', true);
+
+            var $sn = $form.find('#hdnStateName');                    // firm: sync State name
+            if ($sn.length) $sn.val($form.find('#StateId option:selected').text());
+
+            var data = $form.serialize() + '&__RequestVerificationToken=' + encodeURIComponent(token());
+            $.ajax({ url: url, method: 'POST', data: data })
+                .done(function (res) {
+                    if (!res || res.success === false)
+                        return Swal.fire('Error', (res && res.message) || 'Save failed.', 'error');
+                    onSaved(res);
+                    bootstrap.Modal.getInstance($modal[0]).hide();
+                    Swal.fire({ toast: true, position: 'top-end', timer: 1800, showConfirmButton: false, icon: 'success', title: 'Saved' });
+                })
+                .fail(function (xhr) {
+                    Swal.fire('Error', xhr.status === 400 ? 'Validation / anti-forgery failed.' : 'Save failed.', 'error');
+                })
+                .always(function () { $btn.data('saving', false).prop('disabled', false); });
+        }
+
+        // remove any handlers left over from a previous open, then bind exactly once
+        $(document)
+            .off('click', '#firmFormContent #btnSaveFirm')
+            .off('click', '#brokerFormContent #btnSaveBroker')
+            .off('hidden.bs.modal', '#firmFormModal, #brokerFormModal');
+
+        $(document).on('click', '#firmFormContent #btnSaveFirm', function () {
+            savePartner($(this), '#frmFirm', '/Partner/SaveFirm', function (res) {
+                var $opt = $firm.find('option[value="' + res.id + '"]');
+                if ($opt.length) $opt.text(res.name);                                // edit
+                else $firm.append(new Option(res.name, res.id, true, true));         // add
+                $firm.val(res.id).trigger('change');   // cascade reloads brokers for the (new) firm
+            });
+        });
+
+        $(document).on('click', '#brokerFormContent #btnSaveBroker', function () {
+            savePartner($(this), '#frmBroker', '/Partner/SaveBroker', function (res) {
+                var $opt = $broker.find('option[value="' + res.id + '"]');
+                if ($opt.length) $opt.text(res.name);                                // edit
+                else $broker.prop('disabled', false).append(new Option(res.name, res.id, true, true));  // add
+                $broker.val(res.id).trigger('change');
+            });
+        });
+
+        // clear form + destroy select2 on close, and keep body scroll-locked while the employer modal is still open
+        $(document).on('hidden.bs.modal', '#firmFormModal, #brokerFormModal', function () {
+            var $content = $(this).find('.modal-content');
+            $content.find('.select2').each(function () {
+                if ($(this).data('select2')) $(this).select2('destroy');
+            });
+            $content.empty();
+            if ($('.modal.show').length) document.body.classList.add('modal-open');
+        });
+            window.getInitialNote = function () {
+        var text = $('#noteAddText').val().trim();
+        if (!text) return null;
+        return { category: 'Employer Creation', noteText: text };
+    };
+        // exposed for the inline onclick on the +/edit buttons
+        window.openAddFirm    = function () { loadForm('/Partner/FirmForm?id=0', 'firmFormModal', 'firmFormContent'); };
+        window.openEditFirm   = function () { var id = $firm.val();  if (!id) return Swal.fire('Select a firm', 'Choose a firm to edit first.', 'info');  loadForm('/Partner/FirmForm?id=' + id, 'firmFormModal', 'firmFormContent'); };
+        window.openAddBroker  = function () { var f = $firm.val();   if (!f)  return Swal.fire('Select a firm first', 'Brokers belong to a firm.', 'info'); loadForm('/Partner/BrokerForm?id=0&parentFirmId=' + f, 'brokerFormModal', 'brokerFormContent'); };
+        window.openEditBroker = function () { var id = $broker.val();if (!id) return Swal.fire('Select a broker', 'Choose a broker to edit first.', 'info'); loadForm('/Partner/BrokerForm?id=' + id, 'brokerFormModal', 'brokerFormContent'); };
+             // ── Populate ACA contact detail fields when the dropdown changes ──
+    // Fires on manual selection AND after saveNewContact() does .trigger('change')
+    $(document).on('change', '#ACAContactId', function () {
+        var id = $(this).val();
+        if (!id) {
+            $('#ACAContactPhone, #ACAContactEmail, #ConnectUser').val('');
+            $('#ACARole').val('');
+            return;
+        }
+        $.getJSON('/TrackerEmployer/GetContactById', { id: id }, function (c) {
+            if (!c || c.success === false) return;
+            $('#ACAContactPhone').val(c.phone || '');
+            $('#ACAContactEmail').val(c.email || '');
+            $('#ConnectUser').val(c.acaUsername || '');
+            $('#ACARole').val(c.acaRoles || '');
+            // if ACARole is a select2, refresh it:
+            if ($('#ACARole').hasClass('select2')) $('#ACARole').trigger('change.select2');
+        });
+    });
+    })();
+
+        function validatePlanYear(input) {
+        let v = input.value.replace(/\D/g, '');
+
+        // Month validation (01 to 12)
+        if (v.length >= 2) {
+            let month = parseInt(v.substring(0, 2), 10);
+            if (month < 1) month = 1;
+            if (month > 12) month = 12;
+            v = String(month).padStart(2, '0') + v.substring(2);
+        }
+
+        // Day validation (01 to 31)
+        if (v.length >= 4) {
+            let day = parseInt(v.substring(2, 4), 10);
+            if (day < 1) day = 1;
+            if (day > 31) day = 31;
+            v = v.substring(0, 2) + String(day).padStart(2, '0');
+        }
+
+        // Auto '/' placement
+        if (v.length > 2) {
+            v = v.substring(0, 2) + '/' + v.substring(2, 4);
+        }
+
+        input.value = v;
+
+
+    }
+</script>
+@* ══════════════════════════════════════════════════════════════════════
+   PORTAL LOGIN — self-contained (kept separate from the UserAccounts form)
+   No MFA. Live strength chips, show/hide, generate, confirm-match.
+   ══════════════════════════════════════════════════════════════════════ *@
+<script>
+    (function () {
+        // Local password policy (self-contained — no shared dependency).
+        var PR_MIN = 8, PR_UPPER = true, PR_DIGIT = true;
+
+        function portalActive() {
+            // Credentials are in play only when a credential block is rendered
+            // and the user hasn't opted out / opted in appropriately.
+            if (document.getElementById('changePortalPwdFields')) {
+                // EDIT with existing login: only when "Change Password" is on
+                return $('#chkChangePortalPassword').is(':checked');
+            }
+            if (document.getElementById('portalLoginFields')) {
+                // CREATE / EDIT-without-login: on unless the user opts out
+                return !$('#chkNoPortalLogin').is(':checked');
+            }
+            return false;
+        }
+
+        function setChip(id, ok) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            var icon = el.querySelector('i');
+            el.classList.toggle('bg-label-success', ok);
+            el.classList.toggle('bg-label-secondary', !ok);
+            if (icon) icon.className = ok ? 'bx bx-check-circle' : 'bx bx-x-circle';
+        }
+
+        function validateStrength() {
+            var v = $('#PortalPassword').val() || '';
+            var lenOk = v.length >= PR_MIN;
+            var upOk = !PR_UPPER || /[A-Z]/.test(v);
+            var dgOk = !PR_DIGIT || /[0-9]/.test(v);
+            setChip('prLenRule', lenOk);
+            setChip('prUpperRule', upOk);
+            setChip('prDigitRule', dgOk);
+            return lenOk && upOk && dgOk;
+        }
+
+        function validateMatch() {
+            var p = $('#PortalPassword').val() || '';
+            var c = $('#PortalConfirmPassword').val() || '';
+            var ok = (p === c);
+            $('#portalPwdMatch').toggleClass('d-none', ok || c.length === 0);
+            return ok;
+        }
+
+        // Generate a policy-compliant random password.
+        function generatePortalPassword() {
+            var lower = 'abcdefghijklmnopqrstuvwxyz',
+                upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+                digits = '0123456789',
+                symbols = '!#$%^&*_+';
+            var req = [];
+            if (PR_UPPER) req.push(upper[Math.floor(Math.random() * upper.length)]);
+            if (PR_DIGIT) req.push(digits[Math.floor(Math.random() * digits.length)]);
+            req.push(lower[Math.floor(Math.random() * lower.length)]);
+            var all = lower + (PR_UPPER ? upper : '') + (PR_DIGIT ? digits : '') + symbols;
+            var target = Math.max(PR_MIN, 12);
+            while (req.length < target) req.push(all[Math.floor(Math.random() * all.length)]);
+            for (var i = req.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var t = req[i]; req[i] = req[j]; req[j] = t;
+            }
+            return req.join('');
+        }
+
+        // Show/hide toggle — mirrors the EIN field's input-group-merge pattern.
+        window.togglePortalPassword = function (span) {
+            var input = span.parentElement.querySelector('input');
+            var icon = span.querySelector('i');
+            if (!input) return;
+            var show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            if (icon) icon.className = show ? 'bx bx-show' : 'bx bx-hide';
+        };
+
+        // Prefill the username from the employer email on the create block.
+        $('#Email').on('change blur', function () {
+            var $u = $('#PortalUserName');
+            if ($u.length && !$u.prop('readonly') && !$u.val()) $u.val($(this).val());
+        });
+
+        // "Don't create a portal login" — collapse & disable the credential fields.
+        $(document).on('change', '#chkNoPortalLogin', function () {
+            var off = $(this).is(':checked');
+            $('#portalLoginFields').toggleClass('d-none', off)
+                .find('input').prop('disabled', off);
+        });
+
+        // "Change Password" (edit) — reveal & enable the password fields.
+        $(document).on('change', '#chkChangePortalPassword', function () {
+            var on = $(this).is(':checked');
+            $('#changePortalPwdFields').toggleClass('d-none', !on)
+                .find('input').prop('disabled', !on).val('');
+            validateStrength(); validateMatch();
+        });
+
+        $(document).on('input', '#PortalPassword', function () { validateStrength(); validateMatch(); });
+        $(document).on('input', '#PortalConfirmPassword', validateMatch);
+        $(document).on('click', '#genPortalPass', function (e) {
+            e.preventDefault();
+            var pwd = generatePortalPassword();
+            $('#PortalPassword').val(pwd);
+            $('#PortalConfirmPassword').val(pwd);
+            validateStrength(); validateMatch();
+        });
+
+        // Initial state: in edit-with-login, the change-password inputs stay
+        // disabled (so nothing posts) until the user opts in.
+        $(function () {
+            if (document.getElementById('changePortalPwdFields')) {
+                $('#changePortalPwdFields').find('input').prop('disabled', true);
+            }
+            validateStrength();
+        });
+
+        // Gate the employer save on portal-login rules, then hand off to the
+        // existing global saveMain() — Index.cshtml stays untouched.
+        window.saveEmployerWithPortal = function () {
+            if (portalActive()) {
+                var user = ($('#PortalUserName').val() || '').trim();
+                if (!user) {
+                    Swal.fire('User Name required', 'Enter a portal login user name, or tick "Don\'t create a portal login".', 'warning');
+                    $('#PortalUserName').addClass('border-danger').focus();
+                    return;
+                }
+                if (!validateStrength()) {
+                    Swal.fire('Weak Password', 'Password must meet the requirements shown below the field.', 'warning');
+                    $('#PortalPassword').addClass('border-danger').focus();
+                    return;
+                }
+                if (!validateMatch()) {
+                    Swal.fire('Passwords do not match', 'The password and confirmation must be identical.', 'warning');
+                    $('#PortalConfirmPassword').addClass('border-danger').focus();
+                    return;
+                }
+                // Reflect the user's create/opt-out choice into the posted model.
+                $('#CreatePortalLogin').remove();
+                $('#frmMain').append('<input type="hidden" id="CreatePortalLogin" name="CreatePortalLogin" value="true" />');
+            } else {
+                $('#CreatePortalLogin').remove();
+                $('#frmMain').append('<input type="hidden" id="CreatePortalLogin" name="CreatePortalLogin" value="false" />');
+            }
+            $('#PortalPassword, #PortalConfirmPassword, #PortalUserName').removeClass('border-danger');
+            saveMain();
+        };
+    })();
+</script>
+

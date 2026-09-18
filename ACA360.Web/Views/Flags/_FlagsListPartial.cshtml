@@ -1,0 +1,96 @@
+﻿@using ACA360.Core.Models
+@using ACA360.Core.ViewModels
+@model FlagListViewModel
+@{
+    var metadata = Model?.Metadata;
+    int countIndex = metadata != null ? ((metadata.CurrentPage - 1) * metadata.PageSize) + 1 : 1;
+}
+
+@if (Model == null || !Model.Flags.Any())
+{
+    <div class="text-center p-5 text-muted">
+        <i class="bx bx-info-circle fs-1"></i>
+        <p>No flags found matching your criteria.</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive text-nowrap ui-table-responsive">
+        <table id="flagsTable" class="table table-hover table-striped ui-table">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">#</th>
+                    <th class="cursor-pointer" onclick="sortGrid('FlagCode')">
+                        Code @(Model.SortColumn == "FlagCode" ? (Model.SortOrder == "ASC" ? "▲" : "▼") : "")
+                    </th>
+                    <th class="cursor-pointer" onclick="sortGrid('FlagName')">
+                        Name @(Model.SortColumn == "FlagName" ? (Model.SortOrder == "ASC" ? "▲" : "▼") : "")
+                    </th>
+                    <th class="cursor-pointer" onclick="sortGrid('LogicType')">
+                        Type @(Model.SortColumn == "LogicType" ? (Model.SortOrder == "ASC" ? "▲" : "▼") : "")
+                    </th>
+                    <th class="cursor-pointer" onclick="sortGrid('Category')">
+                        Category @(Model.SortColumn == "Category" ? (Model.SortOrder == "ASC" ? "▲" : "▼") : "")
+                    </th>
+                    <th class="cursor-pointer" onclick="sortGrid('Severity')">
+                        Severity @(Model.SortColumn == "Severity" ? (Model.SortOrder == "ASC" ? "▲" : "▼") : "")
+                    </th>
+                    <th class="cursor-pointer" onclick="sortGrid('IsActive')">
+                        Status @(Model.SortColumn == "IsActive" ? (Model.SortOrder == "ASC" ? "▲" : "▼") : "")
+                    </th>
+                    <th style="width: 100px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Flags)
+                {
+                    <tr>
+                        <td class="text-muted">@(countIndex++)</td>
+                        <td><span class="badge bg-label-primary">@item.FlagCode</span></td>
+                        <td>
+                            <strong>@item.FlagName</strong>
+                            <br />
+                            <small class="text-muted text-wrap" style="max-width: 300px; display:block;">
+                                @item.Description
+                            </small>
+                        </td>
+                        <td>@item.LogicType</td>
+                        <td>@item.Category</td>
+                        <td>
+                            @if (item.Severity == "Critical")
+                            {
+                                <span class="badge bg-danger">Critical</span>
+                            }
+                            else if (item.Severity == "Warning")
+                            {
+                                <span class="badge bg-warning text-dark">Warning</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-info">Info</span>
+                            }
+                        </td>
+                        <td>
+                            @if (item.IsActive)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Inactive</span>
+                            }
+                        </td>
+                        <td>
+                            <button type="button" data-url="@Url.Action("Manage", new { id = item.FlagId })" class="btn btn-sm btn-icon btn-outline-secondary edit-flag-btn" title="Edit">
+                                <span class="bx bx-edit-alt"></span>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@* Reuse the same common pagination partial *@
+@await Html.PartialAsync("_GridPagination", Model.Metadata)

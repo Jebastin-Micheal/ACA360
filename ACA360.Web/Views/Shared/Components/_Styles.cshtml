@@ -1,0 +1,46 @@
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com/" />
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&amp;display=swap" rel="stylesheet" />
+
+<environment include="Development">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="@(Url.Content("~/favicon.ico"))" />
+
+    <!-- Icon Fonts-->
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/fonts/iconify-icons.css"))"  />
+
+    <!-- Core Vendor CSS -->
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/libs/pickr/pickr-themes.css"))" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/css/core.css"))" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/css/demo.css"))" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css"))" />
+    <link rel="stylesheet" href="@(Url.Content("~/css/tom-select.css"))" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/fonts/flag-icons.css"))" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/libs/apex-charts/apex-charts.css"))" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/libs/select2/select2.css"))" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/libs/cards-actions/spinkit.css"))" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/libs/font-awesome/all.min.css"))" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/libs/toastr/toastr.css"))" />
+</environment>
+
+<environment exclude="Development">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="@(Url.Content("~/favicon.ico"))" asp-append-version="true" />
+
+    <!-- Icon Fonts-->
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/fonts/iconify-icons.css"))" asp-append-version="true" />
+
+    <!-- Core Vendor CSS -->
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/libs/pickr/pickr-themes.css"))" asp-append-version="true" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/css/core.css"))" asp-append-version="true" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/css/demo.css"))" asp-append-version="true" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css"))" asp-append-version="true" />
+    <link rel="stylesheet" href="@(Url.Content("~/css/tom-select.css"))" asp-append-version="true" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/fonts/flag-icons.css"))" asp-append-version="true" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/libs/apex-charts/apex-charts.css"))" asp-append-version="true" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/libs/select2/select2.css"))" asp-append-version="true" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/libs/cards-actions/spinkit.css"))" asp-append-version="true" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/libs/font-awesome/all.min.css"))" asp-append-version="true" />
+    <link rel="stylesheet" href="@(Url.Content("~/assets/vendor/libs/toastr/toastr.css"))" asp-append-version="true" />
+</environment>

@@ -1,0 +1,687 @@
+﻿@* _UploadModal.cshtml *@
+@model ACA360.Core.Models.UploadedFileModel
+@{
+    ViewData["Title"] = "Upload ACA File";
+}
+
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">Upload New File</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+
+    <div class="modal-body">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form id="uploadForm" asp-action="Upload" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        @* ── NEW: Hidden Employer ID (Populated by Smart Detect) ── *@
+                        <input type="hidden" id="detectedEmployerId" name="employerId" value="" />
+                        <input type="hidden" id="detectedEinHiddenField" name="taxId" value="" />
+                        
+                        @* ── 1. Template Dropdown ── *@
+                        <div class="mb-3">
+                            <label for="templateIdSelect" class="form-label">1. Select File Format</label>
+                            <select name="templateId" id="templateIdSelect" class="form-select" required>
+                                <option value="">-- Please select a format --</option>
+                                @if (Model.AvailableTemplates != null)
+                                {
+                                    foreach (var template in Model.AvailableTemplates)
+                                    {
+                                        <option value="@template.TemplateId">@template.TemplateName</option>
+                                    }
+                                }
+                            </select>
+
+                            @* ── NEW: Plan Year Dropdown ── *@
+                            <div class="mb-3 mt-2">
+                                <label for="planYearSelect" class="form-label">2. Select Filing Year</label>
+                                <select name="planYear" id="planYearSelect" class="form-select" required>
+                                    <option value="">-- Please select a year --</option>
+                                    <option value="@(DateTime.Now.Year - 5)">@(DateTime.Now.Year - 5)</option>
+                                    <option value="@(DateTime.Now.Year - 4)">@(DateTime.Now.Year - 4)</option>
+                                    <option value="@(DateTime.Now.Year - 3)">@(DateTime.Now.Year - 3)</option>
+                                    <option value="@(DateTime.Now.Year - 2)">@(DateTime.Now.Year - 2)</option>
+                                    <option value="@(DateTime.Now.Year - 1)">@(DateTime.Now.Year - 1)</option>
+                                    <option value="@DateTime.Now.Year" selected>@DateTime.Now.Year</option>
+                                    <option value="@(DateTime.Now.Year + 1)">@(DateTime.Now.Year + 1)</option>
+                                </select>
+                            </div>
+
+                            @* NEW: Download Link *@
+                            <div class="mt-2" id="downloadTemplateContainer" style="display:none;">
+                                <a id="dynamicDownloadLink" href="javascript:void(0)" data-url="" class="text-primary small fw-bold" onclick="handleTemplateDownload()">
+                                    <i class='bx bx-download me-1'></i> Download Blank <span id="formatLabel"></span> Template (.xlsx)
+                                </a>
+                            </div>
+                        </div>
+
+                        @* ── 2. Drop Zone ── *@
+                        <label class="form-label">3. Upload File</label>
+                        <div id="dropzoneArea" class="dropzone needsclick dz-clickable text-center border border-dashed py-4 rounded" onclick="document.getElementById('modalFileInput').click();">
+                            <input type="file" name="file" id="modalFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
+
+                            <div id="dzMessage" class="dz-message needsclick">
+                                <i class="bx bx-cloud-upload fs-2 text-muted mb-1 d-block mx-auto"></i>
+                                <strong>Click or drag &amp; drop file here</strong><br>
+                                <span class="note needsclick text-muted small">
+                                    .xlsx, .xls, .csv — max 120 MB
+                                </span>
+                            </div>
+
+                            <div id="modalPreview" class="mt-2"></div>
+                        </div>
+
+                        @* ── NEW: Smart Detect Result Banner ── *@
+                        <div id="smartDetectResult" class="alert d-none mt-3 mb-0 d-flex align-items-center text-start"></div>
+
+                        @* ── 3. Progress Bar (hidden until upload starts) ── *@
+                        <div id="uploadProgressWrapper" class="mt-3 d-none">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small id="uploadProgressLabel" class="text-muted">Preparing...</small>
+                                <small id="uploadProgressPct" class="text-muted">0%</small>
+                            </div>
+                            <div class="progress" style="height:8px;">
+                                <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width:0%"></div>
+                            </div>
+                        </div>
+
+                        @* ── 4. Error Banner (hidden until error occurs) ── *@
+                        <div id="uploadErrorWrapper" class="alert alert-danger mt-3 d-none py-2 px-3">
+                            <i class="bx bx-error-circle me-1"></i>
+                            <span id="uploadErrorMsg"></span>
+                        </div>
+
+                        @* ── 5. Duplicate Override (hidden until duplicate detected) ── *@
+                        <div id="forceUploadOverride" class="mt-3 p-3 bg-label-warning rounded d-none">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="chkForce" name="forceUpload" value="true">
+                                <label class="form-check-label fw-bold text-dark" for="chkForce">
+                                    I confirm this is a duplicate and want to upload anyway.
+                                </label>
+                            </div>
+                            <input type="hidden" id="hdnForceTemplateId" name="templateId" value="" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer py-3">
+        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">
+            <i class="bx bx-x me-1"></i> Close
+        </button>
+        @* DISABLED BY DEFAULT UNTIL SMART DETECT PASSES *@
+        <button type="button" class="btn btn-dark" id="validateBtn" disabled>
+            <span class="d-flex align-items-center" id="validateBtnInner">
+                <i class="bx bx-cloud-upload me-1"></i> Upload &amp; Process
+            </span>
+        </button>
+    </div>
+</div>
+
+@* ── Duplicate Warning Modal ── *@
+<div class="modal fade" id="duplicateWarningModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-label-warning">
+                <h5 class="modal-title">
+                    <i class="bx bx-error text-warning me-2"></i>Duplicate File Detected
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <p class="mb-1">This file was already uploaded:</p>
+                            <ul class="list-unstyled ms-2 mb-0">
+                                <li><strong>File:</strong> <span id="dupFileName"></span></li>
+                                <li><strong>Date:</strong> <span id="dupDate"></span></li>
+                                <li><strong>By:</strong> <span id="dupUser"></span></li>
+                            </ul>
+                            <p class="mt-3 mb-0 text-muted small">
+                                Do you want to upload it again anyway?
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-3">
+                <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="dupConfirmBtn">
+                    <i class="bx bx-upload me-1"></i> Upload Anyway
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Filing year mismatch ──────────────────────────────────────────────────
+   The year dropdown defaults to the current year and nothing downstream
+   objects if that is wrong: the file imports cleanly and the 1095-C codes come
+   out silently wrong. This is the only place a person is told. *@
+<div class="modal fade" id="yearWarningModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-label-danger">
+                <h5 class="modal-title">
+                    <i class="bx bx-calendar-exclamation text-danger me-2"></i>Filing Year Does Not Match the Data
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-2">
+                            You selected <strong class="text-danger" id="yrSelected"></strong>,
+                            but the dates in this file tell a different story:
+                        </p>
+                        <ul class="ms-2 mb-3" id="yrWarnings"></ul>
+                        <div class="alert alert-warning mb-0 py-2" id="yrSuggestBox">
+                            <i class="bx bx-bulb me-1"></i>
+                            This looks like a <strong id="yrSuggested"></strong> file.
+                            Close this and change <em>Select Filing Year</em> before uploading.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-3">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                    <i class="bx bx-left-arrow-alt me-1"></i> Go Back and Change the Year
+                </button>
+                <button type="button" class="btn btn-label-danger" id="yearConfirmBtn">
+                    Upload as <span id="yrConfirmYear"></span> anyway
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        // ── Constants ────────────────────────────
+        const SMALL_THRESHOLD = 5 * 1024 * 1024;   // 10 MB
+        const MAX_SIZE        = 120 * 1024 * 1024;   // 120 MB
+        const ALLOWED_EXT     = ['xlsx', 'xls', 'csv'];
+        const CHUNK_SIZE      = 4 * 1024 * 1024;     // 4 MB
+
+        // ── Element refs ─────────────────────────────────────────────────────────
+        const fileInput       = document.getElementById('modalFileInput');
+        const preview         = document.getElementById('modalPreview');
+        const dropArea        = document.getElementById('dropzoneArea');
+        const dzMessage       = document.getElementById('dzMessage');
+        const templateSelect  = document.getElementById('templateIdSelect');
+        const planYearSelect  = document.getElementById('planYearSelect');
+        const uploadForm      = document.getElementById('uploadForm');
+        const validateBtn     = document.getElementById('validateBtn');
+        const btnInner        = document.getElementById('validateBtnInner');
+        const progressWrapper = document.getElementById('uploadProgressWrapper');
+        const progressBar     = document.getElementById('uploadProgressBar');
+        const progressLabel   = document.getElementById('uploadProgressLabel');
+        const progressPct     = document.getElementById('uploadProgressPct');
+        const errorWrapper    = document.getElementById('uploadErrorWrapper');
+        const errorMsg        = document.getElementById('uploadErrorMsg');
+        const forceWrapper    = document.getElementById('forceUploadOverride');
+        const chkForce        = document.getElementById('chkForce');
+        const antiForgery     = () => document.querySelector('#uploadForm input[name=__RequestVerificationToken]').value;
+
+        // ── Drag & Drop ──────────────────────────────────────────────────────────
+        dropArea.addEventListener('dragover',  e => { e.preventDefault(); dropArea.classList.add('border-primary'); });
+        dropArea.addEventListener('dragleave', ()  => dropArea.classList.remove('border-primary'));
+        dropArea.addEventListener('drop', e => {
+            e.preventDefault();
+            dropArea.classList.remove('border-primary');
+            if (e.dataTransfer.files.length) {
+                _droppedFile = e.dataTransfer.files[0];
+                showFilePreview(_droppedFile);
+                triggerSmartDetect(_droppedFile); // <-- TRIGGER SMART DETECT
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            _droppedFile = null;
+            if (fileInput.files[0]) {
+                showFilePreview(fileInput.files[0]);
+                triggerSmartDetect(fileInput.files[0]); // <-- TRIGGER SMART DETECT
+            }
+        });
+
+        let _droppedFile = null;
+
+        function getSelectedFile() {
+            return _droppedFile || (fileInput.files.length ? fileInput.files[0] : null);
+        }
+
+        function showFilePreview(file) {
+            const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+            const tier   = file.size <= SMALL_THRESHOLD ? 'Direct upload' : 'Chunked upload';
+
+            preview.innerHTML = `
+                <div class="alert alert-secondary py-2 px-3 mb-0 text-start">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bx bx-file fs-5"></i>
+                        <div>
+                            <div class="fw-semibold">${escHtml(file.name)}</div>
+                            <small class="text-muted">${sizeMB} MB &mdash; ${tier}</small>
+                        </div>
+                    </div>
+                </div>`;
+
+            dzMessage.classList.add('d-none');
+            resetError();
+            forceWrapper.classList.add('d-none');
+            chkForce.checked = false;
+
+            // Reset Smart Detect UI on new file selection
+            $('#smartDetectResult').addClass('d-none').removeClass('alert-info alert-success alert-danger alert-warning');
+            $('#validateBtn').prop('disabled', true);
+            $('#detectedEmployerId').val('');
+            $('#detectedEinHiddenField').val('');
+        }
+
+        // ── SMART DETECT AJAX LOGIC ──────────────────────────────────────────────
+        function triggerSmartDetect(file) {
+            const resultBox = $('#smartDetectResult');
+            const submitBtn = $('#validateBtn');
+
+            // 1. Set Loading UI
+            resultBox.removeClass('d-none alert-success alert-danger alert-warning')
+                     .addClass('alert-info')
+                     .html(`<div class="spinner-border spinner-border-sm me-2"></div> <div><strong>Analyzing file stream... detecting Employer.</strong></div>`);
+
+            submitBtn.prop('disabled', true);
+            $('#detectedEmployerId').val('');
+            $('#detectedEinHiddenField').val('');
+            // 2. Prepare FormData
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('__RequestVerificationToken', antiForgery());
+
+            // 3. Fire AJAX
+            $.ajax({
+                url: '/FileUpload/SmartDetectEmployer',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (res) {
+                    if (res.success) {
+                        resultBox.removeClass('alert-info').addClass('alert-success')
+                                 .html(`<i class='bx bx-check-circle fs-4 me-2'></i>
+                                        <div>
+                                            <strong>Employer Detected:</strong> ${res.employerName} <br/>
+                                            <small>EIN: ${res.ein}</small>
+                                        </div>`);
+                        $('#detectedEmployerId').val(res.employerId);
+                        $('#detectedEinHiddenField').val(res.ein);
+                        submitBtn.prop('disabled', false); // Unlock the Upload Button
+                    }
+                    else if (res.isOrphan) {
+                        resultBox.removeClass('alert-info').addClass('alert-danger')
+                                 .html(`<i class='bx bx-error-circle fs-4 me-2'></i>
+                                        <div><strong>Upload Blocked:</strong> ${res.message}</div>`);
+                        _droppedFile = null;
+                        fileInput.value = '';
+                    }
+                    else {
+                        resultBox.removeClass('alert-info').addClass('alert-warning')
+                                 .html(`<i class='bx bx-error fs-4 me-2'></i> <div>${res.message}</div>`);
+                    }
+                },
+                error: function () {
+                    resultBox.removeClass('alert-info').addClass('alert-danger')
+                             .html(`<i class='bx bx-error-circle fs-4 me-2'></i> <div>System error analyzing file.</div>`);
+                }
+            });
+        }
+
+        // ── Upload button ────────────────────────────────────────────────────────
+        // Two independent acknowledgements. Kept apart on purpose: saying "yes it is
+        // a duplicate" must not also silently accept a filing year that does not
+        // match the data. A file that trips both prompts the user twice.
+        let ackDuplicate = false;
+        let ackYear      = false;
+
+        validateBtn.addEventListener('click', () => {
+            ackDuplicate = false;
+            ackYear      = false;
+            startUpload();
+        });
+
+        document.getElementById('dupConfirmBtn').addEventListener('click', () => {
+            bootstrap.Modal.getInstance(document.getElementById('duplicateWarningModal'))?.hide();
+            ackDuplicate = true;
+            startUpload();
+        });
+
+        document.getElementById('yearConfirmBtn').addEventListener('click', () => {
+            bootstrap.Modal.getInstance(document.getElementById('yearWarningModal'))?.hide();
+            ackYear = true;
+            startUpload();
+        });
+
+        async function startUpload() {
+            const forceUpload = ackDuplicate;
+            resetError();
+
+            if (!templateSelect.value) return showError("Please select a file format.");
+            const file = getSelectedFile();
+            if (!file) return showError("Please select a file.");
+            if (!planYearSelect.value) return showError("Please select a filing year.");
+
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!ALLOWED_EXT.includes(ext)) return showError("Only .xlsx, .xls and .csv files are allowed.");
+            if (file.size > MAX_SIZE) return showError("File exceeds the 120 MB limit.");
+
+            setBtnLoading(true);
+            showProgress(0, "Preparing...");
+
+            try {
+                if (file.size <= SMALL_THRESHOLD) {
+                    await uploadSmall(file, forceUpload);
+                } else {
+                    await uploadLarge(file, forceUpload);
+                }
+            } catch (err) {
+                console.error(err);
+                showError("Upload failed. Please try again.");
+                setBtnLoading(false);
+                hideProgress();
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════════════════
+        // TIER 1 — small file ≤ 10 MB
+        // ════════════════════════════════════════════════════════════════════════
+        async function uploadSmall(file, forceUpload) {
+            showProgress(20, "Uploading...");
+            const form = new FormData();
+            form.append("file",       file);
+            form.append("templateId", templateSelect.value);
+            form.append("planYear",   planYearSelect.value);
+            form.append("employerId", $('#detectedEmployerId').val()); // <-- ADDED
+            // 🛡️ Append the detected EIN (stored in #detectedEmployerId or a separate hidden field)
+            form.append("taxId", $('#detectedEinHiddenField').val());
+            form.append("forceUpload", forceUpload ? "true" : "false");
+            form.append("confirmYear", ackYear ? "true" : "false");
+            form.append("__RequestVerificationToken", antiForgery());
+
+            const resp = await fetch(uploadForm.action, { method: "POST", body: form });
+            const data = await resp.json();
+
+            if (data.isDuplicate) {
+                setBtnLoading(false);
+                hideProgress();
+                showDuplicateModal(data.duplicateFileName, data.duplicateDate, data.duplicateUser);
+                return;
+            }
+
+            if (data.yearMismatch) {
+                setBtnLoading(false);
+                hideProgress();
+                showYearModal(data);
+                return;
+            }
+
+            if (data.error) {
+                showError(data.error);
+                setBtnLoading(false);
+                hideProgress();
+                return;
+            }
+
+            showProgress(100, "Complete!");
+            setTimeout(() => window.location.reload(), 800);
+        }
+
+        // ════════════════════════════════════════════════════════════════════════
+        // TIER 2 — large file 10–120 MB
+        // ════════════════════════════════════════════════════════════════════════
+        async function uploadLarge(file, forceUpload) {
+
+            showProgress(3, "Verifying file...");
+            const fileHash = await computeSha256(file);
+
+            showProgress(6, "Initialising upload...");
+            const init = await postJson("/FileUpload/GetSasUploadUrl", {
+                fileName:    file.name,
+                fileSize:    file.size,
+                templateId:  parseInt(templateSelect.value),
+                planYear:    parseInt(planYearSelect.value),
+                employerId:  parseInt($('#detectedEmployerId').val()), // <-- ADDED
+                taxId: $('#detectedEinHiddenField').val(), // 🛡️ Append EIN
+                fileHash:    fileHash,
+                forceUpload: forceUpload
+            });
+
+            if (init.isDuplicate) {
+                setBtnLoading(false);
+                hideProgress();
+                showDuplicateModal(init.duplicateFileName, init.duplicateDate, init.duplicateUser);
+                return;
+            }
+
+            if (init.error) { showError(init.error); setBtnLoading(false); hideProgress(); return; }
+
+            const { sasUrl, blobName, fileLogId, chunkSize: serverChunkSize } = init;
+            const chunkSize = serverChunkSize || CHUNK_SIZE;
+
+            const totalChunks = Math.ceil(file.size / chunkSize);
+            const blockIds    = new Array(totalChunks);
+            const CONCURRENCY = 3;
+
+            for (let batchStart = 0; batchStart < totalChunks; batchStart += CONCURRENCY) {
+                const batchEnd  = Math.min(batchStart + CONCURRENCY, totalChunks);
+                const batchJobs = [];
+
+                for (let i = batchStart; i < batchEnd; i++) {
+                    const start   = i * chunkSize;
+                    const end     = Math.min(start + chunkSize, file.size);
+                    const blockId = btoa(String(i).padStart(6, '0'));
+                    blockIds[i]   = blockId;
+
+                    batchJobs.push(uploadChunkWithRetry(sasUrl, file.slice(start, end), blockId));
+                }
+
+                await Promise.all(batchJobs);
+                const pct = 8 + Math.round((batchEnd / totalChunks) * 82);
+                showProgress(pct, `Uploading ${pct}%`);
+            }
+
+            showProgress(92, "Finalising...");
+            await commitBlocks(sasUrl, blockIds);
+
+            showProgress(96, "Processing...");
+            const final = await postJson("/FileUpload/FinalizeUpload", {
+                fileLogId, blobName, fileHash, fileSize: file.size, confirmYear: ackYear
+            });
+
+            if (final.isDuplicate) {
+                setBtnLoading(false);
+                hideProgress();
+                showDuplicateModal(final.duplicateFileName, final.duplicateDate, final.duplicateUser);
+                return;
+            }
+
+            if (final.yearMismatch) {
+                setBtnLoading(false);
+                hideProgress();
+                showYearModal(final);
+                return;
+            }
+
+            if (final.error) { showError(final.error); setBtnLoading(false); hideProgress(); return; }
+
+            showProgress(100, "Upload complete!");
+            setTimeout(() => window.location.reload(), 800);
+        }
+
+        async function uploadChunkWithRetry(sasUrl, chunk, blockId, maxRetries = 3) {
+            const url = `${sasUrl}&comp=block&blockid=${encodeURIComponent(blockId)}`;
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    const resp = await fetch(url, {
+                        method:  "PUT",
+                        headers: { "x-ms-blob-type": "BlockBlob" },
+                        body:    chunk
+                    });
+                    if (resp.ok) return;
+                    throw new Error(`HTTP ${resp.status}`);
+                } catch (err) {
+                    if (attempt === maxRetries) throw err;
+                    await sleep(Math.pow(2, attempt) * 1000);
+                }
+            }
+        }
+
+        async function commitBlocks(sasUrl, blockIds) {
+            const url  = `${sasUrl}&comp=blockList`;
+            const xml  = `<?xml version="1.0" encoding="utf-8"?><BlockList>${blockIds.map(id => `<Latest>${id}</Latest>`).join('')}</BlockList>`;
+            const resp = await fetch(url, {
+                method:  "PUT",
+                headers: { "Content-Type": "application/xml" },
+                body:    xml
+            });
+            if (!resp.ok) throw new Error(`Block commit failed: HTTP ${resp.status}`);
+        }
+
+        async function computeSha256(file) {
+            const buf  = await file.arrayBuffer();
+            const hash = await crypto.subtle.digest("SHA-256", buf);
+            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function showDuplicateModal(fileName, date, user) {
+            document.getElementById('dupFileName').textContent = fileName || '';
+            document.getElementById('dupDate').textContent     = date     || '';
+            document.getElementById('dupUser').textContent     = user     || '';
+            new bootstrap.Modal(document.getElementById('duplicateWarningModal')).show();
+        }
+
+        function showYearModal(data) {
+            document.getElementById('yrSelected').textContent    = data.planYear;
+            document.getElementById('yrConfirmYear').textContent = data.planYear;
+
+            // textContent throughout: these strings are built from the uploaded file's
+            // own contents and must never be treated as markup.
+            const list = document.getElementById('yrWarnings');
+            list.innerHTML = '';
+            (data.warnings || []).forEach(w => {
+                const li = document.createElement('li');
+                li.className = 'mb-1';
+                li.textContent = w;
+                list.appendChild(li);
+            });
+
+            const box = document.getElementById('yrSuggestBox');
+            if (data.suggestedYear) {
+                document.getElementById('yrSuggested').textContent = data.suggestedYear;
+                box.classList.remove('d-none');
+            } else {
+                box.classList.add('d-none');
+            }
+
+            new bootstrap.Modal(document.getElementById('yearWarningModal')).show();
+        }
+
+        async function postJson(url, body) {
+            const resp = await fetch(url, {
+                method:  "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "RequestVerificationToken": antiForgery()
+                },
+                body: JSON.stringify(body)
+            });
+            if (!resp.ok && resp.status !== 400) throw new Error(`Server error ${resp.status}`);
+            return resp.json();
+        }
+
+        function showProgress(pct, label) {
+            progressWrapper.classList.remove('d-none');
+            progressBar.style.width  = pct + '%';
+            progressLabel.textContent = label;
+            progressPct.textContent   = pct + '%';
+        }
+
+        function hideProgress() { progressWrapper.classList.add('d-none'); }
+        function showError(msg) { errorMsg.textContent = msg; errorWrapper.classList.remove('d-none'); }
+        function resetError() { errorWrapper.classList.add('d-none'); errorMsg.textContent = ''; }
+        function escHtml(str) { return str.replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        function setBtnLoading(loading) {
+            validateBtn.disabled = loading;
+            btnInner.innerHTML = loading
+                ? `<span class="spinner-border spinner-border-sm me-2" role="status"></span>Uploading...`
+                : `<i class="bx bx-cloud-upload me-1"></i> Upload &amp; Process`;
+        }
+
+        document.getElementById('templateIdSelect').addEventListener('change', function () {
+            const selectedId = this.value;
+            const selectedText = this.options[this.selectedIndex].text;
+            const downloadContainer = document.getElementById('downloadTemplateContainer');
+            const downloadLink = document.getElementById('dynamicDownloadLink');
+            const formatLabel = document.getElementById('formatLabel');
+
+            if (selectedId) {
+                const baseUrl = '@Url.Action("DownloadTemplate", "FileUpload")';
+                downloadLink.setAttribute('data-url', `${baseUrl}?templateId=${selectedId}`);
+                formatLabel.innerText = selectedText;
+                $(downloadContainer).fadeIn();
+            } else {
+                $(downloadContainer).fadeOut();
+            }
+        });
+
+    })();
+
+    // Ensure this is NOT inside another function like $(document).ready()
+    function handleTemplateDownload() {
+        const downloadLink = document.getElementById('dynamicDownloadLink');
+        const url = downloadLink.getAttribute('data-url');
+
+        if (!url || url === 'javascript:void(0)') {
+            alert('Please select a file format first.');
+            return;
+        }
+
+        $('#page-loader').addClass('active');
+        fetch(url)
+            .then(function (response) {
+                if (!response.ok) throw new Error('Download failed: ' + response.status);
+
+                const disposition = response.headers.get('Content-Disposition');
+                let fileName = 'Template.xlsx';
+                if (disposition) {
+                    const match = disposition.match(/filename[^;=\n]*=(['"]?)([^'";\n]+)\1/);
+                    if (match) fileName = match[2];
+                }
+
+                return response.blob().then(function (blob) {
+                    return { blob, fileName };
+                });
+            })
+            .then(function ({ blob, fileName }) {
+                const objectUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = objectUrl;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 1000);
+            })
+            .catch(function (err) {
+                console.error(err);
+                alert('Could not download the template. Please try again.');
+            })
+            .finally(function () {
+                $('#page-loader').removeClass('active');
+            });
+    }
+</script>

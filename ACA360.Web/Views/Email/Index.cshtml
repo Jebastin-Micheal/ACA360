@@ -1,0 +1,328 @@
+﻿@{
+    ViewData["Title"] = "Email Application";
+}
+<link href="~/js/pvscript/app-email.css" rel="stylesheet" />
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Inbox",
+    items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem { Title = "Home", Url = Url.Action("Index", "Home"), IsActive = false },
+        new BreadcrumbItem { Title = "Inbox", Url = "", IsActive = true }
+    }
+})
+<style>
+    /* Unique Filter Styling */
+    .adv-filter-card {
+        min-width: 320px;
+        border-radius: 0.5rem;
+    }
+
+    .btn-check:checked + .btn-outline-primary {
+        background-color: #696cff !important;
+        color: #fff !important;
+    }
+
+    .filter-active-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+</style>
+
+<div class="app-email card">
+    <div class="row g-0">
+
+        <!-- 1. Email Sidebar -->
+        <div class="col app-email-sidebar border-end flex-grow-0" id="app-email-sidebar">
+            <div class="btn-compost-wrapper d-grid d-none">
+                <button class="btn btn-primary btn-compose" data-bs-toggle="modal" data-bs-target="#emailComposeSidebar">Compose</button>
+            </div>
+
+            <div class="email-filters pt-4 pb-2 ps">
+                <ul class="email-filter-folders list-unstyled">
+                    <li id="menu-inbox" class="active d-flex justify-content-between align-items-center mb-1 cursor-pointer border-bottom" onclick="loadEmails('inbox')">
+                        <a href="javascript:void(0);" class="d-flex align-items-center">
+                            <i class="icon-base bx bx-envelope"></i>
+                            <span class="align-middle ms-2 fw-medium">Inbox</span>
+                        </a>
+                        <div class="badge bg-label-primary rounded-pill" id="inbox-count">0</div>
+                    </li>
+                    <li id="menu-trash" class="d-flex justify-content-between align-items-center mb-1 cursor-pointer border-bottom" onclick="loadEmails('trash')">
+                        <a href="javascript:void(0);" class="d-flex align-items-center">
+                            <i class="icon-base bx bx-trash"></i>
+                            <span class="align-middle ms-2 fw-medium">Trash</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="email-filter-labels pt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2 px-3">
+                        <p class="small text-body-secondary text-uppercase mb-0 fw-semibold">Labels</p>
+                        <i class="icon-base bx bx-plus cursor-pointer text-body-secondary" data-bs-toggle="modal" data-bs-target="#addLabelModal" title="Add Label"></i>
+                    </div>
+                    <ul class="list-unstyled mb-2" id="label-list-container">
+                        <!-- Dynamic Labels -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Emails List Panel -->
+        <div class="col app-emails-list">
+            <div class="card shadow-none border-0 rounded-0">
+                <div class="card-body emails-list-header p-3 py-2">
+
+                    <!-- Search Input & Advanced Filter Trigger -->
+                    <div class="d-flex justify-content-between align-items-center px-2 mt-2">
+                        <div class="d-flex align-items-center w-100 me-2">
+                            <i class="icon-base bx bx-menu icon-lg cursor-pointer d-block d-lg-none me-3 mb-3" data-bs-toggle="sidebar" data-target="#app-email-sidebar"></i>
+                            <div class="mb-3 w-100">
+                                <div class="input-group input-group-merge shadow-none">
+                                    <span class="input-group-text border-0 p-0 pe-3" id="email-search">
+                                        <i class="icon-base bx bx-search icon-md text-body"></i>
+                                    </span>
+                                    <input type="text" id="searchInput" class="form-control email-search-input border-0 py-0" placeholder="Search mail..." aria-label="Search mail">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ADVANCED FILTER BUTTON & POPOVER -->
+                        <div class="dropdown mb-3">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1 shadow-none border-0 bg-light"
+                                    type="button" id="advFilterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                <i class="icon-base bx bx-filter-alt fs-5 text-primary"></i>
+                                <span class="fw-medium d-none d-sm-inline">Filter</span>
+                                <span class="filter-active-dot bg-danger ms-1 d-none" id="filter-active-badge"></span>
+                            </button>
+
+                            <div class="dropdown-menu dropdown-menu-end p-3 shadow-lg border-0 adv-filter-card" aria-labelledby="advFilterDropdown">
+                                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                    <h6 class="mb-0 fw-bold text-dark"><i class="bx bx-slider-alt me-1 text-primary"></i> Advanced Filters</h6>
+                                    <span class="badge bg-label-primary rounded-pill" id="filterResultsCount">All</span>
+                                </div>
+
+                                <!-- Read / Unread / Starred Status Filter -->
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold text-uppercase text-muted">Status</label>
+                                    <div class="btn-group w-100" role="group">
+                                        <input type="radio" class="btn-check" name="filterStatus" id="statusAll" value="all" checked onchange="applyAdvancedFilters()">
+                                        <label class="btn btn-xs btn-outline-primary py-2" for="statusAll">All</label>
+
+                                        <input type="radio" class="btn-check" name="filterStatus" id="statusUnread" value="unread" onchange="applyAdvancedFilters()">
+                                        <label class="btn btn-xs btn-outline-primary py-2" for="statusUnread">Unread</label>
+
+                                        <input type="radio" class="btn-check" name="filterStatus" id="statusRead" value="read" onchange="applyAdvancedFilters()">
+                                        <label class="btn btn-xs btn-outline-primary py-2" for="statusRead">Read</label>
+
+                                        <input type="radio" class="btn-check" name="filterStatus" id="statusStarred" value="starred" onchange="applyAdvancedFilters()">
+                                        <label class="btn btn-xs btn-outline-primary py-2" for="statusStarred"><i class="bx bxs-star text-warning"></i></label>
+                                    </div>
+                                </div>
+
+                                <!-- Date Wise Filter -->
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold text-uppercase text-muted">Received Date</label>
+                                    <select class="form-select form-select-sm" id="filterDateRange" onchange="applyAdvancedFilters()">
+                                        <option value="all">Any Time</option>
+                                        <option value="today">Today</option>
+                                        <option value="week">Past 7 Days</option>
+                                        <option value="month">Past 30 Days</option>
+                                    </select>
+                                </div>
+
+                                <!-- Filter Actions -->
+                                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                    <button type="button" class="btn btn-xs text-danger p-0" onclick="resetAdvancedFilters()">
+                                        <i class="bx bx-reset me-1"></i>Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="mx-n3 emails-list-header-hr mb-2">
+
+                    <!-- Action Bar -->
+                    <div class="d-flex justify-content-between align-items-center ps-1">
+                        <div class="d-flex align-items-center">
+                            <div class="form-check mb-0 ms-2">
+                                <input class="form-check-input" type="checkbox" id="email-select-all" onchange="toggleSelectAll(this)">
+                            </div>
+                            <div class="d-flex align-items-center ms-2" id="bulkActions" style="opacity: 0.3; pointer-events: none; transition: opacity 0.2s;">
+                                <div class="btn btn-icon me-1" id="bulk-trash-btn" onclick="bulkDelete()" title="Delete Selected">
+                                    <i class="icon-base bx bx-trash icon-md text-body"></i>
+                                </div>
+
+                                <!-- DYNAMIC BULK TOGGLE READ BUTTON & ICON -->
+                                <div class="btn btn-icon me-1" id="bulkToggleReadBtn" onclick="bulkToggleRead()" title="Toggle Read Status">
+                                    <i class="icon-base bx bx-envelope-open icon-md text-body" id="bulkToggleReadIcon"></i>
+                                </div>
+
+                                <div class="dropdown me-1">
+                                    <button class="btn btn-icon p-0 hide-arrow" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="icon-base bx bx-label icon-md text-body"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" id="bulkLabelDropdown">
+                                        <!-- Injected via JS -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center d-none">
+                            <span class="btn btn-icon me-1" onclick="refreshEmails()" title="Refresh">
+                                <i class="icon-base bx bx-refresh icon-md cursor-pointer email-refresh text-body"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="container-m-nx m-0">
+
+                <!-- Email Rows -->
+                <div class="email-list pt-0 ps">
+                    <ul class="list-unstyled m-0" id="email-list-container">
+                        <!-- Dynamic Email Items Injected via JS -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Animated Email Detail View Panel -->
+        <div class="col app-email-view flex-grow-0 bg-lighter" id="app-email-view">
+            <div class="card shadow-none border-0 rounded-0 app-email-view-header p-5 pt-md-4 py-2 bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center overflow-hidden">
+                        <span class="ms-sm-2 me-3 cursor-pointer" onclick="closeEmail()" title="Back to Inbox">
+                            <i class="icon-base bx bx-chevron-left icon-md scaleX-n1-rtl text-body"></i>
+                        </span>
+                        <h5 class="text-truncate3 mb-0 me-2 fw-semibold text-dark" id="detail-subject">Subject</h5>
+                        <span id="detail-label"></span>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <div class="dropdown me-2">
+                            <button class="btn btn-icon p-0 hide-arrow" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Change Label">
+                                <i class="icon-base bx bx-label icon-md text-body"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" id="detailLabelDropdown">
+                                <!-- Injected via JS -->
+                            </ul>
+                        </div>
+                        <span class="btn btn-icon me-1" id="detail-mark-unread" title="Mark Unread">
+                            <i class="icon-base bx bx-envelope icon-md text-body cursor-pointer"></i>
+                        </span>
+                        <span class="btn btn-icon me-1" id="detail-trash" title="Move to Trash">
+                            <i class="icon-base bx bx-trash icon-md text-body cursor-pointer"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-email-view-content py-4 px-4 bg-white" style="height: calc(100vh - 12rem); overflow-y: auto;">
+                <div class="card email-card-last mx-sm-4 mx-2">
+                    <div class="card-header d-flex justify-content-between align-items-center flex-wrap border-bottom p-3">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar avatar-sm me-3">
+                                <span class="avatar-initial rounded-circle bg-label-primary text-primary fw-semibold" id="detail-avatar" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:#e7e7ff;"></span>
+                            </div>
+                            <div>
+                                <h6 class="m-0 fw-semibold text-dark" id="detail-sender-name">Sender Name</h6>
+                                <small class="text-body-secondary" id="detail-sender-email">sender@email.com</small>
+                            </div>
+                        </div>
+                        <div>
+                            <small class="text-body-secondary" id="detail-date"></small>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="detail-body" class="text-dark" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modals -->
+    <div class="app-email-compose modal fade" id="emailComposeSidebar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header py-3 justify-content-between border-bottom">
+                    <h5 class="modal-title fs-5">Compose Mail</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="text" id="composeSender" class="form-control mb-3" placeholder="Sender Name">
+                    <input type="email" id="composeEmail" class="form-control mb-3" placeholder="Sender Email">
+                    <input type="text" id="composeSubject" class="form-control mb-3" placeholder="Subject">
+                    <textarea id="composeBody" class="form-control mb-3" rows="5" placeholder="Write your message..."></textarea>
+                </div>
+                <div class="modal-footer border-top py-3">
+                    <button type="button" class="btn btn-primary" onclick="submitEmail()">Send Mail</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addLabelModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title fs-5">Add New Label</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="text" id="labelName" class="form-control mb-3" placeholder="Label Name">
+                    <select id="labelColor" class="form-select">
+                        <option value="success">Success (Green)</option>
+                        <option value="danger">Danger (Red)</option>
+                        <option value="warning">Warning (Yellow)</option>
+                        <option value="info">Info (Blue)</option>
+                        <option value="primary">Primary (Purple)</option>
+                    </select>
+                </div>
+                <div class="modal-footer border-top py-3">
+                    <button type="button" class="btn btn-primary" onclick="submitLabel()">Save Label</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editLabelModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title fs-5">Edit Label</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="editLabelId">
+                    <input type="text" id="editLabelName" class="form-control mb-3" placeholder="Label Name">
+                    <select id="editLabelColor" class="form-select">
+                        <option value="success">Success (Green)</option>
+                        <option value="danger">Danger (Red)</option>
+                        <option value="warning">Warning (Yellow)</option>
+                        <option value="info">Info (Blue)</option>
+                        <option value="primary">Primary (Purple)</option>
+                    </select>
+                </div>
+                <div class="modal-footer border-top py-3">
+                    <button type="button" class="btn btn-primary" onclick="submitEditLabel()">Update Label</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+
+@section Scripts {
+    <script> const CURRENT_USER_ID = '@ViewBag.UserId';</script>
+    <script src="~/js/PVScript/email-api.js" asp-append-version="true"></script>
+    <script src="~/js/PVScript/email-ui.js" asp-append-version="true"></script>
+
+    <script src="~/js/PVScript/app-email.js" asp-append-version="true"></script>    
+}

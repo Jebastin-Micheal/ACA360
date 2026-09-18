@@ -1,0 +1,1257 @@
+﻿@using ACA360.Web.ViewComponents
+@{
+    ViewData["Title"] = "Employer Tracker";
+}
+
+@await Component.InvokeAsync("Breadcrumb", new
+{
+    pageTitle = "Employer Tracking Dashboard",
+        items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem { Title = "Employer",         Url = "/Employer", IsActive = false },
+        new BreadcrumbItem { Title = "Employer Tracker", Url = "",          IsActive = true  }
+    }
+    })
+
+<style>
+    /* ── Panel shells ── */
+    .emp-panel, .svc-panel {
+        background: var(--bs-paper-bg);
+        border: 0.5px solid var(--bs-border-color);
+        border-radius: 14px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 85vh;
+    }
+
+    .panel-head {
+        padding: 18px 20px 14px;
+        border-bottom: 0.5px solid var(--bs-border-color);
+        flex-shrink: 0;
+        min-height: 87px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+        .panel-head h5 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dash-text-heading);
+            margin: 0;
+        }
+
+        .panel-head small {
+            font-size: 12px;
+            color: var(--dash-text-muted);
+        }
+
+    .panel-body {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .panel-footer {
+        padding: 10px 20px;
+        border-top: 0.5px solid var(--bs-border-color);
+        flex-shrink: 0;
+    }
+
+    /* ── Active filter chips ── */
+    #activeChipsRow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 6px 20px 0;
+        min-height: 0;
+    }
+
+    .filter-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        background: var(--bs-primary-bg-subtle);
+        color: var(--bs-primary);
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+        .filter-chip .chip-x {
+            cursor: pointer;
+            opacity: .7;
+            font-size: 12px;
+            line-height: 1;
+            border: none;
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+            .filter-chip .chip-x:hover {
+                opacity: 1;
+            }
+
+    /* ── Employer rows ── */
+    .emp-row {
+        cursor: pointer;
+    }
+
+        /* Employer name: bigger, single-line, truncated with tooltip on hover */
+        .emp-row td a.emp-name-link {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+        }
+
+        /* EIN: smaller, de-emphasized */
+        .emp-row td small.emp-ein {
+            font-size: 10.5px;
+            color: var(--dash-text-muted);
+        }
+
+        /* Firm name column: truncated, full text on hover via title tooltip */
+        .emp-row td .firm-name {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+
+        /* Compact, icon-only action buttons */
+        .emp-row .action-cell {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+            .emp-row .action-cell .btn-icon {
+                width: 28px;
+                height: 28px;
+                padding: 0;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .emp-row .action-cell .btn-icon i {
+                font-size: 16px;
+            }
+
+        .emp-row.table-active > * {
+            --bs-table-active-bg: var(--bs-primary-bg-subtle);
+        }
+
+        .emp-row td a.emp-name-link {
+            text-decoration: none;
+        }
+
+        .emp-row td a.emp-name-link:hover {
+            text-decoration: underline;
+            color: var(--bs-primary) !important;
+        }
+
+        .table-hover > tbody > .emp-row:has(td a.emp-name-link:hover) > *,
+        .table-hover > tbody > .emp-row.name-hovered > * {
+            --bs-table-bg-state: transparent;
+            --bs-table-accent-bg: transparent;
+        }
+
+        .ui-table tbody .emp-row:has(td a.emp-name-link:hover) td,
+        .ui-table tbody .emp-row.name-hovered td {
+            background-color: transparent !important;
+        }
+
+    /* ── Service cards ── */
+    .svc-card {
+        border: 0.5px solid var(--bs-border-color);
+        border-top: 3px solid var(--bs-primary);
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 12px;
+        box-shadow: var(--bs-box-shadow-sm);
+    }
+
+    .svc-card-head {
+        padding: 10px 14px;
+        background: var(--bs-primary-bg-subtle);
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+        .svc-card-head .svc-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            color: var(--dash-text-heading);
+            line-height: 1.4;
+        }
+
+            .svc-card-head .svc-name i {
+                font-size: 18px;
+                flex-shrink: 0;
+                color: var(--bs-primary);
+            }
+
+    /* ── Status / year pills ── */
+    .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.3;
+    }
+
+    .pill-year {
+        background: color-mix(in sRGB, var(--bs-paper-bg) var(--bs-bg-label-tint-amount), var(--bs-secondary));
+        color: var(--bs-secondary);
+    }
+
+    .pill-active {
+        background: color-mix(in sRGB, var(--bs-paper-bg) var(--bs-bg-label-tint-amount), var(--bs-success));
+        color: var(--bs-success);
+    }
+
+    .pill-pending {
+        background: color-mix(in sRGB, var(--bs-paper-bg) var(--bs-bg-label-tint-amount), var(--bs-warning));
+        color: var(--bs-warning);
+    }
+
+    .pill-sold {
+        background: color-mix(in sRGB, var(--bs-paper-bg) var(--bs-bg-label-tint-amount), var(--bs-info));
+        color: var(--bs-info);
+    }
+
+    .pill-cancelled {
+        background: color-mix(in sRGB, var(--bs-paper-bg) var(--bs-bg-label-tint-amount), var(--bs-danger));
+        color: var(--bs-danger);
+    }
+
+    .pill-opp {
+        background: color-mix(in sRGB, var(--bs-paper-bg) var(--bs-bg-label-tint-amount), var(--bs-primary));
+        color: var(--bs-primary);
+    }
+
+    .svc-card-body {
+        padding: 12px 14px;
+    }
+
+    .stat-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+    }
+
+        .stat-row + .stat-row {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 0.5px solid var(--bs-border-color);
+        }
+
+    .stat-label {
+        font-size: 12px;
+        color: var(--dash-text-muted);
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        margin-bottom: 3px;
+    }
+
+    .stat-val {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--dash-text-heading);
+    }
+
+        .stat-val.green {
+            color: var(--bs-success);
+        }
+
+        .stat-val.muted {
+            color: var(--dash-text-muted);
+            font-weight: 400;
+        }
+
+    .btn-edit-svc {
+        padding: 5px 12px;
+        border: 1px solid var(--bs-primary);
+        border-radius: 7px;
+        font-size: 11px;
+        font-weight: 600;
+        background: var(--bs-primary);
+        color: #fff;
+        cursor: pointer;
+        flex-shrink: 0;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: background-color .15s ease, transform .1s ease;
+    }
+
+        .btn-edit-svc i {
+            font-size: 13px;
+        }
+
+        .btn-edit-svc:hover {
+            background: var(--bs-primary-dark, #0b5ed7);
+            border-color: var(--bs-primary-dark, #0b5ed7);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        color: var(--dash-text-muted);
+        text-align: center;
+    }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            margin: 0;
+        }
+
+    /* ── Filter offcanvas overrides ── */
+    #filterSidebar {
+        width: 340px;
+    }
+
+        #filterSidebar .offcanvas-body {
+            padding: 12px 16px;
+        }
+
+    .fgroup-label {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--dash-text-muted);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 6px;
+        padding-bottom: 5px;
+        border-bottom: 0.5px solid var(--bs-border-color);
+    }
+
+    .flags-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .flag-chip {
+        padding: 3px 9px;
+        border: 0.5px solid var(--bs-border-color);
+        border-radius: 20px;
+        font-size: 11px;
+        cursor: pointer;
+        background: var(--bs-paper-bg);
+        color: var(--dash-text-body);
+    }
+
+        .flag-chip.active {
+            background: var(--bs-primary-bg-subtle);
+            color: var(--bs-primary);
+            border-color: var(--bs-primary-border-subtle);
+        }
+
+    .field-with-actions {
+        display: flex;
+        align-items: center;
+        gap: .375rem;
+    }
+
+        .field-with-actions .form-select {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+    .btn-act {
+        flex: 0 0 auto;
+        padding: 0;
+        width: 25px; /* matches form-select-sm height */
+        height: 25px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+    }
+
+        .btn-act i {
+            font-size: 1rem;
+        }
+
+    .swal2-container {
+        z-index: 20000 !important;
+    }
+</style>
+
+<div class="row mb-5" style="height:85vh;">
+
+    <!-- ── Employer Panel ───────────────────────────────────── -->
+    <div class="col-lg-7 d-flex flex-column">
+        <div class="emp-panel">
+            <div class="panel-head">
+                @{
+                    ViewBag.ShowViewModeToggle = false;
+                    ViewBag.FilterToggle = "offcanvas";
+                    ViewBag.FilterTarget = "#filterSidebar";
+                }
+                @await Html.PartialAsync("_GridToolbarCommon", new
+                {
+                    IsEmployerPage = false,
+                    CustomButtons = @"
+                        <a href=""/TrackerEmployer/ExportMasterExcel"" class=""btn btn-label-success"" onclick=""monitorDownload()"">
+                            <i class=""bx bx-export me-1""></i>Export
+                        </a>
+                        <button class=""btn btn-primary"" type=""button"" onclick=""openForm(0)"">
+                            <i class=""bx bx-plus me-1""></i>Add
+                        </button>"
+                })
+                <!-- Active filter chips -->
+                <div id="activeChipsRow" class="p-0"></div>
+            </div>
+
+            <div class="panel-body px-4 py-2" id="listContainer"></div>
+        </div>
+    </div>
+
+    <!-- ── Service Panel ────────────────────────────────────── -->
+    <div class="col-lg-5 d-flex flex-column">
+        <div class="svc-panel">
+            <div class="panel-head">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div><h5 id="lblRight">Services</h5></div>
+                    <button class="btn btn-primary px-3" id="btnAddSvc" disabled onclick="openSvcForm(0)">
+                        <i class="bx bx-plus me-1"></i>Add
+                    </button>
+                </div>
+            </div>
+            <div class="panel-body p-3" id="svcContainer">
+                <div class="empty-state">
+                    <i class="bx bx-layer text-muted"></i>
+                    <p>Select an employer to view their services</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     FILTER OFFCANVAS
+     ══════════════════════════════════════════════════════════ -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="filterSidebar">
+
+    <div class="offcanvas-header bg-light border-bottom py-2">
+        <h5 class="offcanvas-title fw-bold fs-6 mb-0">
+            <i class="bx bx-filter-alt me-2 text-primary"></i>Filter Employers
+        </h5>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary rounded-pill" id="offcanvasFilterCount" style="display:none">0</span>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+    </div>
+
+    <div class="offcanvas-body">
+        <form id="frmFilter" novalidate>
+
+            <!-- GROUP 0: Quick Search -->
+            <div class="mb-3">
+                <p class="fgroup-label"><i class="bx bx-search" style="font-size:11px"></i> Quick Search</p>
+                <input type="text" id="fltSearch" name="SearchText" class="form-control form-control-sm"
+                       placeholder="Employer name or EIN…" />
+            </div>
+            <!-- GROUP 1: Employer (Main → Affiliate cascade) -->
+            <div class="mb-3">
+                <p class="fgroup-label">
+                    <i class="bx bx-briefcase" style="font-size:11px"></i> Employer
+                </p>
+                <div class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label small mb-1">Main Employer</label>
+                        <select id="fltMainEmployer" name="MainEmployerId"
+                                class="form-select form-select-sm">
+                            <option value="">All Employers</option>
+                        </select>
+                    </div>
+                    <div class="col-12" id="affiliateRow" style="display:none;">
+                        <label class="form-label small mb-1">
+                            Affiliate
+                            <span class="badge bg-label-primary ms-1"
+                                  id="affiliateCount" style="font-size:10px">0</span>
+                        </label>
+                        <select id="fltAffiliate" name="AffiliateEmployerId"
+                                class="form-select form-select-sm">
+                            <option value="">All Affiliates</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <!-- GROUP 2: Organization -->
+            <div class="mb-3">
+                <p class="fgroup-label"><i class="bx bx-buildings" style="font-size:11px"></i> Organization</p>
+                <div class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label small mb-1">Firm</label>
+                        <select id="fltFirm" name="FirmId" class="form-select form-select-sm">
+                            <option value="">All Firms</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small mb-1">Broker</label>
+                        <select id="fltBroker" name="BrokerId" class="form-select form-select-sm">
+                            <option value="">All Brokers</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small mb-1">State</label>
+                        <select id="fltState" name="State" class="form-select form-select-sm">
+                            <option value="">Any</option>
+                            <option>AL</option>
+                            <option>AK</option>
+                            <option>AZ</option>
+                            <option>AR</option>
+                            <option>CA</option>
+                            <option>CO</option>
+                            <option>CT</option>
+                            <option>DE</option>
+                            <option>FL</option>
+                            <option>GA</option>
+                            <option>HI</option>
+                            <option>ID</option>
+                            <option>IL</option>
+                            <option>IN</option>
+                            <option>IA</option>
+                            <option>KS</option>
+                            <option>KY</option>
+                            <option>LA</option>
+                            <option>ME</option>
+                            <option>MD</option>
+                            <option>MA</option>
+                            <option>MI</option>
+                            <option>MN</option>
+                            <option>MS</option>
+                            <option>MO</option>
+                            <option>MT</option>
+                            <option>NE</option>
+                            <option>NV</option>
+                            <option>NH</option>
+                            <option>NJ</option>
+                            <option>NM</option>
+                            <option>NY</option>
+                            <option>NC</option>
+                            <option>ND</option>
+                            <option>OH</option>
+                            <option>OK</option>
+                            <option>OR</option>
+                            <option>PA</option>
+                            <option>RI</option>
+                            <option>SC</option>
+                            <option>SD</option>
+                            <option>TN</option>
+                            <option>TX</option>
+                            <option>UT</option>
+                            <option>VT</option>
+                            <option>VA</option>
+                            <option>WA</option>
+                            <option>WV</option>
+                            <option>WI</option>
+                            <option>WY</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small mb-1">Filing Year</label>
+                        <select id="fltFilingYear" name="FilingYear" class="form-select form-select-sm">
+                            <option value="">All Years</option>
+                            <option>2025</option>
+                            <option>2024</option>
+                            <option>2023</option>
+                            <option>2022</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GROUP 3: Team -->
+            <div class="mb-3">
+                <p class="fgroup-label"><i class="bx bx-group" style="font-size:11px"></i> Team</p>
+                <div class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label small mb-1">Account Manager</label>
+                        <select id="fltAcctMgr" name="AcctManagerId" class="form-select form-select-sm">
+                            <option value="">All AMs</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small mb-1">Data Analyst</label>
+                        <select id="fltAnalyst" name="DataAnalystId" class="form-select form-select-sm">
+                            <option value="">All Analysts</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small mb-1">Sales Representative</label>
+                        <select id="fltSalesRep" name="SalesRepId" class="form-select form-select-sm">
+                            <option value="">All Sales Representative</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GROUP 4: Configuration -->
+            <div class="mb-3">
+                <p class="fgroup-label"><i class="bx bx-cog" style="font-size:11px"></i> Configuration</p>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label small mb-1">Funding Type</label>
+                        <select id="fltFunding" name="FundingType" class="form-select form-select-sm">
+                            <option value="">Any</option>
+                            <option>Self-Funded</option>
+                            <option>Fully-Insured</option>
+                            <option>Mixed: Self-Funded &amp; Fully-Insured</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small mb-1">Form Type</label>
+                        <select id="fltFormType" name="FormType" class="form-select form-select-sm">
+                            <option value="">Any</option>
+                            <option>1095-C</option>
+                            <option>1095-B</option>
+                            <option>Mixed:1095-B/1095-C</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small mb-1">Complexity</label>
+                        <select id="fltComplexity" name="LevelOfComplexity" class="form-select form-select-sm">
+                            <option value="">Any Level</option>
+                            <option>Low</option>
+                            <option>Standard</option>
+                            <option>Medium</option>
+                            <option>High</option>
+                            <option>Extreme</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small mb-1">Industry</label>
+                        <select id="fltIndustry" name="IndustryId" class="form-select form-select-sm">
+                            <option value="">All Industries</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GROUP 5: Flags -->
+            <div class="mb-2">
+                <p class="fgroup-label"><i class="bx bx-flag" style="font-size:11px"></i> Flags</p>
+                <div class="flags-wrap">
+                    <div class="flag-chip" data-flag="IsPriority" onclick="toggleFlag(this)">Priority</div>
+                    <div class="flag-chip" data-flag="SFTP" onclick="toggleFlag(this)">SFTP</div>
+                    <div class="flag-chip" data-flag="NoAutoRenewal" onclick="toggleFlag(this)">No Auto-Renewal</div>
+                    <div class="flag-chip" data-flag="AnnualCOI" onclick="toggleFlag(this)">Annual COI</div>
+                </div>
+                <!-- Hidden checkboxes that bind to the form state -->
+                <input type="hidden" id="fltIsPriority" name="IsPriority" value="" />
+                <input type="hidden" id="fltSFTP" name="SFTP" value="" />
+                <input type="hidden" id="fltNoAutoRenewal" name="NoAutoRenewal" value="" />
+                <input type="hidden" id="fltAnnualCOI" name="AnnualCOI" value="" />
+            </div>
+
+        </form>
+    </div>
+
+    <div class="offcanvas-footer border-top p-3 bg-light">
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary btn-sm flex-grow-1" onclick="applyFilter()">
+                <i class="bx bx-check me-1"></i>Apply Filters
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearFilter()">
+                <i class="bx bx-x me-1"></i>Clear
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODALS (unchanged from original)
+     ══════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="mainModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+</div>
+<div class="modal fade" id="svcModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" id="svcContent"></div>
+    </div>
+</div>
+<div class="modal fade" id="dashboardModal" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Dashboard</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <iframe id="dashboardFrame" style="width:100%; height:90vh; border:0;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+<partial name="_ReceiptIdModal" />
+
+<input type="hidden" id="hdnId" value="0" />
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    @await Html.PartialAsync("Components/Modals/_TrackerModalsPartial")
+    <script src="~/js/vscript/dashboard-receipt-id.js"></script>
+    <script src="~/js/vscript/searchable-select.js"></script>
+    <script src="~/js/common-grid.js"></script>
+    <script>
+        // ════════════════════════════════════════════════════════════
+        // FILTER STATE (paging/search/sort are owned by GridManager — see INIT)
+        // ════════════════════════════════════════════════════════════
+        let filterState = {
+            // organization
+            firmId: null, brokerId: null, stateFilter: null, filingYear: null,
+            // team
+            acctManagerId: null, dataAnalystId: null, salesRepId: null,
+            // configuration
+            fundingType: null, formType: null, levelOfComplexity: null, industryId: null,
+            // flags
+            isPriority: null, noAutoRenewal: null, sftp: null, annualCOI: null,
+            mainEmployerId: null, affiliateEmployerId: null
+        };
+
+        // Human-readable labels for chip display
+        const chipLabels = {
+            firmId:           v => 'Firm: '    + ($('#fltFirm option:selected').text()    || v),
+            brokerId:         v => 'Broker: '  + ($('#fltBroker option:selected').text()  || v),
+            stateFilter:      v => 'State: '   + v,
+            filingYear:       v => 'Year: '    + v,
+            acctManagerId:    v => 'AM: '      + ($('#fltAcctMgr option:selected').text() || v),
+            dataAnalystId:    v => 'Analyst: ' + ($('#fltAnalyst option:selected').text() || v),
+            salesRepId:       v => 'Sales: '   + ($('#fltSalesRep option:selected').text()|| v),
+            fundingType:      v => 'Funding: ' + v,
+            formType:         v => 'Form: '    + v,
+            levelOfComplexity:v => 'Level: '   + v,
+            industryId:       v => 'Industry: '+ ($('#fltIndustry option:selected').text()|| v),
+            isPriority:       v => 'Priority',
+            noAutoRenewal:    v => 'No Auto-Renewal',
+            sftp:             v => 'SFTP',
+            annualCOI:        v => 'Annual COI'
+        };
+
+        // ════════════════════════════════════════════════════════════
+        // CORE LIST LOAD — delegated to the shared GridManager (see INIT)
+        // ════════════════════════════════════════════════════════════
+        function gridAdditionalParams() {
+            var st = GridManager.getState();
+            return {
+                Page:                st.pageIndex,
+                SearchText:          st.search,
+                MainEmployerId:      filterState.mainEmployerId,
+                AffiliateEmployerId: filterState.affiliateEmployerId,
+                FirmId:              filterState.firmId,
+                BrokerId:            filterState.brokerId,
+                State:               filterState.stateFilter,
+                FilingYear:          filterState.filingYear,
+                AcctManagerId:       filterState.acctManagerId,
+                DataAnalystId:       filterState.dataAnalystId,
+                SalesRepId:          filterState.salesRepId,
+                FundingType:         filterState.fundingType,
+                FormType:            filterState.formType,
+                LevelOfComplexity:   filterState.levelOfComplexity,
+                IndustryId:          filterState.industryId,
+                IsPriority:          filterState.isPriority,
+                NoAutoRenewal:       filterState.noAutoRenewal,
+                SFTP:                filterState.sftp,
+                AnnualCOI:           filterState.annualCOI
+            };
+        }
+
+        function onGridLoaded() {
+            const firstRow = $('#listContainer .emp-row').first();
+            if (firstRow.length > 0) {
+                const empId   = firstRow.attr('id').replace('tr_', '');
+                const empName = firstRow.find('a.emp-name-link').first().text().trim();
+                setTimeout(() => selectItem(empId, empName), 100);
+            } else {
+                $('#svcContainer').html('<div class="empty-state"><i class="bx bx-layer text-muted"></i><p>No employers found</p></div>');
+                $('#lblRight').text('Services');
+                $('#btnAddSvc').prop('disabled', true);
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // FILTER: APPLY / CLEAR / CHIPS
+        // ════════════════════════════════════════════════════════════
+        function applyFilter() {
+            var searchVal = $('#fltSearch').val() || '';
+            $('#mainGridSearch').val(searchVal); // ← keep common toolbar search box in sync
+            filterState.firmId            = $('#fltFirm').val()        || null;
+            filterState.brokerId          = $('#fltBroker').val()      || null;
+            filterState.stateFilter       = $('#fltState').val()       || null;
+            filterState.filingYear        = $('#fltFilingYear').val()  || null;
+            filterState.acctManagerId     = $('#fltAcctMgr').val()     || null;
+            filterState.dataAnalystId     = $('#fltAnalyst').val()     || null;
+            filterState.salesRepId        = $('#fltSalesRep').val()    || null;
+            filterState.fundingType       = $('#fltFunding').val()     || null;
+            filterState.formType          = $('#fltFormType').val()    || null;
+            filterState.levelOfComplexity = $('#fltComplexity').val()  || null;
+            filterState.industryId        = $('#fltIndustry').val()    || null;
+            filterState.isPriority        = $('#fltIsPriority').val()    === 'true' ? true : null;
+            filterState.noAutoRenewal     = $('#fltNoAutoRenewal').val() === 'true' ? true : null;
+            filterState.sftp              = $('#fltSFTP').val()          === 'true' ? true : null;
+            filterState.annualCOI         = $('#fltAnnualCOI').val()     === 'true' ? true : null;
+            filterState.mainEmployerId      = $('#fltMainEmployer').val() || null;
+            filterState.affiliateEmployerId = $('#fltAffiliate').val()    || null;
+            updateFilterUI();
+            GridManager.reload({ pageIndex: 1 });
+            bootstrap.Offcanvas.getInstance(document.getElementById('filterSidebar')).hide();
+        }
+
+        function clearFilter() {
+            // Reset form controls
+            $('#frmFilter')[0].reset();
+            // Reset flag chips
+            document.querySelectorAll('.flag-chip').forEach(c => {
+                c.classList.remove('active');
+            });
+            ['fltIsPriority','fltSFTP','fltNoAutoRenewal','fltAnnualCOI']
+                .forEach(id => document.getElementById(id).value = '');
+
+            // Reset filters
+            Object.keys(filterState).forEach(k => filterState[k] = null);
+
+            $('#fltMainEmployer').val('');
+            $('#fltAffiliate').html('<option value="">All Affiliates</option>');
+            $('#affiliateRow').hide();
+
+            updateFilterUI();
+            GridManager.reload({ pageIndex: 1 });
+        }
+
+        function clearOneFilter(key) {
+            filterState[key] = null;
+            // Reset the corresponding form element
+            const elMap = {
+                firmId:            '#fltFirm',
+                brokerId:          '#fltBroker',
+                stateFilter:       '#fltState',
+                filingYear:        '#fltFilingYear',
+                acctManagerId:     '#fltAcctMgr',
+                dataAnalystId:     '#fltAnalyst',
+                salesRepId:        '#fltSalesRep',
+                fundingType:       '#fltFunding',
+                formType:          '#fltFormType',
+                levelOfComplexity: '#fltComplexity',
+                industryId:        '#fltIndustry'
+            };
+            const flagMap = {
+                isPriority:    { hidden: '#fltIsPriority',    flag: '[data-flag="IsPriority"]' },
+                noAutoRenewal: { hidden: '#fltNoAutoRenewal', flag: '[data-flag="NoAutoRenewal"]' },
+                sftp:          { hidden: '#fltSFTP',          flag: '[data-flag="SFTP"]' },
+                annualCOI:     { hidden: '#fltAnnualCOI',     flag: '[data-flag="AnnualCOI"]' }
+            };
+            if (elMap[key])  $(elMap[key]).val('');
+            if (flagMap[key]) {
+                $(flagMap[key].hidden).val('');
+                document.querySelector(flagMap[key].flag)?.classList.remove('active');
+            }
+            updateFilterUI();
+            GridManager.reload({ pageIndex: 1 });
+        }
+
+        function updateFilterUI() {
+            const activeKeys = Object.keys(filterState).filter(k =>
+                filterState[k] !== null && filterState[k] !== ''
+            );
+            const count = activeKeys.length;
+
+            // Badge on filter button (shared with the common toolbar)
+            const badge = document.getElementById('filterBadge');
+            badge.textContent = count;
+            badge.classList.toggle('d-none', count === 0);
+
+            // Badge inside offcanvas header
+            const ocBadge = document.getElementById('offcanvasFilterCount');
+            ocBadge.textContent = count;
+            ocBadge.style.display = count > 0 ? '' : 'none';
+
+            // Chips below search bar
+            const row = document.getElementById('activeChipsRow');
+            row.innerHTML = activeKeys.map(k => {
+                const label = chipLabels[k] ? chipLabels[k](filterState[k]) : k;
+                return `<span class="filter-chip">
+                            ${label}
+                            <button class="chip-x" onclick="clearOneFilter('${k}')" title="Remove filter">×</button>
+                        </span>`;
+            }).join('');
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // FLAG CHIP TOGGLE
+        // ════════════════════════════════════════════════════════════
+        function toggleFlag(el) {
+            el.classList.toggle('active');
+            const flag     = el.getAttribute('data-flag');
+            const hiddenId = 'flt' + flag;
+            const isActive = el.classList.contains('active');
+            document.getElementById(hiddenId).value = isActive ? 'true' : '';
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // SORT — paging/search are handled by GridManager itself
+        // ════════════════════════════════════════════════════════════
+        function sortList(col) {
+            var st = GridManager.getState();
+            var newOrder = (st.sortColumn === col && st.sortOrder === 'ASC') ? 'DESC' : 'ASC';
+            GridManager.reload({ sortColumn: col, sortOrder: newOrder, pageIndex: 1 });
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // FILTER DROPDOWN POPULATION
+        // ════════════════════════════════════════════════════════════
+        function loadFilterOptions() {
+            $.get('/TrackerEmployer/GetFilterOptions').done(res => {
+                res.firms.forEach(f =>
+                    $('#fltFirm').append(`<option value="${f.firmId}">${f.firmName}</option>`));
+                res.brokers.forEach(b =>
+                    $('#fltBroker').append(`<option value="${b.id}">${b.name}</option>`));
+                res.accountManagers.forEach(am =>
+                    $('#fltAcctMgr').append(`<option value="${am.id}">${am.name}</option>`));
+                res.dataAnalysts.forEach(da =>
+                    $('#fltAnalyst').append(`<option value="${da.id}">${da.name}</option>`));
+                res.salesReps.forEach(sr =>
+                    $('#fltSalesRep').append(`<option value="${sr.id}">${sr.name}</option>`));
+                res.industries.forEach(i =>
+                    $('#fltIndustry').append(`<option value="${i.id}">${i.name}</option>`));
+            });
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // EMPLOYER SELECTION
+        // ════════════════════════════════════════════════════════════
+        // Accepts either the clicked row element (reads its data-emp-* attributes, which
+        // Razor HTML-encodes so a name with a quote/apostrophe/&/<> is safe) OR an explicit
+        // (id, name) pair. Passing the raw name through the row's inline onclick used to
+        // break the generated JS (console error) and stop the service list from loading.
+        function selectItem(rowOrId, name) {
+            var id, nm;
+            if (rowOrId && rowOrId.nodeType === 1) {
+                id = rowOrId.getAttribute('data-emp-id');
+                nm = rowOrId.getAttribute('data-emp-name') || '';
+            } else {
+                id = rowOrId; nm = name || '';
+            }
+            $('#hdnId').val(id);
+            $('.emp-row').removeClass('table-active');
+            $('#tr_' + id).addClass('table-active');
+            // Escape the name before inserting as HTML (handles < > & and quotes).
+            $('#lblRight').html('Services: <b>' + $('<span>').text(nm).html() + '</b>');
+            $('#btnAddSvc').prop('disabled', false);
+            loadSvcs(id);
+        }
+
+        function loadSvcs(id) {
+            $.get('/TrackerEmployer/GetServices', { employerId: id })
+              .done(html => $('#svcContainer').html(html));
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // EMPLOYER FORM
+        // ════════════════════════════════════════════════════════════
+        function openForm(id) {
+            $.get('/TrackerEmployer/Form/' + id).done(html => {
+                $('#modalContent').html(html);
+                new bootstrap.Modal(document.getElementById('mainModal')).show();
+            });
+        }
+
+        function saveMain() {
+            var form = $('#frmMain');
+            $.validator.unobtrusive.parse(form);
+            if (!form.valid()) {
+                var firstErr = form.find('.input-validation-error').addClass('border-danger').first();
+                if (firstErr.length) {
+                    $('.modal-body').animate({ scrollTop: firstErr.offset().top - 200 }, 300);
+                    firstErr.focus();
+                }
+                return;
+            }
+            $.ajax({
+                url: '/TrackerEmployer/Save', type: 'POST', data: form.serialize(),
+                success: function (res) {
+                    if (res.success) {
+                        var empId = res.employerId;
+                        // Read note fields directly from DOM — more reliable than window.getInitialNote
+                        var noteText = ($('#noteAddText').val() || '').trim();
+                        var note = noteText ? { category: 'Employer Creation', noteText: noteText } : null;
+
+                        function finalize() {
+                            var _mm = bootstrap.Modal.getInstance(document.getElementById('mainModal'));
+                            if (_mm) _mm.hide();
+                            GridManager.reload();
+                            Swal.fire({ icon: 'success', title: 'Saved!', text: 'Employer saved successfully.', timer: 1500, showConfirmButton: false });
+                        }
+
+                        if (note && empId > 0) {
+                            $.post('/TrackerEmployer/SaveNote', {
+                                __RequestVerificationToken: $('[name="__RequestVerificationToken"]').first().val(),
+                                EmployerId: empId,
+                                Category: note.category,
+                                NoteText: note.noteText,
+                                NoteYear: new Date().getFullYear()
+                            }).done(function (r) {
+                                if (!r || !r.success) {
+                                    Swal.fire('Note Warning', 'Employer saved but note could not be saved: ' + (r && r.message || 'Unknown error'), 'warning');
+                                }
+                                finalize();
+                            }).fail(function (xhr) {
+                                Swal.fire('Note Warning', 'Employer saved but note failed (HTTP ' + xhr.status + '): ' + (xhr.responseJSON && xhr.responseJSON.message || xhr.statusText), 'warning');
+                                finalize();
+                            });
+                        } else {
+                            finalize();
+                        }
+                    } else {
+                        Swal.fire('Validation Error', res.message || 'Please check the form.', 'error');
+                    }
+                },
+                error: xhr => Swal.fire('Server Error', 'Status: ' + xhr.status, 'error')
+            });
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // SERVICE FORM
+        // ════════════════════════════════════════════════════════════
+        function openSvcForm(id) {
+            var empId = $('#hdnId').val();
+            if (id == 0) {
+                $.get('/TrackerEmployer/ServiceForm', { employerId: empId, id: 0 }).done(html => {
+                    $('#svcContent').html(html);
+                    new bootstrap.Modal(document.getElementById('svcModal')).show();
+                });
+            } else {
+                $.get('/TrackerEmployer/GetServicePanel', { id: id, edit: true, isModal: true }).done(html => {
+                    $('#svcContent').html(html);
+                    new bootstrap.Modal(document.getElementById('svcModal')).show();
+                    setTimeout(function () {
+                        var box = $('#receiptBadgeContainerModal');
+                        if (box.length && typeof loadReceiptBadge === 'function') {
+                            var ctx = {
+                                employerId: box.data('emp-id'), employerServiceId: box.data('emp-svc-id'),
+                                serviceId: box.data('svc-id'), planYear: box.data('plan-year'),
+                                serviceName: box.data('svc-name'), badgeContainer: '#receiptBadgeContainerModal'
+                            };
+                            window._currentSvcCtx = ctx;
+                            loadReceiptBadge(ctx);
+                        }
+                    }, 300);
+                });
+            }
+        }
+
+        function saveSvc() {
+            var f = $('#frmSvc');
+            $.validator.unobtrusive.parse(f);
+            if (!f.valid()) {
+                var firstErr = f.find('.input-validation-error').addClass('border-danger').first();
+                if (firstErr.length) { $('.modal-body').animate({ scrollTop: firstErr.offset().top - 200 }, 300); firstErr.focus(); }
+                return;
+            }
+            $.post('/TrackerEmployer/SaveService', f.serialize()).done(r => {
+                if (r.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('svcModal')).hide();
+                    loadSvcs($('#hdnId').val());
+                    Swal.fire({ icon: 'success', title: 'Saved!',text : 'Service saved successfully.', timer: 1500, showConfirmButton: false });
+                }
+            });
+        }
+
+        function saveSvcPanel() {
+            var form = document.getElementById('frmSvcPanel');
+            if (!form) return;
+            var fd = new FormData(form);
+            ['MedcomCOBRA','Required131','WillNotSignSA','CDHPClient']
+                .forEach(f => { if (!fd.has(f)) fd.set(f, 'false'); });
+            var payload = {};
+            fd.forEach((v, k) => { payload[k] = v; });
+            $.post('/TrackerEmployer/SaveService', payload).done(r => {
+                if (r.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('svcModal')).hide();
+                    loadSvcs($('#hdnId').val());
+                    Swal.fire({ icon: 'success', title: 'Updated!', title: 'Service Updated successfully!', timer: 1500, showConfirmButton: false });
+                } else {
+                    Swal.fire('Error', r.message || 'Save failed', 'error');
+                }
+            });
+        }
+
+        function deleteService(id) {
+            Swal.fire({
+                title: 'Remove Service?', icon: 'warning', showCancelButton: true,
+                confirmButtonColor: '#d33', confirmButtonText: 'Yes, remove it!'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    $.post('/TrackerEmployer/DeleteService', { id }).done(res => {
+                        if (res.success) { loadSvcs($('#hdnId').val()); Swal.fire('Deleted!', 'Service removed.', 'success'); }
+                        else { Swal.fire('Error', res.message, 'error'); }
+                    });
+                }
+            });
+        }
+
+        function openDashboard(id) { window.location.href = '/TrackerEmployer/Dashboard/' + id; }
+         function monitorDownload() {
+                  // Hide the page loader after short delay
+        setTimeout(() => {
+            document.getElementById('page-loader').style.display = 'none';
+        }, 1500);
+
+            Swal.fire({
+                title: 'Downloading...',
+                icon: 'success',
+                timer: 1500,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
+        }
+        // ════════════════════════════════════════════════════════════
+        // INIT
+        // ════════════════════════════════════════════════════════════
+        $(document).ready(function () {
+            loadMainEmployers();
+            loadFilterOptions();
+
+            GridManager.init({
+                url: '/TrackerEmployer/GetList',
+                container: '#listContainer',
+                state: {
+                    pageIndex: 1,
+                    pageSize: 10,
+                    search: '',
+                    sortColumn: 'EmployerName',
+                    sortOrder: 'ASC'
+                },
+                additionalParams: gridAdditionalParams,
+                onLoad: onGridLoaded
+            });
+            GridManager.reload();
+
+            // Fallback for browsers without :has() support — suppress the
+            // row hover highlight while hovering the employer-name link.
+            $('#listContainer').on('mouseenter', '.emp-name-link', function () {
+                $(this).closest('tr.emp-row').addClass('name-hovered');
+            }).on('mouseleave', '.emp-name-link', function () {
+                $(this).closest('tr.emp-row').removeClass('name-hovered');
+            });
+
+                // Add this inside $(document).ready()
+        $('#fltFirm').on('change', function () {
+            const firmId = $(this).val();
+            const brokerSelect = $('#fltBroker');
+
+            // Reset broker dropdown
+            brokerSelect.html('<option value="">All Brokers</option>');
+
+            if (!firmId) return; // firm cleared — show all brokers
+
+            brokerSelect.html('<option value="">Loading...</option>').prop('disabled', true);
+
+            $.get('/TrackerEmployer/GetBrokersForFirm', { firmId })
+                .done(res => {
+                    brokerSelect.html('<option value="">All Brokers</option>');
+                    res.forEach(b =>
+                        brokerSelect.append(`<option value="${b.id}">${b.name}</option>`)
+                    );
+                })
+                .fail(() => {
+                    brokerSelect.html('<option value="">All Brokers</option>');
+                })
+                .always(() => brokerSelect.prop('disabled', false));
+        });
+                // Load main employer dropdown on page load
+        function loadMainEmployers() {
+            $.get('/TrackerEmployer/GetMainEmployers').done(res => {
+                const sel = $('#fltMainEmployer');
+                sel.html('<option value="">All Employers</option>');
+                res.forEach(e =>
+                    sel.append(`<option value="${e.value}">${e.text}</option>`)
+                );
+            });
+        }
+
+        // When main employer changes → load its affiliates
+        $('#fltMainEmployer').on('change', function () {
+            const mainId = $(this).val();
+            const affiliateSelect = $('#fltAffiliate');
+            const affiliateRow    = $('#affiliateRow');
+
+            // Reset affiliate
+            affiliateSelect.html('<option value="">All Affiliates</option>');
+            affiliateRow.hide();
+            filterState.affiliateEmployerId = null;
+
+            if (!mainId) return;
+
+            affiliateSelect.html('<option value="">Loading...</option>')
+                           .prop('disabled', true);
+
+            $.get('/TrackerEmployer/GetAffiliatesByMain', { mainEmployerId: mainId })
+                .done(res => {
+                    affiliateSelect.html('<option value="">All Affiliates</option>');
+
+                    if (res.length === 0) {
+                        // No affiliates — hide the row entirely
+                        affiliateRow.hide();
+                    } else {
+                        res.forEach(a =>
+                            affiliateSelect.append(
+                                `<option value="${a.value}">${a.text}</option>`
+                            )
+                        );
+                        $('#affiliateCount').text(res.length);
+                        affiliateRow.show();
+                    }
+                })
+                .fail(() => {
+                    affiliateSelect.html('<option value="">All Affiliates</option>');
+                })
+                .always(() => affiliateSelect.prop('disabled', false));
+        });
+        });
+    </script>
+}

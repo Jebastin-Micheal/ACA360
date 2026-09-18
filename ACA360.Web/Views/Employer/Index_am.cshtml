@@ -1,0 +1,1166 @@
+﻿@using ACA360.Core.Extensions
+@model ACA360.Web.Models.EmployerListViewModel
+
+@using ACA360.Web.ViewComponents
+@{
+    ViewData["Title"] = "PermissionSettings";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<link href="~/css/loaderstyle.css" rel="stylesheet" />
+@* <link href="~/assets/vendor/css/core.css" rel="stylesheet" /> *@
+<link href="~/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" rel="stylesheet" />
+@* <link href="~/assets/vendor/css/core.css" rel="stylesheet" /> *@
+<style>
+    
+    .custom-card-header {
+        background-color: #f8f9fa; /* Table header color */
+        padding: 0.75rem 1.25rem;
+        border-bottom: 1px solid #dee2e6;
+        font-weight: bold;
+        text-align: center;
+        border-top-left-radius: 0.5rem;
+        border-top-right-radius: 0.5rem;
+    }
+
+    .custom-card {
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+    }
+
+
+
+</style>
+
+
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Permission Settings",
+    items = new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Title = "Employer", Url = Url.Action("Index", "Employer"), IsActive = false },
+    new BreadcrumbItem { Title = "List of Employers", Url = "", IsActive = true }
+}
+})
+
+
+<div id="employerListContainerWrapper" style="position:relative;">
+    <div id="loader" class="loader" style="display:none;">
+        <div class="spinner"></div>
+    </div>
+    <!--  Search Box for Employer -->
+    <div class="card mb-6">
+        <div class="card-body">
+
+            
+            <div class="row">                 <!-- Adjust 150px based on navbar/header -->
+  
+
+    <!-- Collapsible Employer List -->
+                <div class="collapse collapse-horizontal show col-md-4 p-2 h-100 d-flex flex-column shadow-sm" id="employerListContainer">
+        
+                @* <div id="employerListContainerContent"></div>*@
+                 @Html.Partial("_EmployerListPartial_am", Model) 
+        
+                </div>
+
+    <!-- Details Panel -->
+                <div id="employerDetailsContainer" class="col-md-8 details-expanded h-100">
+           @*  <div id="details-loading" class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  
+                </div>
+            </div> *@
+            <div id="details-content">
+                <div class="row mb-6 gy-6">
+
+                    <div class="col-xl">
+
+                                <fieldset disabled>
+                                    @* Card one *@
+                            <div class="card mb-3">
+
+                                <div class="card-body">
+                                    <form>
+                                        <div class="row mb-6">
+
+                                            <div class="col-4">
+                                                <label class="form-label" for="basic-icon-default-fullname">EIN</label>
+                                                <div class="input-group input-group-merge">
+                                                    <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-user"></i></span>
+                                                    <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="EIN" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <label for="defaultSelect" class="form-label">Type</label>
+                                                <select id="defaultSelect" class="form-select">
+                                                    <option>Primary</option>
+                                                    <option value="1">Secondary</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-4">
+                                                <label class="form-label" for="basic-icon-default-fullname">Filing Year</label>
+                                                <div class="input-group input-group-merge">
+                                                    <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base icon-base bx bx-calendar-check"></i></span>
+                                                    <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Filing Year" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="row mb-6">
+                                            <div class="col-12">
+                                                <label class="form-label" for="basic-icon-default-fullname">Address 1</label>
+                                                <div class="input-group input-group-merge">
+                                                    <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-home-alt"></i></span>
+                                                    <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Address 1" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-6">
+                                            <div class="col-8">
+                                                <label class="form-label" for="basic-icon-default-fullname">Address 2</label>
+                                                <div class="input-group input-group-merge">
+                                                    <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-home-alt"></i></span>
+                                                    <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Address 2" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <label class="form-label" for="basic-icon-default-fullname">City</label>
+                                                <div class="input-group input-group-merge">
+                                                    <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-buildings"></i></span>
+                                                    <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="City" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <div class="row mb-6">
+
+                                            <div class="col-4">
+                                                <label class="form-label" for="basic-icon-default-fullname">State</label>
+                                                <div class="input-group input-group-merge">
+                                                    <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-map-alt"></i></span>
+                                                    <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="State" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <label class="form-label" for="basic-icon-default-fullname">Zip code</label>
+                                                <div class="input-group input-group-merge">
+                                                    <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-hash"></i></span>
+                                                    <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Zip code" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <label class="form-label" for="basic-icon-default-fullname">Country</label>
+                                                <div class="input-group input-group-merge">
+                                                    <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-world"></i></span>
+                                                    <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Country" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <div class="row mb-6">
+
+                                            <div class="col-4">
+                                                <label class="form-label" for="basic-icon-default-fullname">Foreign Address</label>
+                                                <div class="input-group input-group-merge">
+                                                    <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-id-card"></i></span>
+                                                    <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Foreign Address" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <label class="form-label" for="basic-icon-default-fullname">Enable Call Center</label>
+                                                <div class="input-group input-group-merge">
+                                                    <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-phone-call"></i></span>
+                                                    <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Enable Call Center" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <label class="form-label" for="basic-icon-default-fullname">Corrected</label>
+                                                <div class="input-group input-group-merge">
+                                                    <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-check"></i></span>
+                                                    <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Corrected" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            @* Card two *@
+                            <div class="card mb-3">
+                                <div class="accordion stick-top course-content-fixed">
+                                    <div class="accordion-item mb-0 active">
+                                        <div class="accordion-header" id="headingOtherDetails">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="h5 card-header text-center m-0 text-nowrap flex-grow-1">EMPLOYER TRACKER INFORMATION</div>
+                                                <button type="button" class="accordion-button" data-bs-toggle="collapse" data-bs-target="#otherDetailsAccordion" aria-expanded="true" aria-controls="otherDetailsAccordion">
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="otherDetailsAccordion" class="px-6 accordion-collapse collapse show" data-bs-parent="#courseContent">
+                                            <!-- Tabs start here -->
+                                            <div class="tab-scroll-wrapper position-relative overflow-hidden" id="tabsHorizontalScroll">
+                                                        <ul class="nav nav-pills nav-fill mt-4 flex-nowrap" id="otherdetailsTab" role="tablist">
+
+                                                    <li class="nav-item">
+                                                        <a class="nav-link active" id="ER-tab" data-bs-toggle="tab" href="#erinfo" role="tab" aria-controls="erinfo" aria-selected="true">ER Info</a>
+                                                    </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" id="Service-tab" data-bs-toggle="tab" href="#service" role="tab" aria-controls="service" aria-selected="false">Service Info</a>
+                                                    </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" id="Form_1094-tab" data-bs-toggle="tab" href="#form_1094" role="tab" aria-controls="form_1094" aria-selected="false">1094 Details</a>
+                                                    </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" id="Adit_log-tab" data-bs-toggle="tab" href="#aditlog" role="tab" aria-controls="aditlog" aria-selected="false">Audit Log</a>
+                                                    </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" id="Other_Important_Info-tab" data-bs-toggle="tab" href="#otherimportantinfo" role="tab" aria-controls="otherimportantinfo" aria-selected="false">Other Important Information</a>
+                                                    </li>
+
+                                                </ul>
+                                            </div>
+
+                                            <div class="tab-content" id="EmployerDetailsTabContent">
+                                                <!-- ER Info Tab -->
+                                                <div class="tab-pane fade show active" id="erinfo" role="tabpanel" aria-labelledby="ER-tab">
+                                                    <div class="row mb-6">
+                                                        <div class="col-12">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Firm</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-building"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Firm" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+
+                                                        <div class="col-4">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Broker</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-trending-up"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Broker" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-4">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Phone</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-mobile-alt"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Phone" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-4">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Email</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-envelope"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Email" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                    <div class="row mb-6">
+
+                                                        <div class="col-4">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Contact</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-group"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Contact" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-4">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Phone</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-mobile-alt"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Phone" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-4">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Email</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-envelope"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Email" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                    <div class="row mb-6">
+
+                                                        <div class="col-4">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Billing Contact</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-dollar"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Billing Contact" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-4">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Phone</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-mobile-alt"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Phone" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-4">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Email</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-envelope"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Email" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+                                                        <div class="col-12">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Affilliates</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-network-chart"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Affilliates" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Account Manager</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-briefcase-alt"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Account Manager" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Sales Rep</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-card"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Sales Rep" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Data Analyst</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-data"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Data Analyst" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Vendor</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-package"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Vendor" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Waiting Period</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-hourglass"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Waiting Period" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">20% Over Proposed Form Count</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-bar-chart-alt"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="  " aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Banding type</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-category"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Banding type" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">20% Over Proposed Form Count Price</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-purchase-tag-alt "></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="  " aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                                <!-- Services Info Tab -->
+                                                <div class="tab-pane fade" id="service" role="tabpanel" aria-labelledby="Service-tab">
+                                                    <div class="row mb-6">
+                                                        <div class="col-12">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Services</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-wrench"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Services" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+                                                        <div class="col-12">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Status</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-bar-chart"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Status" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row mb-6">
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Proposal Sent</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-paper-plane"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Proposal Sent" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Contract Sent</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-mail-send"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Contract Sent" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Proposal Signed</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-edit-alt"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Proposal Signed" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Contract Signed</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-pen"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Contract Signed" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">1095 Process Step</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-list-check"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="1095 Process Step" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">FTE Tracking Step</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-table"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="FTE Tracking Step" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Last Updated</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-calendar-edit"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Last Updated" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Last Updated</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-calendar-edit"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Last Updated" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Next Follow-Up</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-calendar-plus"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Next Follow-Up" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Next Follow-Up</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-calendar-plus"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Next Follow-Up" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">State Filling Process Step</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-briefcase-alt"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="State Filling Process Step" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Extension Filed</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-check-shield"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Extension Filed" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Last Updated</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-calendar-edit"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Last Updated" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Audit By</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-zoom-in"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Audit By" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Next Follow-Up</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-calendar-plus"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Next Follow-Up" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Receipt ID</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-receipt"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Receipt ID" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!-- 1094 Details Tab -->
+                                                <div class="tab-pane fade" id="form_1094" role="tabpanel" aria-labelledby="Form_1094-tab">
+                                                    <div class="row mb-2">
+                                                        <div id="chapterThree" class="card-body accordion-collapse collapse show" data-bs-parent="#courseContent" style="margin-top: -24px;">
+                                                                    <!-- 🔹 Form Type & Origin Code -->
+                                                                    <div class="row mb-3">
+                                                                        <div class="col-md-6">
+                                                                            <label class="form-label">Form Type</label>
+                                                                           
+                                                                            <select class="form-select"></select>
+                                                                            
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <label class="form-label">Origin Code</label>
+                                                                            <select class="form-select"></select>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <!-- 🔹 Certification of Eligibility -->
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Certification of Eligibility</label>
+                                                                        <div class="row">
+                                                                            <div class="col-md-6">
+                                                                                <div class="form-check">
+                                                                                    <input class="form-check-input" type="checkbox" name="CertA" value="true") />
+                                                                                    <label class="form-label">A. Qualifying Offer Method</label>
+                                                                                </div>
+                                                                                <div class="form-check">
+                                                                                    <input class="form-check-input" type="checkbox" name="CertC" value="true") />
+                                                                                    <label class="form-label">C. Reserved</label>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="col-md-6">
+                                                                                <div class="form-check">
+                                                                                    <input class="form-check-input" type="checkbox" name="CertB" value="true") />
+                                                                                    <label class="form-label">B. Reserved</label>
+                                                                                </div>
+                                                                                <div class="form-check">
+                                                                                    <input class="form-check-input" type="checkbox" name="CertD" value="true") />
+                                                                                    <label class="form-label">D. 98% Offer Method</label>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <!-- 🔹 ALE Information Table -->
+                                                                    <label class="form-label mb-2">ALE Information</label>
+                                                                    <div class="table-responsive">
+                                                                        <table class="table table-bordered text-center">
+                                                                            <thead class="table-light">
+                                                                                <tr>
+                                                                                    <th>Month</th>
+                                                                                    <th>Minimum Coverage</th>
+                                                                                    <th>Full-Time</th>
+                                                                                    <th>Total</th>
+                                                                                    <th>Aggregate</th>
+                                                                                    <th>Sec4980H</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                @{
+                                                                                    string[] months = { "All", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                                                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+                                                                                    for (int i = 0; i < 13; i++)
+                                                                                    {
+                                                                                        <tr>
+                                                                                            <td>@months[i]</td>
+                                                                                            <td>
+                                                                                                <input type="checkbox" name="MinimumCoverage[@i]" value="true"/>
+                                                                                            </td>
+                                                                                            <td>
+                                                                                                <input type="number" name="FullTime[@i]" class="form-control form-control-sm"/>
+                                                                                            </td>
+                                                                                            <td>
+                                                                                                <input type="number" name="Total[@i]" class="form-control form-control-sm"/>
+                                                                                            </td>
+                                                                                            <td>
+                                                                                                <input type="checkbox" name="AggregateGroup[@i]" value="true"/>
+                                                                                            </td>
+                                                                                            <td>
+                                                                                                <input type="number" name="Sec4980H[@i]" class="form-control form-control-sm"/>
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                    }
+                                                                                }
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+
+                                                            
+                                                         @*    <div class="table-responsive text-nowrap">
+                                                                <table class="table table-bordered">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Month</th>
+                                                                            <th>Minimum Coverage</th>
+                                                                            <th>Full-Time</th>
+                                                                            <th>Total</th>
+                                                                            <th>Aggregate</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        <tr>
+                                                                            <td><i class="icon-base fab fa-angular icon-md text-danger me-4"></i> <span></span></td>
+                                                                            <td><i class="icon-base fab fa-angular icon-md text-danger me-4"></i> <span></span></td>
+                                                                            <td><i class="icon-base fab fa-angular icon-md text-danger me-4"></i> <span></span></td>
+                                                                            <td><i class="icon-base fab fa-angular icon-md text-danger me-4"></i> <span></span></td>
+                                                                            <td><i class="icon-base fab fa-angular icon-md text-danger me-4"></i> <span></span></td>
+                                                                        </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div> *@
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!-- Audit Log -->
+                                                <div class="tab-pane fade" id="aditlog" role="tabpanel" aria-labelledby="Adit_log-tab">
+                                                    <div class="row mb-2">
+                                                        <div id="chapterThree" class="card-body accordion-collapse collapse show" data-bs-parent="#courseContent" style="margin-top: -24px;">
+                                                            <div class="table-responsive text-nowrap">
+                                                                <table class="table table-bordered">
+                                                                            <thead class="table-light">
+                                                                        <tr>
+                                                                            <th>User</th>
+                                                                            <th>Operation</th>
+                                                                            <th>Old Value</th>
+                                                                            <th>New Value</th>
+                                                                            <th>Date</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                                <tr><td colspan="5" class="text-center">No audit log data found.</td></tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!--Other Important Info -->
+                                                <div class="tab-pane fade" id="otherimportantinfo" role="tabpanel" aria-labelledby="Other_Important_Info-tab">
+                                                    <div>
+                                                        <label for="exampleFormControlTextarea1" class="form-label">Mail Fulfillment Memo</label>
+                                                        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+                                                    </div>
+                                                    <div class="row mt-3">
+                                                        <div class="col-12">
+                                                            <h5>Most Recent Dates</h5>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Most Recent Hire Date</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-calendar"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Hire Date" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label" for="basic-icon-default-fullname">Most Recent Termination Date</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-calendar"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="Termination Date" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mt-3">
+                                                        <div class="col-12">
+                                                            <h5>Safe Harbor Count</h5>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row mb-6">
+                                                        <div class="col-4">
+                                                            <label class="form-label" for="basic-icon-default-fullname">2F</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-briefcase-alt"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="2F" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-4">
+                                                            <label class="form-label" for="basic-icon-default-fullname">2G</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-card"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="2G" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-4">
+                                                            <label class="form-label" for="basic-icon-default-fullname">2H</label>
+                                                            <div class="input-group input-group-merge">
+                                                                <span id="basic-icon-default-fullname2" class="input-group-text"><i class="icon-base bx bx-card"></i></span>
+                                                                <input type="text" class="form-control" id="basic-icon-default-fullname" placeholder="2H" aria-label="  " aria-describedby="basic-icon-default-fullname2">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @* Card Three *@
+                            <div class="card mb-3">
+                                <div class="accordion stick-top course-content-fixed">
+                                    <div class="accordion-item mb-0 active">
+                                        <div class="accordion-header" id="headingThree">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="h5 card-header text-center m-0 text-nowrap flex-grow-1">NOTES</div>
+                                                <button type="button" class="accordion-button" data-bs-toggle="collapse" data-bs-target="#chapterThree" aria-expanded="true" aria-controls="chapterOne">
+                                                </button>
+                                            </div>
+
+                                        </div>
+                                        <div id="chapterThree" class="card-body accordion-collapse collapse show" data-bs-parent="#courseContent" style="margin-top: -24px;">
+                                            <div class="table-responsive text-nowrap">
+                                                <table class="table table-bordered">
+                                                            <thead class="table-light">
+                                                        <tr>
+                                                            <th>Date</th>
+                                                            <th>Note</th>
+                                                            <th>Category</th>
+                                                            <th>User</th>
+                                                            <th>Date</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                                </fieldset>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+</div>
+
+</div>
+</div>
+<div id="details-loading" class="text-center d-none">
+    <div class="spinner-360"></div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="addEmployerModal" tabindex="-1" aria-labelledby="addEmployerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEmployerModalLabel">Add Employer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">  </button>
+            </div>
+            <div class="modal-body" id="addEmployerModalBody">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Employer Form Preview Modal -->
+<div class="modal fade" id="employerPdfPreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content h-100">
+            <!-- Header -->
+            <div class="modal-header bg-lighter py-2 align-items-center">
+                <h5 class="modal-title text-primary me-3">
+                    <i class='bx bxs-file-pdf me-2'></i> Form Preview
+                </h5>
+                <div class="d-flex align-items-center flex-grow-1">
+                    <span id="employerPreviewLabel" class="badge bg-label-secondary ms-2 fw-normal"></span>
+
+                    <!-- Fullscreen Toggle Button -->
+                    <button type="button" class="btn btn-sm btn-icon btn-outline-secondary ms-3 toggle-fullscreen" data-target-modal="employerPdfPreviewModal" title="Toggle Fullscreen">
+                        <i class='bx bx-fullscreen'></i>
+                    </button>
+                </div>
+                <!-- Close Button -->
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Body with Iframe and Loader -->
+            <div class="modal-body p-0 bg-dark text-center position-relative">
+                <div id="employerPreviewLoader" class="position-absolute top-50 start-50 translate-middle">
+                    <div class="spinner-border text-light" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="text-light mt-2">Rendering PDF...</div>
+                </div>
+                <iframe id="employerPdfFrame" src="" class="w-100 h-100 border-0" style="min-height: 85vh; display: none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Include jQuery -->
+<!-- Include jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="~/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+<script src="@(Url.Content("~/assets/vendor/libs/blockui/extended-ui-blockui.js"))"></script>
+<script>
+        
+     let psList;
+    $(document).ready(function () {
+        // const scrollWrapper = document.querySelector('#employerTable');
+
+        // psList = new PerfectScrollbar(scrollWrapper, {
+        //     wheelSpeed: 1,
+        //     wheelPropagation: true,
+        //     suppressScrollY: true, // Only horizontal scroll
+        //     minScrollbarLength: 20
+        // });
+
+            
+
+        function loadEmployerList(pageIndex) {
+            // Show loader while fetching data
+            $("#loader").show();
+              var searchTerm = $('#employerSearch').val();
+             var pageSize = $(".drpPageSize").val();
+             // Get the sort column and order from the table's data attributes
+    var $table = $('#employerTable');
+    var sortColumn = $table.data('sort-column');
+    var sortOrder = $table.data('sort-order');
+            // Make AJAX call to get employer list based on the page index and other parameters
+            $.ajax({
+                url: '@Url.Action("EmployerListPartial", "Employer")',
+                data: {
+                    pageIndex: pageIndex,
+                    page_Size: pageSize,
+                    search: searchTerm,         // Keep search value from the model
+                    sortColumn: sortColumn,
+                    sortOrder: sortOrder    // Keep sorting order value
+                },
+                success: function (data) {
+                    // Update the content of the employer list container
+                        $("#employerListContainer").html(data);
+    
+                    // Hide the loader after content is updated
+                    $("#loader").hide();
+                },
+                error: function () {
+                    // Hide the loader in case of an error
+                    $("#loader").hide();
+                }
+            });
+        }
+
+        // Initial load when the page is ready
+        // loadEmployerList(1);
+       // Click to toggle sort order for Name only
+
+
+        // Attach click event to pagination links
+        $(document).on("click", ".page-link", function (event) {
+            event.preventDefault();  // Prevent default link behavior
+            var pageIndex = $(this).data("pageindex"); // Get page index from the clicked link
+            loadEmployerList(pageIndex); // Load employer list for the selected page
+        });
+        $(document).on("change", ".drpPageSize", function (event) {
+            event.preventDefault();
+            var pageIndex = 1; // Start at first page
+            loadEmployerList(pageIndex);
+        });
+         $(document).on('click', '#nameColumnHeader', function () {
+             alert("sorting");
+        var $icon = $(this).find('i');
+        var currentOrder = $(this).attr('data-sort-order');
+        var newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+
+        // Toggle class
+        if (newOrder === 'asc') {
+            $icon.removeClass('bi-arrow-down-short').addClass('bi-arrow-up-short');
+        } else {
+            $icon.removeClass('bi-arrow-up-short').addClass('bi-arrow-down-short');
+        }
+
+        $(this).attr('data-sort-order', newOrder);
+        $('#employerTable').attr('data-sort-order', newOrder);
+    $('#employerTable').attr('data-sort-column', 0); // <-- update sort column here
+        loadEmployerList(1);
+    });
+         $(document).on('keyup', '#employerSearch', function () {
+        let searchTerm = $(this).val();
+      
+        if (searchTerm.length >= 3 || searchTerm.length === 0) {
+            // Show the loader while fetching search results
+            $("#loader").show();
+
+            $.ajax({
+                url: '@Url.Action("EmployerListPartial", "Employer")',
+                type: 'GET',
+                data: { search :searchTerm }, // Pass the search term and page size
+                success: function (data) {
+
+                    // Update the content of the employer list container with search results
+                  /*   $("#employerListContainer").empty();  */// Clear existing employer list content
+                       $("#employerListContainer").html(data);
+                     // Restore the search input value after partial replaces it
+                $('#employerSearch').val(searchTerm);
+                },
+                complete: function () {
+                    // Hide the loader after content is updated
+                    $("#loader").hide();
+                }
+            });
+        } 
+        else {
+
+              $("#loader").show();
+       
+        }
+    });
+
+
+      // 1. Form Generate Button Click -> Open Preview Modal
+    $(document).on('click', '.form-gen-btn', function(e) {
+        e.preventDefault();
+
+        var $btn = $(this);
+        var employerId = $btn.data('employer-id');
+        var year = $btn.data('year');
+        var formType = $btn.data('form-type');
+
+        if (!employerId || !year) {
+            toastr.error("Unable to get Employer ID or Filing Year.", "Error");
+            return;
+        }
+
+        // Close the dropdown menu
+        var $dropdownMenu = $btn.closest('.dropdown-menu');
+        if ($dropdownMenu.length) {
+            $dropdownMenu.removeClass('show');
+        }
+
+        // Set Label Info
+        $('#employerPreviewLabel').text(formType + " Preview");
+
+        // Show Modal and Loader, Hide Iframe temporarily
+        $('#employerPdfPreviewModal').modal('show');
+        $('#employerPreviewLoader').show();
+        $('#employerPdfFrame').attr('src', 'about:blank').hide();
+
+        // Build the Preview URL using GET
+        // 1094 forms don't need selectedEmployeeId and suppressSSN is naturally false
+        var url = '/FormGeneration/GeneratePreview?' +
+            'employerId=' + employerId +
+            '&year=' + year +
+            '&formType=' + encodeURIComponent(formType) +
+            '&selectedEmployeeId=' +
+            '&suppressSSN=false';
+
+        // Set the Iframe source to trigger PDF generation
+        $('#employerPdfFrame').attr('src', url);
+    });
+
+    // 2. Hide Loader when PDF finishes loading in the Iframe
+    $('#employerPdfFrame').on('load', function() {
+        var src = $(this).attr('src');
+        if (src && src !== 'about:blank') {
+            $('#employerPreviewLoader').hide();
+            $(this).show();
+        }
+    });
+
+    // 3. Clear Iframe on Modal Close (Free memory)
+    $('#employerPdfPreviewModal').on('hidden.bs.modal', function() {
+        $('#employerPdfFrame').attr('src', 'about:blank').hide();
+        $('#employerPreviewLoader').show();
+    });
+
+    // 4. FULLSCREEN TOGGLE LOGIC
+    $(document).on('click', '.toggle-fullscreen', function() {
+        let targetModalId = $(this).data('target-modal');
+        let $dialog = $('#' + targetModalId + ' .modal-dialog');
+        let $icon = $(this).find('i');
+
+        // Toggle Bootstrap fullscreen classes
+        $dialog.toggleClass('modal-fullscreen modal-xl');
+
+        // Toggle Fullscreen Icon
+        if ($dialog.hasClass('modal-fullscreen')) {
+            $icon.removeClass('bx-fullscreen').addClass('bx-exit-fullscreen');
+        } else {
+            $icon.removeClass('bx-exit-fullscreen').addClass('bx-fullscreen');
+        }
+    });
+
+    // 5. Reset Fullscreen state when modal closes
+    $('.modal').on('hidden.bs.modal', function() {
+        let $dialog = $(this).find('.modal-dialog');
+        let $icon = $(this).find('.toggle-fullscreen i');
+
+        if ($dialog.hasClass('modal-fullscreen')) {
+            $dialog.removeClass('modal-fullscreen').addClass('modal-xl');
+            $icon.removeClass('bx-exit-fullscreen').addClass('bx-fullscreen');
+        }
+    });
+
+
+      });
+
+
+    $(document).on('click', '.employer-link', function (e) {
+        e.preventDefault();
+
+        const ein = $(this).data('ein');
+        const filingYear = $(this).data('filingyear');
+        // Adjust column widths
+        $('#employerListContainer')
+            .removeClass('col-md-4')
+            .addClass('col-md-3');
+
+        $('#employerDetailsContainer')
+            .removeClass('col-md-8')
+            .addClass('col-md-9'); 
+            
+        $('#employerSearchcontainer')
+            .removeClass('col-md-6')
+            .addClass('col-md-4');
+            
+             // ✅ Update Perfect Scrollbar after class changes
+             // ✅ Initialize Perfect Scrollbar on employerTableWrapper
+    const scrollWrapper = document.querySelector('#employerTable');
+
+    if (psList) {
+        psList.update(); // Update if already initialized
+    } else {
+        psList = new PerfectScrollbar(scrollWrapper, {
+            wheelSpeed: 1,
+            wheelPropagation: true,
+            suppressScrollY: true, // ❗Only horizontal scroll
+            minScrollbarLength: 20
+        });
+    }
+        
+           // Remove highlight from all rows
+        $('.employer-item').removeClass('active');
+
+    // Highlight the selected row (the parent <tr>)
+        $(this).closest('.employer-item').addClass('active');
+        // Highlight the selected link
+        $('.employer-link').removeClass('active selected');
+        $(this).addClass('active selected');
+        
+        // // Show loading spinner
+        $('#details-content').hide();
+         $('#details-loading').removeClass('d-none');
+
+        $.get('/Employer/GetCommonDetails', { ein, filingYear })
+            .done(function (html) {
+                $('#details-content').html(html).show();
+            })
+            .fail(function () {
+                $('#details-content').html('<div class="alert alert-danger">Error loading details.</div>').show();
+            })
+            .always(function () {
+                $('#details-loading').addClass('d-none');
+            });
+    });
+    $(document).on('click', '.addEmployerBtn', function () {
+        $.get('@Url.Action("AddEmployerCommon", "Employer")', function (data) {
+            $('#addEmployerModalBody').html(data);
+            $('#addEmployerModal').modal('show');
+        });
+    });
+    $(document).on('click', '.btnRefresh', function () {
+        $('.employerSearch').val('');
+      
+        $('.drpPageSize').val('10');
+        loadEmployerList(1);
+    });
+
+    
+
+           document.addEventListener('DOMContentLoaded', function () {
+              
+        const toggleSwitch = document.getElementById('toggleEmployerListSwitch');
+        if (toggleSwitch) {
+            toggleSwitch.checked = false;
+           // console.log('Initial toggle switch state:', toggleSwitch.checked); // Should log false
+        }
+    });
+       
+       
+
+       $(document).on('change', '#toggleEmployerListSwitch', function () {
+        const list = $('#employerListContainer');
+        const details = $('#employerDetailsContainer');
+
+        if (this.checked) {
+            // Hide list
+            list.addClass('hide-employer-list');
+            list.removeClass('col-md-3');
+            details.removeClass('col-md-9').addClass('full-width-details');
+            
+        } else {
+            // Show list
+            list.removeClass('hide-employer-list');
+            list.removeClass('d-none'); // just in case
+            list.addClass('col-md-3');
+            details.removeClass('full-width-details').addClass('col-md-9');
+        }
+    });
+
+        // Re-enable tab links inside the tab nav
+    document.querySelectorAll('#otherdetailsTab .nav-link').forEach(function(link) {
+        link.disabled = false; // For <button> tags styled as tabs (if used)
+        link.classList.remove('disabled'); // If Bootstrap's .disabled class is applied
+        link.removeAttribute('aria-disabled'); // Optional for accessibility
+    });
+
+
+</script>
+
+
+
+
+
+
+    
+

@@ -1,0 +1,162 @@
+﻿@using ACA360.Core.Constants
+@model ACA360.Core.Models.FilingDashboardViewModel
+
+@{
+    var metadata = Model.Metadata;
+}
+
+<div class="table-responsive text-nowrap ui-table-responsive">
+    <table class="table table-bordered table-hover align-middle ui-table mb-0">
+        <thead>
+            <tr class="align-middle">
+                <th>
+                    @await Html.PartialAsync("_SortableHeader", new
+                    {
+                        Title = "Employer", Column = 0, SortColumn = Model.SortColumn, SortOrder = Model.SortOrder
+                                        })
+                </th>
+                <th class="text-center">
+                    @await Html.PartialAsync("_SortableHeader", new
+                                        {
+                        Title = "Forms Generated", Column = 1, SortColumn = Model.SortColumn, SortOrder = Model.SortOrder
+                                        })
+                </th>
+                <th class="text-center">
+                    Status
+                </th>
+                <th class="text-center">Artifacts</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Employers == null || !Model.Employers.Any())
+            {
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted">No filings found.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model.Employers)
+                {
+                    string rowClass = item.IsLocked ? "bg-label-gray" : "";
+                    string statusBadge = item.FilingStatusId switch
+                    {
+                        2 => "bg-success",
+                        1 => "bg-info",
+                        _ => "bg-secondary"
+                    };
+                    string icon = item.IsLocked ? "bx-lock-alt" : "bx-edit-alt";
+
+                    <tr class="@rowClass">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-2">
+                                    <span class="avatar-initial rounded bg-label-primary">
+                                        @item.EmployerName.Substring(0, 1)
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="fw-bold text-heading">@item.EmployerName</span>
+                                    <div class="small text-muted">EIN: @(CanViewSSNorEIN? item.TaxId: DataMasker.MaskEIN(item.TaxId))</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            @if (item.EmployeeFormsCount > 0)
+                            {
+                                <span class="badge bg-label-primary">@item.EmployeeFormsCount Forms</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">-</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <span class="badge @statusBadge">
+                                <i class='bx @icon me-1'></i> @item.StatusText
+                            </span>
+                            @if (item.LastGeneratedDate.HasValue)
+                            {
+                                <div class="small text-muted mt-1">@item.LastGeneratedDate.Value.ToString("MMM dd")</div>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @if (item.HasBatch)
+                            {
+                                <a href="javascript:;"
+                                   class="btn btn-sm btn-outline-dark" title="Download Filing Package"
+                                   onclick="triggerFileDownload('@Url.Action("DownloadForms", "ACA", new { employerId = item.EmployerId, year = Model.SelectedYear })')">
+                                    <i class='bx bxs-file-pdf me-1'></i> Package
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-muted small fst-italic">No Files</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="dropdown">
+                                <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                    <i class="bx bx-dots-vertical-rounded"></i>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end m-0">
+
+                                    <a class="dropdown-item" href="javascript:;" onclick="showFilingTimeline('@item.EmployerId', @Model.SelectedYear)">
+                                        <i class="bx bx-history me-1"></i> Timeline
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+
+                                    @if (!item.IsLocked)
+                                    {
+                                        <a class="dropdown-item" href="@Url.Action("Index", "FormGeneration", new { year = Model.SelectedYear })">
+                                            <i class="bx bx-refresh me-1"></i> Regenerate
+                                        </a>
+                                        if (item.HasBatch)
+                                        {
+                                            <div class="dropdown-divider"></div>
+                                            <a href="javascript:;" class="dropdown-item text-success" onclick="finalizeFiling('@item.EmployerId')">
+                                                <i class="bx bx-check-shield me-1"></i> Finalize & Lock
+                                            </a>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <a class="dropdown-item" href="javascript:;"
+                                           onclick="triggerFileDownload('@Url.Action("DownloadForms", "ACA", new { employerId = item.EmployerId, year = Model.SelectedYear })')">
+                                            <i class="bx bxs-download me-1"></i> Download Again
+                                        </a>
+                                        @if (User.IsInRole(UserRoles.SuperAdmin) || User.IsInRole(UserRoles.Admin) || User.IsInRole(UserRoles.ACADirector))
+                                        {
+                                            <div class="dropdown-divider"></div>
+                                            <a href="javascript:;" class="dropdown-item text-danger" onclick="unlockFiling('@item.EmployerId')">
+                                                <i class="bx bx-lock-open-alt me-1"></i> Unlock Filing
+                                            </a>
+                                        }
+
+                                        <div class="dropdown-divider"></div>
+                                        <!-- Archive / Unarchive Button based on IsArchived -->
+                                        @if (item.IsArchived)
+                                        {
+                                            <a href="javascript:;" class="dropdown-item text-info" onclick="toggleArchiveFiling('@item.EmployerId', false)">
+                                                <i class="bx bx-archive-out me-1"></i> Unarchive
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a href="javascript:;" class="dropdown-item text-muted" onclick="toggleArchiveFiling('@item.EmployerId', true)">
+                                                <i class="bx bx-archive-in me-1"></i> Archive File
+                                            </a>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@await Html.PartialAsync("_GridPagination", Model.Metadata)

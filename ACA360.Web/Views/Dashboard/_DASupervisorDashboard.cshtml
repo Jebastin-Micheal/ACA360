@@ -1,0 +1,163 @@
+@model ACA360.Core.Models.DashboardViewModel
+@{
+    var d = Model.SupervisorData ?? new ACA360.Core.Models.SupervisorDashboardData();
+    var affiliates = d.TotalEINs - d.TotalUniqueClients;
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="d-metric accent-danger">
+            <div class="d-metric-label">Past Due Clients</div>
+            <div class="d-metric-value counter text-danger" data-target="@d.PastDueClients">@d.PastDueClients</div>
+            <div class="d-metric-sub">Immediate attention</div>
+            <i class='bx bx-alarm-exclamation d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="d-metric">
+            <div class="d-metric-label">Active Structure</div>
+            <div class="d-metric-value counter" data-target="@d.TotalUniqueClients">@d.TotalUniqueClients</div>
+            <div class="d-metric-sub">+ @affiliates affiliates = <strong>@d.TotalEINs</strong> EINs</div>
+            <i class='bx bx-buildings d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="d-metric accent-info">
+            <div class="d-metric-label">Forms Mailed</div>
+            <div class="d-metric-value counter" data-target="@d.FormsMailedCount">@d.FormsMailedCount</div>
+            <div class="d-metric-sub">1095-C sent</div>
+            <i class='bx bx-mail-send d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="d-metric accent-success">
+            <div class="d-metric-label">e-Filed</div>
+            <div class="d-metric-value counter" data-target="@d.FormsEfiledCount">@d.FormsEfiledCount</div>
+            <div class="d-metric-sub">Transmitted to IRS</div>
+            <i class='bx bx-cloud-upload d-metric-icon'></i>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-xl-6">
+        <div class="d-card h-100">
+            <div class="d-card-header">
+                <h6 class="d-card-title"><i class='bx bx-upload me-2 text-info'></i>File Ingestion Health</h6>
+                <span class="badge bg-label-secondary">Live Queue Status</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 text-center">
+                    @{
+                        var boxes = new[] {
+                                        (d.FilesAccepted,      "Accepted",         "success",  "bx-check-circle"),
+                                        (d.FilesProcessing,    "Processing",       "info",     "bx-loader-circle"),
+                                        (d.FilesCriticalErrors,"Critical Errors",  "danger",   "bxs-error"),
+                                        (d.FilesRejected,      "Fixable Issues",   "warning",  "bx-x-circle"),
+                                        };
+                    }
+                    @foreach (var (val, label, color, icon) in boxes)
+                    {
+                        <div class="col-6">
+                            <div class="p-3 rounded" style="background:rgba(var(--bs-@(color)-rgb),.08); border:1px solid rgba(var(--bs-@(color)-rgb),.15);">
+                                <i class='bx @icon text-@color d-block mb-1' style="font-size:1.5rem;"></i>
+                                <div class="fw-bold fs-4 text-@color counter" data-target="@val">@val</div>
+                                <div style="font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;" class="text-muted">@label</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-xl-6">
+        <div class="d-card h-100">
+            <div class="d-card-header">
+                <h6 class="d-card-title"><i class='bx bx-git-branch me-2 text-primary'></i>Client Pipeline Distribution</h6>
+            </div>
+            <div class="card-body"><div id="daProcessChart" style="height:230px;"></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="d-card">
+    <div class="d-card-header">
+        <h6 class="d-card-title"><i class='bx bx-table me-2 text-primary'></i>Production Tracking</h6>
+        <div class="d-flex gap-2">
+            <input type="text" id="daSearch" class="form-control form-control-sm" placeholder="Search employers…" style="width:200px;">
+            <select id="daStepFilter" class="form-select form-select-sm" style="width:140px;">
+                <option value="">All Steps</option>
+                @if (d.ProcessStepDistribution != null)
+                {
+                    @foreach (var step in d.ProcessStepDistribution.Keys)
+                    {
+                        <option value="@step">@step</option>
+                    }
+                }
+            </select>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table id="supervisorTable" class="table table-hover align-middle mb-0" style="font-size:.82rem;">
+            <thead style="background:rgba(105,108,255,.04);">
+                <tr>
+                    <th class="ps-4 py-3" style="font-size:.68rem;letter-spacing:.5px;">EMPLOYER</th>
+                    <th class="py-3" style="font-size:.68rem;letter-spacing:.5px;">TYPE</th>
+                    <th class="py-3" style="font-size:.68rem;letter-spacing:.5px;">STEP</th>
+                    <th class="py-3" style="font-size:.68rem;letter-spacing:.5px;">FILE HEALTH</th>
+                    <th class="py-3" style="font-size:.68rem;letter-spacing:.5px;">DUE DATE</th>
+                    <th class="pe-4 py-3"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in d.ClientStatusList ?? new List<ACA360.Core.Models.ClientProcessStatusRow>())
+                {
+                    <tr>
+                        <td class="ps-4 fw-semibold">@row.EmployerName</td>
+                        <td><span class="badge bg-label-@(row.IsAffiliate ? "secondary" : "primary")" style="font-size:.68rem;">@(row.IsAffiliate ? "Affiliate" : "Main")</span></td>
+                        <td><span class="badge bg-@row.StepColor" style="font-size:.72rem;">@row.CurrentStep</span></td>
+                        <td>
+                            @if (row.IsPastDue)
+                            {
+                                <span class="risk-critical">Needs Action</span>
+                            }
+                            else
+                            {
+
+                                <span class="risk-ok">Healthy</span>
+                            }
+                        </td>
+                        <td class="@(row.IsPastDue ? "text-danger fw-bold" : "")">@row.DueDate.ToString("MMM dd")</td>
+                        <td class="pe-4">
+                            <a href="@Url.Action("Dashboard", "Employer", new { id = row.EmployerId })" class="btn btn-sm btn-icon btn-outline-primary"><i class='bx bx-search'></i></a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script id="daChartLabels" type="application/json">@Json.Serialize(d.ProcessStepDistribution?.Keys ?? Enumerable.Empty<string>())</script>
+<script id="daChartValues" type="application/json">@Json.Serialize(d.ProcessStepDistribution?.Values ?? Enumerable.Empty<int>())</script>
+<script>
+    $(document).ready(function() {
+        var table = $('#supervisorTable').DataTable({ pageLength:10, order:[[4,'asc']],
+            dom:'t<"d-flex justify-content-between px-4 py-3"ip>' });
+        $('#daSearch').on('keyup', function(){ table.search(this.value).draw(); });
+        $('#daStepFilter').on('change', function(){ table.column(2).search(this.value).draw(); });
+
+        new ApexCharts(document.querySelector('#daProcessChart'), {
+            series: JSON.parse(document.getElementById('daChartValues').textContent),
+            labels: JSON.parse(document.getElementById('daChartLabels').textContent),
+            chart: { type:'donut', height:230 },
+            colors: ['#696cff','#71dd37','#ff3e1d','#8592a3','#03c3ec'],
+            plotOptions: { pie:{ donut:{ size:'62%', labels:{ show:true,
+                total:{ show:true, label:'Clients', fontWeight:700 } } } } },
+            dataLabels:{ enabled:false }, legend:{ position:'bottom', fontSize:'12px' }, stroke:{ width:0 }
+        }).render();
+    });
+</script>

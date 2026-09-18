@@ -1,0 +1,115 @@
+﻿@model ACA360.Core.Models.Tracker.FirmItem
+
+<form id="frmFirm" class="browser-default-validation">
+    <div class="modal-header border-bottom py-3 bg-label-primary">
+        <div class="d-flex align-items-center">
+            <div class="avatar avatar-md me-3">
+                <span class="avatar-initial rounded-circle bg-primary shadow-sm">
+                    <i class="bx bx-buildings fs-3"></i>
+                </span>
+            </div>
+            <div>
+                <h5 class="modal-title fw-bold mb-0">Firm Overview</h5>               
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+
+    <div class="modal-body py-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <input type="hidden" asp-for="FirmId" />
+                    <input type="hidden" asp-for="State" id="hdnStateName" />
+
+
+                    <div class="d-flex align-items-center mb-4">
+                        <span class="badge badge-center rounded-pill bg-label-primary me-2"><i class="bx bx-info-circle"></i></span>
+                        <h6 class="text-uppercase fw-bold mb-0 small">Identity</h6>
+                        <hr class="flex-grow-1 ms-3 opacity-25" />
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" asp-for="FirmName">Official Firm Name <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-merge">
+                                <span class="input-group-text"><i class="bx bx-business"></i></span>
+                                <input asp-for="FirmName" class="form-control" placeholder="Enter the official firm name" required />
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center mb-4">
+                        <span class="badge badge-center rounded-pill bg-label-success me-2"><i class="bx bx-map-pin"></i></span>
+                        <h6 class="text-uppercase fw-bold mb-0 small">Registered Address</h6>
+                        <hr class="flex-grow-1 ms-3 opacity-25" />
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" asp-for="Address">Address</label>
+                            <div class="input-group input-group-merge">
+                                <span class="input-group-text"><i class="bx bx-map"></i></span>
+                                <input asp-for="Address" class="form-control" placeholder="Address" />
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold" asp-for="City">City</label>
+                            <input asp-for="City" class="form-control" placeholder="City" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" asp-for="StateId">State</label>
+                            <select name="StateId" id="StateId" class="form-select">
+                                <option value="">State</option>
+                                @foreach (var state in (SelectList)ViewBag.States)
+                                {
+                                    <option value="@state.Value" selected="@(Model.StateId?.ToString() == state.Value ? "selected" : null)">
+                                        @state.Text
+                                    </option>
+                                }
+                            </select>
+                            <span asp-validation-for="StateId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold" asp-for="Zip">Zip Code</label>
+                            <input asp-for="Zip" class="form-control" placeholder="Zip" maxlength="10" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center mb-4">
+                        <span class="badge badge-center rounded-pill bg-label-warning me-2"><i class="bx bx-cog"></i></span>
+                        <h6 class="text-uppercase fw-bold mb-0 small">System Configuration</h6>
+                        <hr class="flex-grow-1 ms-3 opacity-25" />
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="p-3 rounded border border-dashed d-flex align-items-center justify-content-between bg-lighter">
+                                <div class="d-flex align-items-center">
+                                    <div class="badge bg-label-primary p-2 me-3 rounded">
+                                        <i class="bx bx-power-off fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold">Active Status</h6>
+
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" asp-for="IsActive" id="chkFirmActive" style="width: 2.6em; height: 1.3em;" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer border-top bg-lighter p-3 py-3">
+        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Discard</button>
+        <button type="button" id="btnSaveFirm" onclick="saveFirm()" class="btn btn-primary px-5 shadow-sm">
+            <i class="bx bx-save me-1"></i> Save Firm
+        </button>
+    </div>
+</form>

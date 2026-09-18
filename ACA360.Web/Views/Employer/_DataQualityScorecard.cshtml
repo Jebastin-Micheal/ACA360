@@ -1,0 +1,78 @@
+﻿@model ACA360.Core.Models.DataHealthScorecard
+
+<div class="text-center mb-4">
+    <div class="position-relative d-inline-block">
+        <div id="healthGauge"></div>
+        <div class="position-absolute top-50 start-50 translate-middle mt-2">
+            <h2 class="mb-0 fw-bold @(Model.HealthScore < 70 ? "text-danger" : "text-success")">@Model.HealthScore</h2>
+            <small class="text-muted text-uppercase">Health Score</small>
+        </div>
+    </div>
+    <h5 class="mt-2">Data Quality Rating: <strong>@Model.Rating</strong></h5>
+</div>
+
+@if (Model.Alerts.Any())
+{
+    <div class="list-group list-group-flush text-start">
+        @foreach (var alert in Model.Alerts)
+        {
+            string borderClass = alert.Severity == "Critical" ? "border-danger border-start border-4" :
+            alert.Severity == "High" ? "border-warning border-start border-4" : "";
+
+            <div class="list-group-item p-3 mb-2 bg-light rounded @borderClass">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1 fw-bold text-dark">
+                        @if (alert.Severity == "Critical")
+                        {
+                            <i class='bx bxs-error text-danger me-1'></i>
+                        }
+                        else if (alert.Severity == "High")
+                        {
+
+                            <i class='bx bxs-flag-alt text-warning me-1'></i>
+                        }
+                        else
+                        {
+
+                            <i class='bx bx-info-circle text-info me-1'></i>
+                        }
+                        @alert.Title
+                    </h6>
+                    <span class="badge bg-label-secondary">@alert.AffectedRecordCount Records</span>
+                </div>
+                <p class="mb-1 small">@alert.Description</p>
+                <div class="mt-2 p-2 bg-white rounded border border-dashed">
+                    <small class="text-success"><i class='bx bx-bulb me-1'></i> <strong>Suggestion:</strong> @alert.Suggestion</small>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="text-center py-4">
+        <div class="avatar avatar-xl bg-label-success rounded-circle mx-auto mb-3">
+            <i class='bx bx-check-double fs-1'></i>
+        </div>
+        <h5>Data Looks Great!</h5>
+        <p class="text-muted">No anomalies detected in the current dataset.</p>
+    </div>
+}
+
+<script>
+    // Simple Gauge using ApexCharts (Ensure ApexCharts is loaded on parent page)
+    var options = {
+        series: [@Model.HealthScore],
+        chart: { height: 200, type: 'radialBar' },
+        plotOptions: {
+            radialBar: {
+                hollow: { size: '65%' },
+                track: { background: '#f0f2f5' },
+                dataLabels: { show: false } // Hide default label, we used custom center HTML
+            }
+        },
+        colors: ['@((Model.HealthScore < 70) ? "#ff3e1d" : "#71dd37")'],
+        stroke: { lineCap: 'round' },
+    };
+    new ApexCharts(document.querySelector("#healthGauge"), options).render();
+</script>

@@ -1,0 +1,87 @@
+﻿<li class="nav-item dropdown-shortcuts navbar-dropdown dropdown me-2 me-xl-0"><li class="nav-item dropdown-shortcuts navbar-dropdown dropdown me-2 me-xl-0">
+<a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);"
+
+       data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+<i class="icon-base bx bx-grid-alt icon-md"></i>
+</a>
+<div class="dropdown-menu dropdown-menu-end p-0">
+<div class="dropdown-menu-header border-bottom">
+<div class="dropdown-header d-flex align-items-center py-3">
+<h6 class="mb-0 me-auto">Shortcuts</h6>
+<a href="javascript:void(0)" class="dropdown-shortcuts-add py-2" id="btnAddShortcut"
+
+                   data-bs-toggle="tooltip" data-bs-placement="top" title="Add shortcuts">
+<i class="icon-base bx bx-plus-circle text-heading"></i>
+</a>
+</div>
+</div>
+ 
+        <div class="dropdown-shortcuts-list scrollable-container">
+ 
+            @* ---- ROW 1: FIXED - Dashboard + Calendar (plain hardcoded href, no DB) ---- *@
+<div class="row row-bordered overflow-visible g-0">
+<div class="dropdown-shortcuts-item col">
+<span class="dropdown-shortcuts-icon rounded-circle mb-3">
+<i class="icon-base bx bx-pie-chart-alt-2 icon-26px text-heading"></i>
+</span>
+<a href="/Dashboard" class="stretched-link">Dashboard</a>
+
+</div>
+<div class="dropdown-shortcuts-item col">
+<span class="dropdown-shortcuts-icon rounded-circle mb-3">
+<i class="icon-base bx bx-calendar icon-26px text-heading"></i>
+</span>
+
+                    @* No real page yet -> not clickable. Once the Calendar page
+
+                       is ready, replace this <span> with: *@
+<a href="/Calendar" class="stretched-link">Calendar</a>
+
+                    @* <span class="stretched-link text-muted" style="cursor:default;">Calendar</span> *@
+</div>
+</div>
+ 
+            @* ---- MIDDLE ROWS: DYNAMIC - filled by JS from DB (max 4 items / 2 rows) ---- *@
+<div id="shortcutsContainer"></div>
+ 
+            @* ---- LAST ROW: FIXED - FAQs + Settings (plain hardcoded href, no DB) ---- *@
+<div class="row row-bordered overflow-visible g-0">
+<div class="dropdown-shortcuts-item col">
+<span class="dropdown-shortcuts-icon rounded-circle mb-3">
+<i class="icon-base bx bx-help-circle icon-26px text-heading"></i>
+</span>
+
+                    @* No real page yet -> not clickable. Once the FAQs page
+
+                       is ready, replace this <span> with:*@
+<a href="/Faq" class="stretched-link">FAQs</a> 
+</div>
+<div class="dropdown-shortcuts-item col">
+<span class="dropdown-shortcuts-icon rounded-circle mb-3">
+<i class="icon-base bx bx-cog icon-26px text-heading"></i>
+</span>
+<a href="/Settings" class="stretched-link">Setting</a>
+
+</div>
+</div>
+ 
+        </div>
+</div>
+</li>
+ 
+@* ---- Add-shortcut popup ---- *@
+<div class="dropdown-menu shadow border rounded p-0" id="availableShortcutsPopup"
+
+     style="display:none; position:absolute; min-width:230px; z-index:1065;">
+<div class="p-2 border-bottom fw-semibold small">Add Shortcut</div>
+<div id="addShortcutMsg" class="px-2 pt-2 small" style="display:none;"></div>
+<ul class="list-unstyled m-0 p-0" id="availableShortcutsList" style="max-height:260px; overflow-y:auto;"></ul>
+</div>
+ 
+@* ---- Antiforgery token ---- *@
+<form id="__afTokenForm" style="display:none">
+
+    @Html.AntiForgeryToken()
+</form>
+
+ 

@@ -1,0 +1,183 @@
+﻿@{
+    ViewData["Title"] = "Manage Sales Representative";
+    ViewBag.ShowFilterButton = false;
+    ViewBag.ShowViewModeToggle = false;
+}
+
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Manage Sales Representative",
+    items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem { Title = "Employer", Url = Url.Action("Index", "Employer"), IsActive = false },
+        new BreadcrumbItem { Title = "Tracker", Url = "", IsActive = false },
+        new BreadcrumbItem { Title = "Manage Sales Representative", Url = "", IsActive = true }
+    }
+})
+
+<div id="SalesRepListContainerWrapper" style="position:relative;">
+
+    <div id="loader" class="loader" style="display:none;">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="card mb-6">
+        <div class="card-body">
+            @{
+                ViewBag.ShowFilterButton = false;
+                ViewBag.ShowViewModeToggle = false;
+            }
+            @await Html.PartialAsync("_GridToolbarCommon", new
+            {
+                IsEmployerPage = false,
+                        CustomButtons = @"<button class=""btn create-new btn-primary"" type=""button"" id=""add_SalesRep_controls"">
+                        <span class=""d-flex align-items-center gap-2"">
+                        <i class=""icon-base bx bx-plus icon-sm""></i>
+                        <span class=""d-none d-sm-inline-block"">Add New Sales Rep</span>
+                        </span>
+                        </button>"
+                        })
+
+            <div class="row">
+                <div id="gridContainer">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+@* ── Add / Edit Modal ── *@
+<div class="modal fade" id="salesRepModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/common-grid.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+
+            // 1. Initialize Common Grid Manager
+            GridManager.init({
+                url: '@Url.Action("GetSalesRepList", "SalesRep")',
+                container: '#gridContainer',
+                loadingContainer: '#loader',
+                cookieName: 'view_mode_salesrep',
+                state: {
+                    pageIndex: 1,
+                    pageSize: 10,
+                    search: '',
+                    sortColumn: 'SalesRepName',
+                    sortOrder: 'ASC',
+                    viewMode: 'List'
+                }
+            });
+
+            // ✅ FIX 1: Explicitly trigger first load (init() does NOT auto-load)
+            GridManager.reload();
+
+            // 2. Add Sales Rep
+            $("#add_SalesRep_controls").click(function () {
+                openModal(0);
+            });
+
+            // 3. Edit Sales Rep
+            $(document).on('click', '.edit-SalesRep-btn', function () {
+                var id = $(this).data('id');
+                openModal(id);
+            });
+
+            // 4. Delete Sales Rep
+            $(document).on('click', '.delete-SalesRep-btn', function () {
+                var id = $(this).data('id');
+                deleteSalesRep(id);
+            });
+
+            // ✅ FIX 3: Sort header click — use GridManager state instead of old sortGrid()
+            $(document).on('click', '.cursor-pointer[onclick^="sortGrid"]', function (e) {
+                e.preventDefault();
+                var state = GridManager.getState();
+                var col = 'SalesRepName';
+                if (state.sortColumn === col) {
+                    state.sortOrder = state.sortOrder === 'ASC' ? 'DESC' : 'ASC';
+                } else {
+                    state.sortColumn = col;
+                    state.sortOrder = 'ASC';
+                }
+                GridManager.reload();
+            });
+
+        });
+
+        // ── Modal Functions ─────────────────────────────────────────
+        function openModal(id) {
+            $.get('/SalesRep/AddUpdate/' + id).done(function (html) {
+                $('#modalContent').html(html);
+                new bootstrap.Modal(document.getElementById('salesRepModal')).show();
+            });
+        }
+
+        function saveSalesRep() {
+            var form = $('#frmSalesRep');
+            $.validator.unobtrusive.parse(form);
+
+            if (!form.valid()) {
+                form.find('.border-danger').removeClass('border-danger');
+                var errors = form.find('.input-validation-error');
+                errors.addClass('border-danger');
+                if (errors.first().length) errors.first().focus();
+                return;
+            }
+
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '/SalesRep/Save',
+                type: 'POST',
+                data: form.serialize(),
+                headers: { "RequestVerificationToken": token },
+                success: function (res) {
+                    if (res && res.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('salesRepModal')).hide();
+                        Swal.fire('Saved!', 'Sales Representative saved successfully.', 'success');
+                        GridManager.reload();
+                    } else {
+                        Swal.fire('Error', res.message || 'Failed to save.', 'error');
+                    }
+                },
+                error: function () {
+                    Swal.fire('Error', 'Error occurred while saving.', 'error');
+                }
+            });
+        }
+
+        // ── Delete ──────────────────────────────────────────────────
+        function deleteSalesRep(id) {
+            Swal.fire({
+                title: 'Are you sure?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    var token = $('input[name="__RequestVerificationToken"]').val();
+                    $.ajax({
+                        url: '/SalesRep/Delete/' + id,
+                        type: 'POST',
+                        headers: { "RequestVerificationToken": token },
+                        success: function (res) {
+                            if (res.success) {
+                                GridManager.reload();
+                                Swal.fire('Deleted!', '', 'success');
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+}

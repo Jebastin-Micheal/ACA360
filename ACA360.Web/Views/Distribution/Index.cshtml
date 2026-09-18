@@ -1,0 +1,415 @@
+﻿@model ACA360.Core.Models.DistributionDashboardViewModel
+@using ACA360.Web.ViewComponents
+@{
+    ViewData["Title"] = "Distribution Center";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    int empId = ViewBag.SelectedEmployerId ?? 0;
+    int year = ViewBag.SelectedYear ?? DateTime.Now.Year;
+
+
+    // CONFIG: Toolbar Buttons including custom status filters and bulk email actions
+    var customButtons = @"
+    <div class='d-inline-flex align-items-center flex-wrap gap-2 w-100 w-md-auto mt-2 mt-md-0'>
+        <input type='hidden' id='currentStatus' value='all' />
+        <div class='btn-group me-1 me-md-3' role='group'>
+            <button type='button' class='btn btn-outline-secondary active status-filter-btn' data-status='all'>All</button>
+            <button type='button' class='btn btn-outline-success status-filter-btn' data-status='electronic'>Electronic</button>
+            <button type='button' class='btn btn-outline-warning status-filter-btn' data-status='paper'>Paper</button>
+            <button type='button' class='btn btn-outline-primary status-filter-btn' data-status='sent'>Sent</button>
+            <button type='button' class='btn btn-outline-info status-filter-btn' data-status='pending'>Pending</button>
+        </div>
+
+        <div class='dropdown dist-export-wrapper me-2'>
+    <button class='btn btn-outline-secondary dropdown-toggle hide-arrow' type='button' data-bs-toggle='dropdown'>
+        <i class='bx bx-export me-1'></i> Export
+    </button>
+    <ul class='dropdown-menu dropdown-menu-end'>
+        <li><a class='dropdown-item dist-export-action' href='#' data-format='print'><i class='bx bx-printer me-2'></i>Print</a></li>
+        <li><a class='dropdown-item dist-export-action' href='#' data-format='csv'><i class='bx bx-file me-2'></i>CSV</a></li>
+        <li><a class='dropdown-item dist-export-action' href='#' data-format='excel'><i class='bx bxs-file-export me-2'></i>Excel</a></li>
+        <li><a class='dropdown-item dist-export-action' href='#' data-format='pdf'><i class='bx bxs-file-pdf me-2'></i>PDF</a></li>
+    </ul>
+  </div>
+
+        <div class='d-flex align-items-center'>
+            <span id='selectionCount' class='text-muted small fw-bold me-3 text-nowrap'>0 Selected</span>
+            <button id='btnBulkEmail' class='btn btn-primary text-nowrap' disabled onclick='sendBulkEmails()'>
+                <i class='bx bx-envelope me-1'></i> Email Selected
+            </button>
+        </div>
+    </div>";
+
+    var toolbarConfig = new
+    {
+        IsEmployerPage = false,
+        CustomButtons = customButtons
+    };
+}
+
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Distribution Center",
+    items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem { Title = "Employer", Url = Url.Action("Index", "Employer"), IsActive = false },
+        new BreadcrumbItem { Title = "Distribution Center", Url = "", IsActive = true }
+    }
+})
+
+<div class="card mb-4">
+    <div class="card-header border-bottom py-3">
+        <form method="get" class="d-flex align-items-center gap-3">
+            <h5 class="mb-0 text-primary me-auto"><i class='bx bx-paper-plane me-2'></i> Distribution Center</h5>
+
+            <select name="employerId" asp-items="ViewBag.Employers" class="form-select form-select-sm" style="width: 250px;" onchange="this.form.submit()">
+            </select>
+
+            <select name="year" asp-items="ViewBag.Years" class="form-select form-select-sm" style="width: 100px;" onchange="this.form.submit()">
+            </select>
+        </form>
+    </div>
+</div>
+
+@if (empId == 0)
+{
+    <div class="alert alert-info text-center">Please select an employer to manage distribution.</div>
+}
+else
+{
+    <div class="row mb-4 g-3">
+        <div class="col-md-3">
+            <div class="card h-100 border-start border-4 border-primary">
+                <div class="card-body">
+                    <small class="text-muted fw-bold">Total Employees</small>
+                    <h3 class="mb-0 text-primary">@Model.TotalEmployees</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100 border-start border-4 border-success">
+                <div class="card-body">
+                    <small class="text-muted fw-bold">Electronic Consent</small>
+                    <h3 class="mb-0 text-success">@Model.ElectronicCount</h3>
+                    <small class="text-success"><i class='bx bx-check'></i> Can Email</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100 border-start border-4 border-warning">
+                <div class="card-body">
+                    <small class="text-muted fw-bold">Paper Only</small>
+                    <h3 class="mb-0 text-warning">@Model.PaperCount</h3>
+                    <small class="text-warning"><i class='bx bx-printer'></i> Must Print</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100 border-start border-4 border-info">
+                <div class="card-body">
+                    <small class="text-muted fw-bold">Emails Sent</small>
+                    <h3 class="mb-0 text-info">@Model.EmailedCount</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="DistributionListContainerWrapper" style="position:relative;">
+        <div id="loader" class="loader" style="display:none;">
+            <div class="spinner"></div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                @{
+                    ViewBag.ShowFilterButton = false;
+                    ViewBag.ShowViewModeToggle = false;
+                }
+
+                @await Html.PartialAsync("_GridToolbarCommon", toolbarConfig)
+
+
+                <div class="row">
+                    <div id="DistributionListContainer">
+                        @await Html.PartialAsync("_DistributionListPartial", Model)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script src="~/js/common-grid.js"></script>
+    <script>
+                const employerId = '@empId';
+                const currentYear = '@year';
+
+                // 1. Bulletproof AJAX Interceptor:
+                // This guarantees the custom statusFilter is ALWAYS injected into the GridManager's AJAX request,
+                // regardless of how common-grid.js manages its internal state.
+                        $.ajaxPrefilter(function (options) {
+                    if (options.url && (options.url.includes('DistributionListPartial') || options.url.includes('ExportDistribution'))) {
+                        const activeStatus = $('.status-filter-btn.active').data('status') || 'all';
+
+                        if (options.url.includes('statusFilter=')) {
+                            options.url = options.url.replace(/statusFilter=[^&]*/, 'statusFilter=' + activeStatus);
+                        } else {
+                            options.url += (options.url.includes('?') ? '&' : '?') + 'statusFilter=' + activeStatus;
+                        }
+                    }
+                });
+
+
+                $(document).ready(function() {
+                    if (employerId !== '0') {
+                        GridManager.init({
+                            url: '@Url.Action("DistributionListPartial", "Distribution")?employerId=' + employerId + '&year=' + currentYear,
+                            container: '#DistributionListContainer',
+                            loadingContainer: '#loader',
+                            cookieName: 'view_mode_distribution',
+                            state: {
+                                pageIndex: @(Model.Metadata?.CurrentPage ?? 1),
+                                pageSize: @(Model.Metadata?.PageSize ?? 10),
+                                search: '@Html.Raw(Model.Search ?? "")',
+                                sortColumn: '@Html.Raw(Model.SortColumn)',
+                                sortOrder: '@Html.Raw(Model.SortOrder ?? "")',
+                                viewMode: 'List'
+                            },
+                            onLoadComplete: function() {
+                                initTooltips();
+                                $('#selectAll').prop('checked', false);
+                                updateToolbar();
+                            }
+                        });
+                    }
+
+                    // Custom Status Filters Click Event
+                    $('.status-filter-btn').click(function() {
+                    $('.status-filter-btn').removeClass('active');
+                    $(this).addClass('active');
+                    var status = $(this).data('status');
+                    $('#currentStatus').val(status);
+
+                    GridManager.init({ state: { pageIndex: 1 } });
+                    GridManager.reload();
+                });
+
+                    // Grid Checkbox Selection Logic
+                    $(document).on('change', '#selectAll', function() {
+                        $('.emp-select:not(:disabled)').prop('checked', this.checked);
+                        updateToolbar();
+                    });
+
+                    $(document).on('change', '.emp-select', function() {
+                        if(!this.checked) $('#selectAll').prop('checked', false);
+                        updateToolbar();
+                    });
+                });
+
+                $(document).on('click', '.dist-export-action', function (e) {
+            e.preventDefault();
+            var format = $(this).data('format');
+            var activeStatus = $('.status-filter-btn.active').data('status') || 'all';
+
+            var url = '@Url.Action("ExportDistribution", "Distribution")'
+                + '?employerId=' + employerId
+                + '&year=' + currentYear
+                + '&statusFilter=' + activeStatus
+                + '&format=' + format;
+
+            // Print: hidden iframe only — no visible wrapper.
+            // BuildPrintHtml auto-triggers window.print() on load, same as Rules module.
+            if (format === 'print') {
+                var iframeName = 'printFrame_' + new Date().getTime();
+                var $iframe = $('<iframe>').attr('name', iframeName).css('display', 'none');
+                $('body').append($iframe);
+                $iframe.attr('src', url);
+
+                // Cleanup after giving the print dialog time to open
+                setTimeout(function () {
+                    $iframe.remove();
+                }, 5000);
+                return;
+            }
+
+            // CSV / Excel / PDF: fetch + blob download
+            $('#loader').show();
+            fetch(url, { credentials: 'same-origin' })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('Export failed');
+                    var disposition = res.headers.get('Content-Disposition') || '';
+                    var match = disposition.match(/filename="?([^"]+)"?/);
+                    var fileName = match ? match[1] : ('DistributionList.' + (format === 'excel' ? 'xlsx' : format));
+                    return res.blob().then(function (blob) { return { blob: blob, fileName: fileName }; });
+                })
+                .then(function (result) {
+                    var objectUrl = window.URL.createObjectURL(result.blob);
+                    var a = document.createElement('a');
+                    a.href = objectUrl;
+                    a.download = result.fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(objectUrl);
+                })
+                .catch(function () {
+                    Swal.fire('Error!', 'Export failed. Please try again.', 'error');
+                })
+                .finally(function () {
+                    $('#loader').hide();
+                });
+        });
+
+                function updateToolbar() {
+                    var count = $('.emp-select:checked').length;
+                    $('#selectionCount').text(count + " Selected");
+                    $('#btnBulkEmail').prop('disabled', count === 0);
+                }
+
+                function initTooltips() {
+                    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
+                }
+
+                // UPDATED: SweetAlert-based confirm + toast, with Send/Resend wording based on prior status
+                function sendSingleEmail(id, alreadySent) {
+                    const employeeIdStr = String(id);
+                    const isResend = (alreadySent === true || alreadySent === 'true');
+
+                    Swal.fire({
+                        title: isResend ? 'Resend secure link?' : 'Send secure link?',
+                        text: isResend
+                            ? 'This employee has already been sent a link. Do you want to resend it?'
+                            : 'Are you sure you want to send a secure download link to this employee?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: isResend ? 'Resend Link' : 'Send Link'
+                    }).then((result) => {
+                        if (!result.isConfirmed) return;
+
+                        $.post('@Url.Action("SendSecureEmail", "Distribution")', { employeeId: employeeIdStr, year: currentYear }, function (res) {
+                            if (res.success) {
+                                Swal.fire({
+                                    title: isResend ? 'Resent!' : 'Sent!',
+                                    text: res.message,
+                                    icon: 'success',
+                                    timer: 2000,
+                                    timerProgressBar: true,
+                                    showConfirmButton: false,
+                                    toast: true,
+                                    position: 'top-end'
+                                });
+                                GridManager.reload();
+                            } else {
+                                Swal.fire({
+                                    title: 'Error',
+                                    text: res.message,
+                                    icon: 'error',
+                                    timer: 3000,
+                                    timerProgressBar: true,
+                                    showConfirmButton: false,
+                                    toast: true,
+                                    position: 'top-end'
+                                });
+                            }
+                        });
+                    });
+                }
+
+                function sendBulkEmails() {
+                    var ids = [];
+                    $('.emp-select:checked').each(function() { ids.push(String($(this).val())); });
+
+                    if(!confirm(`Send emails to ${ids.length} employees?`)) return;
+                    $.post('@Url.Action("SendBatchEmails", "Distribution")', { employeeIds: ids, year: currentYear }, function(res) {
+                        if(res.success) {
+                            toastr.success(res.message);
+                            GridManager.reload();
+                        }
+                        else { toastr.error(res.message); }
+                    });
+                }
+
+                function downloadPdf(id) {
+                    const employeeIdStr = String(id);
+                    Swal.fire({
+                        title: 'Download PDF?',
+                        text: "Do you want to download the form for this employee?",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, download it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            var pageLoader = document.getElementById('page-loader');
+                            if (pageLoader) pageLoader.style.display = 'block';
+
+                            submitDownloadForm('@Url.Action("DownloadPdf", "Distribution")', {
+                                employeeId: employeeIdStr,
+                                year: currentYear
+                            });
+                            monitorDownload();
+                        }
+                    });
+                }
+
+                function monitorDownload() {
+                    Swal.fire({
+                        title: 'Downloading...',
+                        icon: 'success',
+                        timer: 2000,
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
+
+                    setTimeout(() => {
+                        var pageLoader = document.getElementById('page-loader');
+                        if (pageLoader) pageLoader.style.display = 'none';
+                        $('#loader').hide();
+                    }, 2000);
+                }
+
+                // UPDATED: Submits into a hidden iframe instead of the current window,
+                // so the page no longer navigates away / reloads on download.
+                function submitDownloadForm(url, data) {
+                    var iframeName = 'downloadFrame_' + new Date().getTime();
+                    var iframe = $('<iframe>').attr('name', iframeName).css('display', 'none');
+                    $('body').append(iframe);
+
+                    var form = $('<form></form>')
+                        .attr('action', url)
+                        .attr('method', 'post')
+                        .attr('target', iframeName)
+                        .css('display', 'none');
+
+                    var token = $('input[name="__RequestVerificationToken"]').val();
+                    if(token) {
+                        form.append($('<input>').attr('type', 'hidden').attr('name', '__RequestVerificationToken').val(token));
+                    }
+                    for (var key in data) {
+                        if (Array.isArray(data[key])) {
+                            data[key].forEach(function(val) {
+                                form.append($('<input>').attr('type', 'hidden').attr('name', key).val(val));
+                            });
+                        } else {
+                            form.append($('<input>').attr('type', 'hidden').attr('name', key).val(data[key]));
+                        }
+                    }
+                    $('body').append(form);
+                    form[0].submit();
+
+                    // Cleanup after giving the download time to trigger
+                    setTimeout(function() {
+                        form.remove();
+                        iframe.remove();
+                    }, 5000);
+                }
+    </script>
+}

@@ -1,0 +1,170 @@
+﻿@model ACA360.Core.Models.DownloadHubViewModel
+@using ACA360.Web.ViewComponents
+@{
+    ViewData["Title"] = "Downloads & Archives";
+}
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Downloads & Archives",
+    items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem { Title = "Employer", Url = Url.Action("Index", "Employer"), IsActive = false },
+        new BreadcrumbItem { Title = "Downloads Hub", Url = "", IsActive = true }
+    }
+})
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-label-primary">
+            <div class="card-body d-flex justify-content-between align-items-center p-2">
+                <div>
+                    <h4 class="mb-1 text-primary fw-bold"> <i class='bx bxs-cloud-download me-2'></i> Filing Cabinet</h4>
+                    <p class="mb-0">Access and manage all generated tax forms securely.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-white text-primary shadow-sm p-2">
+                        <i class='bx bx-file me-1'></i> @Model.Files?.Count Files
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header border-bottom py-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+            <div class="d-flex align-items-center gap-2">
+                <input type="text" id="searchBox" class="form-control form-control-sm" placeholder="Search Employer..." style="width: 250px;">
+
+
+                <select id="yearFilter" name="year" asp-items="ViewBag.Years" class="form-select form-select-sm" style="width: 100px;">
+                </select>
+
+            </div>
+
+            <div>
+                <button class="btn btn-outline-secondary btn-sm" onclick="location.reload()">
+                    <i class='bx bx-refresh'></i> Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive text-nowrap ui-table-responsive">
+        <table class="table table-hover ui-table" id="downloadTable">
+            <thead>
+                <tr>
+                    <th>File Name / Package</th>
+                    <th>Employer</th>
+                    <th>Tax Year</th>
+                    <th>Generated</th>
+                    <th>Size</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Files.Any())
+                {
+                    <tr><td colspan="6" class="text-center py-5 text-muted">No files found. Generate a batch first.</td></tr>
+                }
+                <tr id="noResultsRow" style="display: none;">
+                    <td colspan="6" class="text-center py-5 text-muted">No files found. Generate a batch first.</td>
+                </tr>
+                @foreach (var file in Model.Files)
+                {
+                    // FIX: Use Null Conditional Operator (?.) and Null Coalescing (??)
+                    <tr class="file-row" data-year="@file.Year" data-employer="@(file.EmployerName?.ToLower() ?? "")">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <span class="avatar-initial rounded bg-label-warning">
+                                        <i class='bx bxs-file-archive fs-4'></i>
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="fw-bold text-heading">@file.FormType</span>
+                                    @if (file.IsNew)
+                                    {
+                                        <span class="badge badge-center rounded-pill bg-danger w-px-20 h-px-20 ms-1">N</span>
+                                    }
+                                    <div class="small text-muted text-truncate" title="@file.FileName" style="max-width: 200px;">@file.FileName</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="fw-semibold">@(file.EmployerName ?? "Unknown")</span>
+                        </td>
+                        <td>
+                            <span class="badge @file.BadgeClass">@file.Year</span>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span>@file.CreatedDate.ToString("MMM dd, yyyy")</span>
+                                <small class="text-muted">@file.CreatedDate.ToString("hh:mm tt")</small>
+                            </div>
+                        </td>
+                        <td><span class="text-muted">@file.FileSize</span></td>
+                        <td class="text-end">
+
+                            <!-- ✅ GANESH FIX - Download using Hidden Iframe -->
+                            <button type="button"
+                                    class="btn btn-sm btn-primary shadow-sm"
+                                    onclick="downloadFile('@file.FileName')">
+                                <i class='bx bxs-download me-1'></i> Download
+                            </button>
+
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+
+            // Unified Filter Function
+            function applyFilters() {
+                var searchTerm = $("#searchBox").val().toLowerCase();
+                var selectedYear = $("#yearFilter").val();
+                var visibleCount = 0;
+
+                // Only loop through actual data rows (ignoring the empty state rows)
+                $("#downloadTable tbody tr.file-row").each(function() {
+                    var rowText = $(this).text().toLowerCase();
+                    var rowYear = String($(this).data('year')); // Convert to string for safe comparison
+
+                    var matchesSearch = rowText.indexOf(searchTerm) > -1;
+                    var matchesYear = (selectedYear === "" || rowYear === selectedYear);
+
+                    // Show row only if it matches BOTH conditions
+                    if (matchesSearch && matchesYear) {
+                        $(this).show();
+                        visibleCount++;
+                    } else {
+                        $(this).hide();
+                    }
+                });
+
+                // Toggle the "No Results" row based on the visible count
+                if (visibleCount === 0 && $('.file-row').length > 0) {
+                    $("#noResultsRow").show();
+                } else {
+                    $("#noResultsRow").hide();
+                }
+            }
+
+            // Bind both inputs to the same function
+            $("#searchBox").on("keyup", applyFilters);
+            $("#yearFilter").on("change", applyFilters);
+        });
+
+        // Updated Download Logic in Index.cshtml
+        function downloadFile(fileName) {
+            window.open("/Downloads/GetFile?fileName=" + encodeURIComponent(fileName), '_blank');
+        }
+    </script>
+}

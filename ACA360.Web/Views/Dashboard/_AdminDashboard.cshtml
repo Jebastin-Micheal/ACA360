@@ -1,0 +1,18 @@
+﻿@* ============================================================
+   FILE: Views/Dashboard/_AdminDashboard.cshtml
+   
+   NOTE: Index.cshtml currently routes both SuperAdmin and Admin
+   to _SuperAdminDashboard. This partial is kept as a future
+   hook for a lighter admin-specific view if roles diverge.
+   
+   To activate: change Index.cshtml case UserRoles.Admin to
+   render this partial instead of _SuperAdminDashboard.
+   ============================================================ *@
+@model ACA360.Core.Models.DashboardViewModel
+@{
+    var sa = Model.SuperAdminData ?? new ACA360.Core.Models.SuperAdminDashboardData();
+}
+
+@* Admin view intentionally delegates to the SuperAdmin partial.
+   SuperAdminData is populated in the controller for both roles. *@
+<partial name="_SuperAdminDashboard" model="Model" />

@@ -1,0 +1,231 @@
+@model ACA360.Web.Models.NotesWidgetViewModel
+@*
+    Reusable notes widget for Employer/Employee/Plan/Dependent, and the global notes popup.
+    Pass EntityType + EntityId via the model. DisplayMode = "Table" (default, in-page sections)
+    or "Cards" (the global popup). JS lives in notes-shared.js, styles in notes-shared.css
+    (both must be referenced once by the page/layout).
+*@
+@{
+    var fullName = User.FindFirst("FullName")?.Value;
+    if (string.IsNullOrEmpty(fullName))
+    {
+        var identityName = User.Identity?.Name ?? "System";
+        fullName = identityName.Contains("@")
+            ? char.ToUpper(identityName.Split('@')[0][0]) + identityName.Split('@')[0].Substring(1)
+            : identityName;
+    }
+    bool cssAlreadyLoaded = ViewBag.NotesSharedCssLoaded == true;
+}
+@if (!cssAlreadyLoaded)
+{
+    <link rel="stylesheet" href="~/css/notes-shared.css" asp-append-version="true" />
+    ViewBag.NotesSharedCssLoaded = true;
+}
+@{
+    bool skipAutoInit = ViewBag.NotesSkipAutoInit == true;
+    bool isReadOnly = User.IsInRole(ACA360.Core.Constants.UserRoles.Broker) || User.IsInRole(ACA360.Core.Constants.UserRoles.Employer);
+    bool isCardsMode = string.Equals(Model.DisplayMode, "Cards", StringComparison.OrdinalIgnoreCase);
+    var sessionFilingYear = Context.Session.GetString("SelectedFilingYear");
+    if (!int.TryParse(sessionFilingYear, out _))
+    {
+        sessionFilingYear = DateTime.Now.Year.ToString();
+    }
+}
+<div class="card shadow-none border notes-widget" data-entity-type="@Model.EntityType" data-entity-id="@Model.EntityId" data-current-user="@fullName" data-skip-autoinit="@(skipAutoInit ? "true" : "false")" data-readonly="@(isReadOnly ? "true" : "false")" data-display-mode="@(isCardsMode ? "cards" : "table")" data-filing-year="@sessionFilingYear">
+
+    <div class="card-header @(isCardsMode ? "notes-card-header-modal" : "") py-2 px-3 d-flex align-items-center justify-content-between border-bottom">
+        <div class="d-flex align-items-center gap-2">
+            <span class="avatar avatar-sm">
+                <span class="avatar-initial rounded-circle"><i class="bx bx-notepad text-primary"></i></span>
+            </span>
+            <span class="notes-panel-title">@Model.Title Notes</span>
+            <span class="badge bg-label-primary rounded-pill notes-count-badge" data-role="noteCount">0 Total</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            @if (!isReadOnly)
+            {
+                <button type="button" class="btn btn-primary btn-sm shadow-sm px-3 rounded-pill" onclick="NotesWidget.openAdd(this.closest('.notes-widget').getAttribute('data-widget-id'))">
+                    <i class="bx bx-plus me-1"></i>Add Note
+                </button>
+            }
+            else
+            {
+                <span class="badge bg-label-secondary rounded-pill notes-badge-sm"><i class="bx bx-lock-alt me-1"></i>View Only</span>
+            }
+            @if (isCardsMode)
+            {
+                <button type="button" class="btn-close notes-modal-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            }
+        </div>
+    </div>
+
+    @if (isCardsMode)
+    {
+        <div class="px-3 pt-2 pb-1 border-bottom">
+            <div class="input-group input-group-merge shadow-none border rounded-pill notes-search-group mb-2">
+                <span class="input-group-text border-0 bg-transparent"><i class="bx bx-search text-muted"></i></span>
+                <input type="text" data-role="noteSearchBox" class="form-control border-0 shadow-none bg-transparent ps-0 notes-search-input"
+                       placeholder="Search notes…"
+                       onkeyup="NotesWidget.onSearch(this.closest('.notes-widget').getAttribute('data-widget-id'))" />
+            </div>
+
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <div class="cat-search-wrap notes-filter-cat-wrap" data-role="filterCatWrap">
+                    <input type="text" class="cat-search-input form-control form-control-sm" data-role="filterCatInput"
+                           placeholder="Filter by category…" autocomplete="off" readonly
+                           onfocus="NotesWidget.openCatDrop(this.closest('.notes-widget').getAttribute('data-widget-id') + '-filter')"
+                           oninput="NotesWidget.searchCat(this.closest('.notes-widget').getAttribute('data-widget-id') + '-filter', this.value)" />
+                    <div class="cat-dropdown shadow-lg mt-1" data-role="filterCatDrop"></div>
+                    <i class="bx bx-chevron-down cat-chevron"></i>
+                </div>
+                <input type="hidden" data-role="filterCatHidden" value="" />
+
+                <span class="text-nowrap fw-semibold text-muted notes-filter-status" data-role="noteFilterStatus"></span>
+                <div class="d-flex align-items-center gap-2 ms-auto">
+                    <select class="form-select form-select-sm rounded-pill notes-filter-select" data-role="filterUser"
+                            onchange="NotesWidget.onUserFilter(this.closest('.notes-widget').getAttribute('data-widget-id'), this.value)">
+                        <option value="">All Users</option>
+                    </select>
+
+                    <select class="form-select form-select-sm rounded-pill notes-filter-select" data-role="filterYear"
+                            onchange="NotesWidget.onYearFilter(this.closest('.notes-widget').getAttribute('data-widget-id'), this.value)">
+                        <option value="">Filing Year</option>
+                        @for (var y = DateTime.Now.Year; y >= DateTime.Now.Year - 6; y--)
+                        {
+                            <option value="@y">@y</option>
+                        }
+                    </select>
+
+                    <button type="button" class="btn btn-sm btn-label-secondary py-0 px-2" onclick="NotesWidget.clearFilters(this.closest('.notes-widget').getAttribute('data-widget-id'))">
+                        <i class="bx bx-refresh me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="px-2 py-2 d-flex flex-wrap align-items-center gap-2 border-bottom">
+            <div class="input-group input-group-merge shadow-none border rounded-pill notes-search-group-table">
+                <span class="input-group-text border-0 ps-1"><i class="bx bx-search text-muted"></i></span>
+                <input type="text" data-role="noteSearchBox" class="form-control form-control-sm border-0 shadow-none bg-transparent ps-0 notes-search-input-table"
+                       placeholder="Search..."
+                       onkeyup="NotesWidget.onSearch(this.closest('.notes-widget').getAttribute('data-widget-id'))" />
+            </div>
+
+            <div class="cat-search-wrap notes-filter-cat-wrap" data-role="filterCatWrap">
+                <input type="text" class="cat-search-input form-control form-control-sm" data-role="filterCatInput"
+                       placeholder="Filter by category…" autocomplete="off" readonly
+                       onfocus="NotesWidget.openCatDrop(this.closest('.notes-widget').getAttribute('data-widget-id') + '-filter')"
+                       oninput="NotesWidget.searchCat(this.closest('.notes-widget').getAttribute('data-widget-id') + '-filter', this.value)" />
+                <div class="cat-dropdown shadow-lg mt-1" data-role="filterCatDrop"></div>
+                <i class="bx bx-chevron-down cat-chevron"></i>
+            </div>
+            <input type="hidden" data-role="filterCatHidden" value="" />
+
+            <select class="form-select form-select-sm rounded-pill notes-filter-select" data-role="filterUser"
+                    onchange="NotesWidget.onUserFilter(this.closest('.notes-widget').getAttribute('data-widget-id'), this.value)">
+                <option value="">All Users</option>
+            </select>
+
+            <select class="form-select form-select-sm rounded-pill notes-filter-select" data-role="filterYear"
+                    onchange="NotesWidget.onYearFilter(this.closest('.notes-widget').getAttribute('data-widget-id'), this.value)">
+                <option value="">All Years</option>
+                @for (var y = DateTime.Now.Year; y >= DateTime.Now.Year - 6; y--)
+                {
+                    <option value="@y">@y</option>
+                }
+            </select>
+
+            <div class="ms-auto d-flex align-items-center gap-2">
+                <span class="text-nowrap fw-semibold text-muted notes-filter-status" data-role="noteFilterStatus"></span>
+                <button type="button" class="btn btn-sm btn-label-secondary py-0 px-2" onclick="NotesWidget.clearFilters(this.closest('.notes-widget').getAttribute('data-widget-id'))">
+                    <i class="bx bx-refresh me-1"></i>Clear
+                </button>
+            </div>
+        </div>
+    }
+
+    <div data-role="inlineNoteForm" class="p-3 border-bottom d-none">
+        <input type="hidden" data-role="noteEditId" value="0" />
+        <div class="row g-2">
+            <div class="col-md-5">
+                <label class="form-label small">Category</label>
+                <div class="cat-search-wrap cat-search-lg w-100" data-role="modalCatWrap">
+                    <input type="text" class="cat-search-input form-control" data-role="modalCatInput"
+                           placeholder="Select category…" autocomplete="off"
+                           onfocus="NotesWidget.openCatDrop(this.closest('.notes-widget').getAttribute('data-widget-id') + '-modal')"
+                           oninput="NotesWidget.searchCat(this.closest('.notes-widget').getAttribute('data-widget-id') + '-modal', this.value)" />
+                    <i class="bx bx-chevron-down cat-chevron"></i>
+                    <div class="cat-dropdown" data-role="modalCatDrop"></div>
+                </div>
+                <input type="hidden" data-role="noteCategoryHidden" />
+            </div>
+            <div class="col-12">
+                <textarea data-role="noteText" class="form-control form-control-sm" rows="4" placeholder="Enter note..."></textarea>
+            </div>
+            <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+                <button type="button" class="btn btn-sm btn-label-secondary" onclick="NotesWidget.cancelForm(this.closest('.notes-widget').getAttribute('data-widget-id'))">Cancel</button>
+                <button type="button" class="btn btn-sm btn-primary" onclick="NotesWidget.save(this.closest('.notes-widget').getAttribute('data-widget-id'))">
+                    <i class="bx bx-save me-1"></i>Save Note
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (isCardsMode)
+    {
+        <div class="notes-cards-wrap p-2" data-role="notesTableBody">
+            <div class="text-center text-muted py-4 small">Loading notes…</div>
+        </div>
+    }
+    else
+    {
+        <div class="notes-table-wrap">
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead class="notes-thead-primary">
+                        <tr>
+                            <th class="notes-th-date">Date</th>
+                            <th class="notes-th-category">Category</th>
+                            <th class="notes-th-note">Note</th>
+                            <th class="notes-th-author">Author</th>
+                            @if (!isReadOnly)
+                            {
+                                <th class="notes-th-actions">Actions</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody data-role="notesTableBody">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4 small">Loading notes…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@{
+    bool jsAlreadyLoaded = ViewBag.NotesSharedJsLoaded == true;
+}
+@if (!jsAlreadyLoaded)
+{
+    <script src="~/js/notes-shared.js" asp-append-version="true"></script>
+    ViewBag.NotesSharedJsLoaded = true;
+}
+
+<script>
+    (function () {
+        function initPending() {
+            document.querySelectorAll('.notes-widget').forEach(function (el) {
+                if (!el.getAttribute('data-widget-id') && el.getAttribute('data-skip-autoinit') !== 'true') {
+                    NotesWidget.init(el);
+                }
+            });
+        }
+        if (window.NotesWidget) initPending();
+        else document.addEventListener('DOMContentLoaded', initPending);
+    })();
+</script>

@@ -1,0 +1,638 @@
+@model ACA360.Web.Models.EmployeeListViewModel
+@using System.Security.Claims
+@{
+    var role = User.FindFirstValue(ClaimTypes.Role);
+    var tabPrefix = "tab_" + Guid.NewGuid().ToString("N").Substring(0, 6);
+    bool isNew = Model?.SelectedEmployeeDetails == null;
+    // Missing-data indicators — a tab whose category has no records is a data gap
+    // (same rule that drives the "Missing Data" quick filter: hire / status / coverage / payroll).
+    var det = Model?.SelectedEmployeeDetails;
+    bool missHire = det != null && (det.EmployeeHireDetail == null || det.EmployeeHireDetail.Count == 0);
+    bool missStatus = det != null && (det.EmployeeStatus == null || det.EmployeeStatus.Count == 0);
+    bool missPayroll = det != null && (det.EmployeePayrollDetails == null || det.EmployeePayrollDetails.Count == 0);
+    bool missMedical = det != null && (det.EmployeeEnrollment == null || det.EmployeeEnrollment.Count == 0);
+}
+
+<style>
+    /* Missing-data tab indicators (red dot + tinted label) and the focus flash
+           used when a record is opened from the "Missing Data" quick filter. */
+    .nav-pills .nav-link.tab-missing:not(.active) {
+        color: #ff3e1d;
+    }
+
+    .nav-pills .nav-link .tab-missing-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-left: 6px;
+        border-radius: 50%;
+        vertical-align: middle;
+        background: #ff3e1d;
+        box-shadow: 0 0 0 2px rgba(255, 62, 29, .18);
+    }
+
+    .pane-missing-flash {
+        animation: paneMissingFlash 1.6s ease-out 1;
+        border-radius: .375rem;
+    }
+
+    @@keyframes paneMissingFlash {
+        0% {
+            background: rgba(255, 62, 29, .14);
+        }
+
+        100% {
+            background: transparent;
+        }
+    }
+
+    /* --- Global Styles --- */
+    .EmployeeDetailsScrollsize {
+        max-height: 300px;
+        position: relative;
+        overflow: hidden;
+        padding-right: 10px;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+    }
+    /* --- Card & Actions --- */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;        
+    }
+
+    .swal2-container {
+        z-index: 9999 !important;
+    }
+    .card-header-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    /* --- Month Card Design (ACA Codes) --- */
+    .month-card-container {
+        display: flex;
+        gap: 10px;
+        padding-bottom: 10px;
+        overflow-x: auto;
+    }
+
+    .month-card {
+        min-width: 90px;
+        flex: 1;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+    }
+
+        .month-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+    .month-card-header {
+        background: #f5f5f9;
+        padding: 6px;
+        text-align: center;
+        font-weight: 700;
+        color: #566a7f;
+        border-bottom: 1px solid #e0e0e0;
+        font-size: 0.8rem;
+    }
+
+    .month-card-body {
+        padding: 8px 4px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 90px;
+    }
+    /* Status Bars */
+    .status-bar-safe {
+        border-bottom: 4px solid #71dd37;
+        background: #f0fdf4;
+    }
+
+    .status-bar-risk {
+        border-bottom: 4px solid #ff3e1d;
+        background: #fff2f2;
+    }
+
+    .status-bar-neutral {
+        border-bottom: 4px solid #8592a3;
+    }
+    /* Modal Inputs */
+    .modal-input {
+        text-align: center;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    /* Dynamic Rows */
+    .dynamic-row {
+        transition: background 0.3s;
+    }
+
+        .dynamic-row:hover {
+            background-color: #f8f9fa !important;
+        }
+
+    .audit-item {
+        border-left: 3px solid #d9dee3;
+        padding-left: 12px;
+        margin-bottom: 14px;
+    }
+
+    .audit-system {
+        border-color: #8592a3;
+    }
+
+    .audit-manual {
+        border-color: #696cff;
+    }
+
+    .audit-autofix {
+        border-color: #71dd37;
+    }
+
+    .audit-meta {
+        font-size: 0.75rem;
+        color: #8592a3;
+    }
+
+    .vw-6 {
+        width: 6vw !important
+    }
+    .vw-8 {
+        width: 8vw !important
+    }
+    .vw-8 {
+        width: 8vw !important
+    }
+</style>
+
+<div class="row" id="Page_Container">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="FilingYear" id="FilingYear" value="@Model.SelectedEmployeeDetails?.FilingYear" />
+    <input type="hidden" id="EmployeeID" value="@Model.SelectedEmployeeDetails?.EmployeeID" />
+    <input type="hidden" id="EmployerId" value="@Model.SelectedEmployeeDetails?.EmployerId" />
+    <input type="hidden" id="EmployeeCodeId" value="@Model.SelectedEmployeeDetails?.MonthlyCodes?.EmployeeCodeID" />
+
+    <!-- Basic Details -->
+    <div id="basicInfoSection">
+     @await Html.PartialAsync("_EmployeeBasicInfo", Model)
+    </div>
+   
+     <!-- Employee Codes & Risk Analytics -->
+    <div id="employeeCodesSection">
+      @await Html.PartialAsync("_EmployeeCodes", Model)
+    </div>
+     <!-- Dependents Card with Tabs -->
+     <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header p-0 mx-3">
+                <div class="d-flex justify-content-between align-items-center py-3">
+                    <ul class="nav nav-pills nav-fill gap-2 mb-0" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab_covered">
+                                <i class="bx bx-user-check me-1"></i> Covered Individuals
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab_dependents">
+                                <i class="bx bx-group me-1"></i> Dependents
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body pt-2">
+                <div class="tab-content p-0">
+                    <div class="tab-pane fade show active" id="tab_covered" role="tabpanel">
+                        <div id="coveredIndividualsSection">
+                         @await Html.PartialAsync("_CoveredIndividuals", Model)
+                       </div>
+                    </div>
+                    <div class="tab-pane fade" id="tab_dependents" role="tabpanel">                      
+                       <div id="dependentsSection">
+                         @await Html.PartialAsync("_Dependents", Model)                      
+                      </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     
+    <!-- Details History & Enrollment Tabs -->
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header p-0 mx-3 py-4">
+                <ul class="nav nav-pills nav-fill mb-0" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active @(missHire ? "tab-missing" : "")" data-missing="@(missHire ? "true" : "false")" data-bs-toggle="tab" data-bs-target="#@(tabPrefix)_hire">
+                            <i class="bx bx-user-plus me-1"></i> Hire Info
+                            @if (missHire)
+                            {
+                                <span class="tab-missing-dot" title="No hire records"></span>
+                            }
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link @(missStatus ? "tab-missing" : "")" data-missing="@(missStatus ? "true" : "false")" data-bs-toggle="tab" data-bs-target="#@(tabPrefix)_status">
+                            <i class="bx bx-info-circle me-1"></i> Status
+                            @if (missStatus)
+                            {
+                                <span class="tab-missing-dot" title="No status records"></span>
+                            }
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link @(missPayroll ? "tab-missing" : "")" data-missing="@(missPayroll ? "true" : "false")" data-bs-toggle="tab" data-bs-target="#@(tabPrefix)_payroll">
+                            <i class="bx bx-money me-1"></i> Payroll
+                            @if (missPayroll)
+                            {
+                                <span class="tab-missing-dot" title="No payroll records"></span>
+                            }
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link @(missMedical ? "tab-missing" : "")" data-missing="@(missMedical ? "true" : "false")" data-bs-toggle="tab" data-bs-target="#@(tabPrefix)_medical">
+                            <i class="bx bx-plus-medical me-1"></i> Medical
+                            @if (missMedical)
+                            {
+                                <span class="tab-missing-dot" title="No medical enrollment records"></span>
+                            }
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#@(tabPrefix)_cobra">
+                            <i class="bx bx-shield-plus me-1"></i> COBRA
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#@(tabPrefix)_union">
+                            <i class="bx bx-group me-1"></i> Union
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#@(tabPrefix)_retiree">
+                            <i class="bx bx-medal me-1"></i> Retiree
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body pt-2">
+                <div class="tab-content p-0">
+                    <div class="tab-pane fade show active" id="@(tabPrefix)_hire" role="tabpanel">
+                       <div id="hireSection">
+                        @await Html.PartialAsync("_HireInfo", Model)
+                       </div>
+                    </div>
+                    <div class="tab-pane fade" id="@(tabPrefix)_status" role="tabpanel">
+                      <div id="statusSection">
+                        @await Html.PartialAsync("_Status", Model)
+                      </div>
+                    </div>
+                    <div class="tab-pane fade" id="@(tabPrefix)_payroll" role="tabpanel">
+                      <div id="payrollSection">
+                        @await Html.PartialAsync("_Payroll", Model)
+                      </div>
+                    </div>
+                    <div class="tab-pane fade" id="@(tabPrefix)_medical" role="tabpanel">
+                        <div id="medicalSection">
+                        @await Html.PartialAsync("_Medical", Model)
+                       </div>
+                    </div>
+                    <div class="tab-pane fade" id="@(tabPrefix)_cobra" role="tabpanel">
+                       <div id="cobraSection">
+                        @await Html.PartialAsync("_Cobra", Model)
+                       </div>
+                    </div>
+                    <div class="tab-pane fade" id="@(tabPrefix)_union" role="tabpanel">
+                      <div id="unionSection">
+                        @await Html.PartialAsync("_Union", Model)
+                      </div>
+                    </div>
+                    <div class="tab-pane fade" id="@(tabPrefix)_retiree" role="tabpanel">
+                       <div id="retireeSection">
+                        @await Html.PartialAsync("_Retiree", Model)
+                      </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flags & Notes Tabs -->
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header p-0 mx-3 py-4">
+                <ul class="nav nav-pills nav-fill mb-0" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#@(tabPrefix)_flags">
+                            <i class="bx bx-flag me-1"></i> Flags
+                            @{
+                                var flagCount = Model.EmployeeFlags?.Count ?? 0;
+                            }
+                            <span class="badge rounded-pill ms-1 @(flagCount > 0 ? "bg-danger" : "bg-label-success")">@flagCount</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#@(tabPrefix)_notes">
+                            <i class="bx bx-notepad me-1"></i> Notes
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#@(tabPrefix)_auditlogs" onclick="loadAuditData('Employee', '@Model.SelectedEmployeeDetails?.EmployeeID')">
+                            <i class="bx bx-history me-1"></i> Audit Logs
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body pt-2">
+                <div class="tab-content p-0">
+                    <div class="tab-pane fade show active" id="@(tabPrefix)_flags" role="tabpanel">
+                        @await Html.PartialAsync("_EmployeeFlags", Model)
+                    </div>
+                    <div class="tab-pane fade" id="@(tabPrefix)_notes" role="tabpanel">
+                        @await Html.PartialAsync("_NotesTablePartial", new ACA360.Web.Models.NotesWidgetViewModel
+                        {
+                            EntityType = ACA360.Core.Models.NoteEntityType.Employee,
+                            EntityId = int.TryParse(Model.SelectedEmployeeDetails?.EmployeeID, out int employeeEntityId) ? employeeEntityId : 0,
+                            Title = "Employee"
+                        })
+                    </div>
+                    <div class="tab-pane fade" id="@(tabPrefix)_auditlogs" role="tabpanel">
+                        <div id="auditLogContainer_@(tabPrefix)">
+                            <div class="text-center py-5 text-muted">
+                                <div class="spinner-border text-primary mb-3" role="status"></div>
+                                <p>Loading Audit Logs...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // 1. Pass all Razor data into a global JavaScript object
+    window.EmployeeConfig = {
+        filingYear: parseInt("@ViewBag.FilingYear") || 0,
+        planData: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.PlanDropdown.Items)),
+        auditTimelineUrl: '@Url.Action("GetEmployeeAuditTimeline", "ACA")'
+    };
+    function loadAuditData(category, recordId) {
+        // Target the specific container using the tabPrefix to avoid conflicts
+        // if multiple identical components are rendered on the same page.
+        var containerId = '#auditLogContainer_@(tabPrefix)';
+
+        // Prevent reloading if the table has already been fetched
+        if ($(containerId).find('.audit-log-container').length > 0) return;
+
+        $.ajax({
+            // Update this URL if your controller routing is different
+            // (e.g., if you kept [Route("api/[controller]")] use '/api/DataAuditlog/LoadAuditLogPartial')
+            url: '@Url.Action("LoadAuditLogPartial", "DataAuditlog")',
+            type: 'GET',
+            data: {
+                category: category,
+                recordId: recordId
+            },
+            success: function (result) {
+                $(containerId).html(result);
+            },
+            error: function () {
+                $(containerId).html('<div class="alert alert-danger m-3">Error loading audit logs. Please try again.</div>');
+            }
+        });
+    }
+</script>
+
+
+
+<style>
+    .field-flagged,
+    input.field-flagged, select.field-flagged, textarea.field-flagged {
+        border: 2px solid #dc3545 !important;
+        background-color: #fde8ea !important;
+        box-shadow: 0 0 0 .2rem rgba(220,53,69,.25);
+        animation: flagPulse 1s ease-in-out 2;
+    }
+
+    .flag-fix-btn {
+        white-space: nowrap;
+    }
+    /* TODO: [FLAG-FIX A] START — ADDED: codes-matrix month-card highlight (codes flags have no input to light) */
+    .month-card.cell-flagged {
+        border: 2px solid #dc3545 !important;
+        box-shadow: 0 0 0 .2rem rgba(220,53,69,.25);
+        animation: flagPulse 1s ease-in-out 2;
+    }
+    /* TODO: [FLAG-FIX A] END — ADDED */
+    @@keyframes flagPulse {
+        0%, 100% {
+            box-shadow: 0 0 0 .2rem rgba(220,53,69,.25);
+        }
+
+        50% {
+            box-shadow: 0 0 0 .35rem rgba(220,53,69,.45);
+        }
+    }
+</style>
+<script>
+    (function () {
+        // Flag-name pattern -> where to jump. FIRST matching rule wins, so put specific rules first.
+        // section = the stable container id on the target tab; keys = field data-key / name values to highlight.
+        var FLAG_RULES = [
+            { re: /DEPENDENT|COVERED INDIVIDUAL/i,                       section: 'section_dependents', tab: '#tab_covered', keys: ['FirstName','LastName','SSN','CoverageStartDate','CoverageEndDate'] },
+            { re: /COBRA/i,                                             section: 'section_cobra',      keys: ['COBRA_StartDate','COBRA_EndDate','IsCOBRAEnrolled'] },
+            { re: /RETIREE/i,                                           section: 'section_retiree',    keys: ['Retiree_StartDate','Retiree_EndDate','IsRetireeEnrolled'] },
+            { re: /CONTRIBUTION|UNION/i,                                section: 'section_union',      keys: ['Union_ContributionStartDate','Union_ContributionEndDate','IsUnionMember'] },
+            { re: /\$0\.00 INCOME|SALARY PAY AMOUNT|PAYROLL MISSING|\$0 HOURLY|\$0 SALARY/i, section: 'section_payroll', keys: ['payPeriodSalaryAmount','payPeriodHourlyAmount','payPeriodAdditional'] },
+            { re: /LINE 15 MISSING PREMIUM|MINIMUM VALUE|ELECTED WHILE NO PLAN|OFFERED TO SPOUSE|OFFERED TO DEPENDENTS|CONDITIONALLY OFFERED|SELF-FUNDED TO FULLY|FULLY INSURED TO SELF/i, section: 'section_medical', keys: ['planId'] },
+            { re: /OFFER DATE/i,                                        section: 'section_medical',    keys: ['CoverageOfferDate'] },
+            { re: /ENROLLED IS NOT CHECKED/i,                           section: 'section_medical',    keys: ['IsMedicalEnrolled'] },
+            { re: /COVERAGE START|COVERAGE END|PREMIUM (START|END)|ENROLLED IS CHECKED/i, section: 'section_medical', keys: ['Medical_CoverageStartDate','Medical_CoverageEndDate','IsMedicalEnrolled'] },
+            { re: /STATUS (START|END)|PART.?TIME|FULLTIME TO PARTTIME/i, section: 'section_status',     keys: ['Status','StatusStartDate','StatusEndDate'] },
+            { re: /TERMINATION DATE|REHIRED|HIRE DATE/i,                section: 'section_hire',       keys: ['Hire_StartDate','Hire_EndDate'] },
+            { re: /CITY OR STATE OR ZIP|ADDRESS 1|ADDRESS 2|MISSING.*ADDRESS/i, section: 'section_basic', keys: ['Address','Address2','City','State','Zip'] },
+            { re: /FIRST NAME|LAST NAME|FAKE EMPLOYEE|NAME IS 20|NAME FIELD MAY CONTAIN SUFFIX/i, section: 'section_basic', keys: ['FirstName','LastName'] },
+            { re: /SSN/i,                                               section: 'section_basic',      keys: ['SSN'] },
+            { re: /1E\/BLANK|1H\/BLANK|1H\/2C|1B IN LINE|1D IN LINE|1J|1K|CODE COMBINATION/i, section: 'codes', keys: [] }
+        ];
+
+        function resolve(name) {
+            for (var i = 0; i < FLAG_RULES.length; i++) { if (FLAG_RULES[i].re.test(name)) return FLAG_RULES[i]; }
+            return null;
+        }
+
+        // TODO: [FLAG-FIX A] START — ADDED: Category -> section fallback. Uses the real FlagDefinitions.Category
+        // (via the row's data-category) so a flag whose NAME matches no rule above still jumps to the right tab.
+        // Tab-level only (keys: []), so no specific field is highlighted — just navigation.
+        var CATEGORY_SECTION = {
+            'invalid codes':     { section: 'codes' },
+            'potential penalty': { section: 'codes' },
+            'employee coverage': { section: 'section_medical' },
+            'plan':              { section: 'section_medical' },
+            'cobra':             { section: 'section_cobra' },
+            'retiree':           { section: 'section_retiree' },
+            'banding':           { section: 'section_payroll' },
+            'address':           { section: 'section_basic' },
+            'employee name':     { section: 'section_basic' },
+            'employee':          { section: 'section_basic' },
+            'employee status':   { section: 'section_status' },
+            'dependents':        { section: 'section_dependents', tab: '#tab_covered' },
+            'qle':               { section: 'section_dependents', tab: '#tab_covered' },
+            'review':            { section: 'section_medical' }   // Review spans coverage/status/plan; medical is the best default
+        };
+        function resolveCategory(cat) {
+            var r = CATEGORY_SECTION[(cat || '').trim().toLowerCase()];
+            return r ? { section: r.section, tab: r.tab, keys: [] } : null;
+        }
+        // TODO: [FLAG-FIX A] END — ADDED Category fallback
+
+        // TODO: [FLAG-FIX DB] START — ADDED: build a rule from the DB columns (data-target-tab / -field).
+        // These come from FlagDefinitions.TargetTab / TargetField (admin-editable). Used FIRST; the
+        // name-regex and Category maps below stay only as fallbacks when TargetTab is blank.
+        var TAB_TO_SECTION = {
+            'basic': 'section_basic', 'medical': 'section_medical', 'status': 'section_status',
+            'hire': 'section_hire', 'payroll': 'section_payroll', 'cobra': 'section_cobra',
+            'retiree': 'section_retiree', 'union': 'section_union',
+            'covered': 'section_dependents', 'codes': 'codes'
+        };
+        function ruleFromTarget(tab, fields) {
+            tab = (tab || '').trim().toLowerCase();
+            if (!tab) return null;
+            var rule = {
+                section: TAB_TO_SECTION[tab] || ('section_' + tab),
+                keys: (fields || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean)
+            };
+            if (tab === 'covered') rule.tab = '#tab_covered';
+            return rule;
+        }
+        // TODO: [FLAG-FIX DB] END — ADDED ruleFromTarget()
+
+        // TODO: [FLAG-FIX TABLE/SPLIT] `root` scopes lookups to the #Page_Container that holds the
+        // clicked flag, so duplicate section ids across the Split-view instance and the Table-view
+        // modal never collide (previously document.getElementById grabbed the hidden instance).
+        function highlight(sectionId, keys, root) {
+            root = root || document;
+            var host = root.querySelector('#' + sectionId) || root;
+            var first = null;
+            (keys || []).forEach(function (k) {
+                host.querySelectorAll('[data-key="' + k + '"], [name="' + k + '"]').forEach(function (el) {
+                    el.classList.add('field-flagged');
+                    if (!first) first = el;
+                    ['input', 'change'].forEach(function (ev) {
+                        el.addEventListener(ev, function () { el.classList.remove('field-flagged'); }, { once: true });
+                    });
+                });
+            });
+            var target = first || host;
+            if (target && target.scrollIntoView) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (first) { try { first.focus({ preventScroll: true }); } catch (e) { } }
+        }
+
+        // TODO: [FLAG-FIX A] START — ADDED: highlightCodes() — codes flags jump to the Codes matrix and
+        //       highlight the affected month cards (or card_ALL when collapsed). Display only, no Apply.
+        // Codes flags have no field to edit -> light the affected month cards in the Codes matrix.
+        // Row's data-months is "Jan, Feb, ..."; the cards use uppercase data-month="JAN".
+        function highlightCodes(row, root) {
+            root = root || document;
+            root.querySelectorAll('.month-card.cell-flagged').forEach(function (c) { c.classList.remove('cell-flagged'); });
+
+            // employee-core.js collapses identical months into #card_ALL (dimming the month cards with
+            // opacity-50). When collapsed, the value shows ONLY in card_ALL -> highlight that one card.
+            var allCard = root.querySelector('#card_ALL');
+            if (allCard && !allCard.classList.contains('opacity-50')) {
+                allCard.classList.add('cell-flagged');
+                if (allCard.scrollIntoView) allCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            // Per-month codes: light the affected month cards.
+            var months = (row.getAttribute('data-months') || '').split(',')
+                            .map(function (s) { return s.trim().toUpperCase().slice(0, 3); }).filter(Boolean);
+            var first = null;
+            months.forEach(function (key) {
+                root.querySelectorAll('[data-month="' + key + '"]').forEach(function (c) {
+                    c.classList.add('cell-flagged');
+                    if (!first) first = c;
+                });
+            });
+            var target = first || root.querySelector('.month-card-container') || root.querySelector('[data-month]');
+            if (target && target.scrollIntoView) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        // TODO: [FLAG-FIX A] END — ADDED highlightCodes()
+
+        // TODO: [FLAG-FIX TABLE/SPLIT] Bind the click handler ONCE globally (this partial is re-injected
+        // on every detail load — Split inline and Table modal — so binding per-load stacked listeners).
+        // The handler scopes all lookups to the #Page_Container of the clicked flag, so it works in both
+        // views and never targets the other (hidden) instance.
+        if (!window.__flagFixBound) {
+            window.__flagFixBound = true;
+            document.addEventListener('click', function (e) {
+                var btn = e.target.closest('.flag-fix-btn'); if (!btn) return;
+                var row = btn.closest('.flag-row'); if (!row) return;
+                var root = btn.closest('#Page_Container') || document;   // scope to THIS employee-detail instance
+                var name = (row.getAttribute('data-flag-name') || '').trim();
+                // DB routing first (data-target-tab/-field); name-regex and Category are fallbacks.
+                var rule = ruleFromTarget(row.getAttribute('data-target-tab'), row.getAttribute('data-target-field'));
+                if (!rule) rule = resolve(name);
+                if (!rule) rule = resolveCategory(row.getAttribute('data-category'));
+                if (!rule) { return; }
+
+                // Activate the correct tab WITHIN this instance (basic info is always visible, no tab).
+                var tabBtn = null;
+                if (rule.tab) {
+                    tabBtn = root.querySelector('[data-bs-target="' + rule.tab + '"]');
+                } else if (rule.section === 'codes') {
+                    tabBtn = root.querySelector('[data-bs-target$="_codes"]');
+                } else if (rule.section && rule.section.indexOf('section_') === 0) {
+                    var suffix = rule.section.replace('section_', '');
+                    if (suffix !== 'basic') tabBtn = root.querySelector('[data-bs-target$="_' + suffix + '"]');
+                }
+                if (tabBtn && window.bootstrap && bootstrap.Tab) {
+                    bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+                }
+                setTimeout(function () {
+                    if (rule.section === 'codes') highlightCodes(row, root);
+                    else highlight(rule.section, rule.keys, root);
+                }, 250);
+            });
+        }
+         //Missing-data focus — when this record was opened while the "Missing Data"
+        // quick filter is active, jump to the first tab whose category has no records and flash it.
+        // Runs on every detail (re)load; the red dots on the tabs are always shown when data is missing.
+        try {
+            var qfActive = document.querySelector('#quickFilterBar .quick-filter-btn.active');
+            var qf = qfActive ? (qfActive.getAttribute('data-qf') || '') : '';
+            var mroot = document.querySelector('#commonDetailContainer #Page_Container') || document;
+            var missingBtns = mroot.querySelectorAll('.nav-link[data-missing="true"]');
+            if (qf === 'missing' && missingBtns.length) {
+                var firstMissing = missingBtns[0];
+                if (window.bootstrap && bootstrap.Tab) {
+                    bootstrap.Tab.getOrCreateInstance(firstMissing).show();
+                }
+                setTimeout(function () {
+                    if (firstMissing.scrollIntoView) firstMissing.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    var pane = mroot.querySelector(firstMissing.getAttribute('data-bs-target'));
+                    if (pane) {
+                        pane.classList.remove('pane-missing-flash');
+                        void pane.offsetWidth; // restart the CSS animation
+                        pane.classList.add('pane-missing-flash');
+                        if (pane.scrollIntoView) pane.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 250);
+            }
+        } catch (e) { }
+    })();
+</script>
+    

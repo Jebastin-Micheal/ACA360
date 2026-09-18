@@ -1,0 +1,62 @@
+﻿@model ACA360.Web.Models.ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+    // Layout = "~/Views/Shared/_BlankLayout.cshtml"; // Ensure this uses a blank layout (no sidebar)
+
+    // Determine Error Type based on ViewBag or Model
+    int statusCode = ViewBag.StatusCode ?? 500;
+    string errorTitle = "Server Error :(";
+    string errorMessage = "Oops! Something went wrong on our servers.";
+    string imgName = "girl-doing-yoga-light.png";
+
+    if (statusCode == 404)
+    {
+        errorTitle = "Page Not Found ⚠️";
+        errorMessage = "We couldn't find the page you are looking for. It might have been removed or renamed.";
+        imgName = "page-misc-error-light.png";
+    }
+    else if (statusCode == 403)
+    {
+        errorTitle = "Access Denied 🚫";
+        errorMessage = "You do not have permission to view this page. Please contact your administrator.";
+        imgName = "girl-with-laptop-light.png"; // Or any distinct image
+    }
+}
+
+<div class="container-xxl container-p-y">
+    <div class="misc-wrapper text-center">
+
+        <h1 class="mb-2 mx-2" style="font-size: 6rem; font-weight: 700; color: #696cff;">@statusCode</h1>
+
+        <h4 class="mb-2 mx-2">@errorTitle</h4>
+
+        <p class="mb-4 mx-2">@errorMessage</p>
+
+        <div class="d-flex justify-content-center gap-2">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                <i class="bx bx-left-arrow-alt scaleX-n1-rtl bx-sm"></i> Go Back
+            </a>
+            <a href="@Url.Action("Index", "Dashboard")" class="btn btn-primary">
+                <i class="bx bx-home-circle me-1"></i> Back to Home
+            </a>
+        </div>
+
+        @if (statusCode == 500 && !string.IsNullOrEmpty(Model?.RequestId))
+        {
+            <div class="alert alert-danger mt-4 d-inline-block text-start" role="alert">
+                <small class="fw-bold d-block mb-1">Support Details:</small>
+                <small>Request ID: <code>@Model.RequestId</code></small><br />
+                <small>Timestamp: @DateTime.Now.ToString("g")</small>
+            </div>
+        }
+
+        <div class="mt-5">
+            <img src="~/assets/img/illustrations/@imgName"
+                 alt="page-misc-error-light"
+                 width="500"
+                 class="img-fluid"
+                 data-app-dark-img="illustrations/page-misc-error-dark.png"
+                 data-app-light-img="illustrations/page-misc-error-light.png" />
+        </div>
+    </div>
+</div>

@@ -1,0 +1,290 @@
+﻿@model ACA360.Core.Models.DashboardViewModel
+@{
+    var da = Model.AnalystData ?? new ACA360.Core.Models.DataAnalystDashboardData();
+    var queue = Model.DataAnalystQueue ?? new List<ACA360.Core.Models.UploadedFileLog>();
+    var totalActive = da.PendingTriage + da.ReadyToImport;
+}
+
+<style>
+    /* Advanced Dashboard Micro-interactions & Styling */
+    .metric-card-da {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-radius: 12px;
+        border: none;
+    }
+    .metric-card-da:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.05) !important;
+    }
+    .icon-box-da {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+    }
+    .table-hover tbody tr:hover {
+        background-color: rgba(105, 108, 255, 0.03) !important;
+    }
+</style>
+
+@* ── 1. HIGH-VELOCITY METRICS ROW ────────────────────────────────────────── *@
+<div class="row g-4 mb-4">
+    <!-- Action Required -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="card metric-card-da shadow-sm h-100 position-relative overflow-hidden">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted small text-uppercase fw-bold tracking-wide mb-1">Needs Triage</p>
+                        <h2 class="text-danger fw-bolder mb-0">
+                            <span class="counter" data-target="@da.PendingTriage">@da.PendingTriage</span>
+                        </h2>
+                    </div>
+                    <div class="icon-box-da bg-label-danger">
+                        <i class='bx bx-wrench fs-3'></i>
+                    </div>
+                </div>
+                <div class="mt-3 text-muted small">
+                    <span class="text-danger fw-semibold"><i class='bx bx-up-arrow-alt'></i> High Priority</span>
+                    queue items
+                </div>
+            </div>
+            <div class="position-absolute bottom-0 start-0 w-100 bg-danger" style="height: 3px;"></div>
+        </div>
+    </div>
+
+    <!-- Ready to Import -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="card metric-card-da shadow-sm h-100 position-relative overflow-hidden">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted small text-uppercase fw-bold tracking-wide mb-1">Ready to Import</p>
+                        <h2 class="text-info fw-bolder mb-0">@da.ReadyToImport</h2>
+                    </div>
+                    <div class="icon-box-da bg-label-info">
+                        <i class='bx bx-cloud-upload fs-3'></i>
+                    </div>
+                </div>
+                <div class="mt-3 text-muted small">
+                    Cleared validation &mdash; waiting on you
+                </div>
+            </div>
+            <div class="position-absolute bottom-0 start-0 w-100 bg-info" style="height: 3px;"></div>
+        </div>
+    </div>
+
+    <!-- Completed Today -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="card metric-card-da shadow-sm h-100 position-relative overflow-hidden">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-muted small text-uppercase fw-bold tracking-wide mb-1">Throughput</p>
+                        <h2 class="text-success fw-bolder mb-0">@da.CompletedToday</h2>
+                    </div>
+                    <div class="icon-box-da bg-label-success">
+                        <i class='bx bx-check-double fs-3'></i>
+                    </div>
+                </div>
+                <div class="mt-3 text-muted small">
+                    <span class="text-success fw-semibold">Files finalized</span> today
+                </div>
+            </div>
+            <div class="position-absolute bottom-0 start-0 w-100 bg-success" style="height: 3px;"></div>
+        </div>
+    </div>
+
+    <!-- Validation Rules Quick Access (Replaces the old toolkit row) -->
+    <div class="col-xl-3 col-sm-6">
+        <div class="card metric-card-da shadow-sm h-100 bg-primary text-white" style="cursor: pointer;" onclick="window.location.href='@Url.Action("Index", "Rules")'">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+                <div class="icon-box-da bg-white text-primary mb-2 shadow-sm" style="width: 56px; height: 56px;">
+                    <i class='bx bx-book-bookmark fs-2'></i>
+                </div>
+                <h6 class="text-white fw-bold mb-1">Validation Rules</h6>
+                <small class="text-white-50">Browse the Engine Dictionary</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── 2. ACTIVE WORKSPACE & ANALYTICS ─────────────────────────────────────── *@
+<div class="row g-4 mb-4">
+
+    <!-- Priority Queue Table -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-transparent border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold d-flex align-items-center">
+                    <i class='bx bxs-hot text-danger fs-4 me-2'></i> Priority Triage Queue
+                </h6>
+                <a href="@Url.Action("Index", "FileUpload")" class="btn btn-sm btn-label-secondary fw-semibold">
+                    View All Files <i class='bx bx-right-arrow-alt'></i>
+                </a>
+            </div>
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light sticky-top" style="z-index: 1;">
+                        <tr>
+                            <th class="text-uppercase" style="font-size:0.7rem; letter-spacing:0.5px;">Status</th>
+                            <th class="text-uppercase" style="font-size:0.7rem; letter-spacing:0.5px;">Employer / File</th>
+                            <th class="text-uppercase" style="font-size:0.7rem; letter-spacing:0.5px;">Time in Queue</th>
+                            <th class="text-uppercase text-end" style="font-size:0.7rem; letter-spacing:0.5px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (queue.Any())
+                        {
+                            @foreach (var file in queue)
+                            {
+                                bool isUrgent = file.ValidationStatusId == 2 || file.ValidationStatusId == 12;
+                                var timeInQueue = DateTime.Now - file.UploadedAt;
+                                string timeDisplay = timeInQueue.TotalHours > 24
+                                ? $"{(int)timeInQueue.TotalDays}d ago"
+                                : $"{(int)timeInQueue.TotalHours}h ago";
+
+                                <tr>
+                                    <td>
+                                        @switch (file.ValidationStatusId)
+                                        {
+                                            case 2:
+                                            case 12:
+                                                <span class="badge bg-label-danger fw-bold"><i class="bx bx-error-circle me-1"></i>Triage</span>
+                                                break;
+                                            case 3:
+                                                <span class="badge bg-label-warning fw-bold text-dark"><i class="bx bx-error me-1"></i>Warnings</span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-label-secondary fw-bold">Pending</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <span class="fw-bold text-dark">@file.EmployerName</span>
+                                            <span class="text-muted small text-truncate" style="max-width:200px;" title="@file.OriginalFileName">
+                                                <i class='bx bx-file me-1'></i>@file.OriginalFileName
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge @(timeInQueue.TotalHours > 24 ? "bg-danger" : "bg-label-secondary")">
+                                            <i class='bx bx-timer me-1'></i>@timeDisplay
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        @if (isUrgent || file.ValidationStatusId == 3)
+                                        {
+                                            <a href="@Url.Action("Dashboard", "ErrorTriage", new { id = file.FileLogId })" class="btn btn-sm btn-danger shadow-sm">
+                                                Fix Now
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a href="@Url.Action("Details", "FileUpload", new { id = file.FileLogId })" class="btn btn-sm btn-outline-secondary">
+                                                View
+                                            </a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center py-5">
+                                    <div class="avatar avatar-lg mb-3 mx-auto">
+                                        <span class="avatar-initial rounded-circle bg-label-success">
+                                            <i class='bx bx-coffee fs-2'></i>
+                                        </span>
+                                    </div>
+                                    <h6 class="fw-bold text-dark mb-1">Queue is Clear</h6>
+                                    <p class="text-muted small mb-0">Excellent work! You have no pending files.</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics & Distribution -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-transparent border-bottom py-3">
+                <h6 class="mb-0 fw-bold"><i class='bx bx-pie-chart-alt-2 text-primary fs-4 me-2'></i> Workload Distribution</h6>
+            </div>
+            <div class="card-body d-flex flex-column justify-content-center align-items-center p-4">
+                <div id="daWorkloadChart" style="height:220px; width:100%;"></div>
+                <div class="mt-4 w-100">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small fw-semibold">Total Active Files</span>
+                        <span class="badge bg-primary rounded-pill">@totalActive</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var labels = [], values = [];
+        @if (da.StatusDistribution != null)
+        {
+                @foreach (var item in da.StatusDistribution)
+                {
+                        @:labels.push("@Html.Raw(item.Label)");
+                        @:values.push(@item.Value);
+                }
+        }
+
+        if (values.length > 0 && values.some(v => v > 0)) {
+            new ApexCharts(document.querySelector('#daWorkloadChart'), {
+                series: values,
+                labels: labels,
+                chart: {
+                    type: 'donut',
+                    height: 250,
+                    fontFamily: 'inherit'
+                },
+                colors: ['#ff3e1d', '#ffab00', '#696cff', '#71dd37'],
+                stroke: { width: 4, colors: ['#fff'] },
+                dataLabels: { enabled: false },
+                legend: {
+                    show: true,
+                    position: 'bottom',
+                    markers: { radius: 12 }
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '70%',
+                            labels: {
+                                show: true,
+                                name: { fontSize: '0.9rem', color: '#a1acb8' },
+                                value: { fontSize: '1.5rem', fontWeight: 700, color: '#566a7f' },
+                                total: {
+                                    show: true,
+                                    label: 'Pending',
+                                    color: '#a1acb8',
+                                    formatter: w => w.globals.seriesTotals.reduce((a, b) => a + b, 0)
+                                }
+                            }
+                        }
+                    }
+                }
+            }).render();
+        } else {
+            document.querySelector('#daWorkloadChart').innerHTML = `
+                <div class="text-center py-4">
+                    <i class='bx bx-check-shield text-success fs-1 mb-2'></i>
+                    <p class="text-muted fw-semibold mb-0">No active distributions</p>
+                </div>`;
+        }
+    });
+</script>

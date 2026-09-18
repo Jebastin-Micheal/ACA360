@@ -1,0 +1,114 @@
+@using ACA360.Web.Helpers
+@using ACA360.Core.Constants
+@using ACA360.Core.Models
+@model ACA360.Core.ViewModels.PartnerListViewModel<ACA360.Core.Models.Tracker.TrackerEmployerItem>
+@{
+    int countIndex = (Model.CurrentPage - 1) * Model.PageSize + 1;
+
+    var pagination = new PaginationViewEntity
+    {
+        TotalItems = Model.TotalItems,
+        CurrentPage = Model.CurrentPage,
+        PageSize = Model.PageSize,
+        TotalPages = Model.TotalPages
+    };
+}
+
+<div class="table-responsive ui-table-responsive">
+    <table class="table table-bordered table-hover mb-0 ui-table">
+        <thead>
+            <tr class="align-middle">
+                <th>#</th>
+                <th>
+                    @await Html.PartialAsync("_SortableHeader", new
+                    {
+                        Title = "Employer",
+                        Column = "EmployerName",
+                        SortColumn = Model.SortColumn,
+                        SortOrder = Model.SortOrder
+                    })
+                </th>
+                <th>
+                    @await Html.PartialAsync("_SortableHeader", new
+                    {
+                        Title = "Account Manager",
+                        Column = "AccountManagerName",
+                        SortColumn = Model.SortColumn,
+                        SortOrder = Model.SortOrder
+                    })
+                </th>
+                <th>
+                    @await Html.PartialAsync("_SortableHeader", new
+                    {
+                        Title = "Data Analyst",
+                        Column = "DataAnalyst",
+                        SortColumn = Model.SortColumn,
+                        SortOrder = Model.SortOrder
+                    })
+                </th>
+                <th class="cursor-pointer" onclick="sortList('FirmName')">
+                    Status / Firm
+                    @if (Model.SortColumn == "FirmName")
+                    {
+                        <i class="bx @(Model.SortOrder == "ASC" ? "bx-up-arrow-alt" : "bx-down-arrow-alt")"></i>
+                    }
+                </th>
+                <th class="text-center">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Items != null && Model.Items.Any())
+            {
+                foreach (var item in Model.Items)
+                {
+                    <tr id="tr_@item.EmployerId" class="emp-row" data-emp-id="@item.EmployerId" data-emp-name="@item.EmployerName" onclick="selectItem(this)">
+                        <td class="cursor-pointer text-muted">@(countIndex++)</td>
+                        <td class="cursor-pointer" style="max-width:220px;">
+                            <a href="javascript:;" class="text-primary emp-name-link" onclick="event.stopPropagation(); openDashboard(@item.EmployerId)" title="@item.EmployerName">@item.EmployerName</a>
+                            <small class="text-muted emp-ein">EIN: @(string.IsNullOrEmpty(item.EIN) ? "N/A" : (CanViewSSNorEIN ? item.EIN : DataMasker.MaskEIN(item.EIN)))</small>
+                        </td>
+                        <td class="cursor-pointer">@(string.IsNullOrEmpty(item.AccountManagerName) ? "N/A" : item.AccountManagerName)</td>
+                        <td class="cursor-pointer">@(string.IsNullOrEmpty(item.DataAnalyst) ? "N/A" : item.DataAnalyst)</td>
+                        <td class="cursor-pointer" style="max-width:160px;">
+                            <div class="text-muted small firm-name" title="@(item.FirmName ?? "Direct Client")">@(item.FirmName ?? "Direct Client")</div>
+                            @if (item.IsPriority)
+                            {
+                                <span class="badge bg-label-warning rounded-pill">Priority</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-label-success rounded-pill">Standard</span>
+                            }
+                        </td>
+                        <td class="text-center text-nowrap">
+                            <div class="action-cell">
+                                <button class="btn btn-sm btn-icon" onclick="event.stopPropagation(); openForm(@item.EmployerId)" title="Edit">
+                                    <i class="bx bx-edit icon-sm fs-4 text-secondary"></i>
+                                </button>
+                                <a class="btn btn-sm btn-icon" title="Employees List"
+                                   href="/SelectEmployer/SelectThis/@item.EmployerId?empname=@Uri.EscapeDataString(item.EmployerName ?? "")&returnUrl=/Employee">
+                                    <i class="bx bx-group icon-sm fs-4 text-primary"></i>
+                                </a>
+                                <a class="btn btn-sm btn-icon" title="Employer"
+                                   href="/SelectEmployer/SelectThis/@item.EmployerId?empname=@Uri.EscapeDataString(item.EmployerName ?? "")&returnUrl=/Employer">
+                                    <i class="bx bx-buildings icon-sm fs-4 text-primary"></i>
+                                </a>
+                                <button class="btn btn-sm btn-icon" onclick="event.stopPropagation(); openDashboard(@item.EmployerId)" title="Dashboard">
+                                    <i class="bx bxs-dashboard icon-sm fs-4 text-primary"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center p-5 text-muted">No employers found matching your criteria.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@await Html.PartialAsync("_GridPagination", pagination)

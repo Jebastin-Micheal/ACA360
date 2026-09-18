@@ -1,0 +1,146 @@
+﻿@model ACA360.Core.ViewModels.FlagDefinitionViewModel
+@{
+
+    Layout = Context.Request.Headers["X-Requested-With"] == "XMLHttpRequest" ? null : "_Layout";
+}
+<div class="container-fluid flex-grow-1 container-p-y">
+    <div class="">
+        <div class="card-body">
+            <form asp-action="Save" method="post">
+                <input type="hidden" asp-for="FlagId" />
+                <input type="hidden" asp-for="IsSystemFlag" />
+
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <label asp-for="FlagCode" class="form-label"></label>
+                        <input asp-for="FlagCode" class="form-control" placeholder="16.1" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="FlagName" class="form-label"></label>
+                        <input asp-for="FlagName" class="form-control" placeholder="Short Name" />
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Category" class="form-label"></label>
+                        <select asp-for="Category" class="form-select">
+                            <option value="Potential Penalty">Potential Penalty</option>
+                            <option value="QLE">QLE / Dates</option>
+                            <option value="Data Quality">Data Quality</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Severity" class="form-label"></label>
+                        <select asp-for="Severity" class="form-select">
+                            <option value="Warning">Warning</option>
+                            <option value="Critical">Critical</option>
+                            <option value="Info">Info</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <h6 class="text-primary">Logic Configuration</h6>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="LogicType" class="form-label fw-bold">Logic Engine Type</label>
+                        <select asp-for="LogicType" asp-items="Model.LogicTypes" class="form-select" id="ddlLogicType"></select>
+                        <small class="text-muted">Select how this rule determines flags.</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="TargetTable" class="form-label">Data Source Table</label>
+                        <select asp-for="TargetTable" asp-items="Model.Tables" class="form-select"></select>
+                    </div>
+                </div>
+
+                <div id="section-standard-logic" class="p-3 border rounded mb-3 bg-light">
+                    <h6 class="small text-uppercase text-muted">Primary Condition</h6>
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label">Column</label>
+                            <select asp-for="TargetColumn" asp-items="Model.Columns" class="form-select"></select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Operator</label>
+                            <select asp-for="Operator" asp-items="Model.Operators" class="form-select"></select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Value</label>
+                            <input asp-for="ComparisonValue" class="form-control" placeholder="e.g. 1H, Active, 0" />
+                        </div>
+                    </div>
+                </div>
+
+                <div id="section-compound-logic" class="p-3 border rounded mb-3 bg-light" style="display:none;">
+                    <div class="d-flex align-items-center mb-2">
+                        <h6 class="small text-uppercase text-muted mb-0 me-3">Secondary Condition</h6>
+                        <select asp-for="Connector" class="form-select form-select-sm w-auto">
+                            <option value="AND">AND (Both Must match)</option>
+                            <option value="OR">OR (Either matches)</option>
+                        </select>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label">Column</label>
+                            <select asp-for="SecondaryColumn" asp-items="Model.Columns" class="form-select"></select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Operator</label>
+                            <select asp-for="SecondaryOperator" asp-items="Model.Operators" class="form-select"></select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label">Value</label>
+                            <input asp-for="SecondaryValue" class="form-control" placeholder="e.g. Blank" />
+                        </div>
+                    </div>
+                </div>
+
+                <div id="section-custom-sql" style="display:none;">
+                    <div class="alert alert-warning">
+                        <i class="bx bx-code-alt me-1"></i>
+                        <strong>Advanced Mode:</strong> Enter a valid SQL WHERE clause. Use alias <code>S</code> for table columns.
+                    </div>
+                    <label asp-for="CustomSqlPredicate" class="form-label">SQL Where Clause</label>
+                    <textarea asp-for="CustomSqlPredicate" class="form-control font-monospace" rows="4"
+                              placeholder="S.Status = 'FT' AND ISDATE(S.CoverageEndDate) = 1"></textarea>
+                </div>
+
+                <hr class="my-4" />
+                <h6 class="fw-bold mb-2">Fix Navigation <small class="text-muted fw-normal">— where the “Fix” button jumps</small></h6>
+                <div class="row">
+                    <div class="col-md-5 mb-3">
+                        <label asp-for="TargetTab" class="form-label"></label>
+                        <select asp-for="TargetTab" asp-items="Model.FixTargetTabs" class="form-select"></select>
+                    </div>
+                    <div class="col-md-7 mb-3">
+                        <label asp-for="TargetField" class="form-label"></label>
+                        <input asp-for="TargetField" class="form-control"
+                               placeholder="e.g. Medical_CoverageEndDate  (comma-separated; leave blank for Codes)" />
+                    </div>
+                </div>
+                @* TODO: [FLAG-FIX DB] END — ADDED Fix Navigation *@
+
+                <hr class="my-4" />
+                <div class="mb-3">
+                    <label asp-for="RemediationSuggestion" class="form-label">Correction Advice (Displayed to User)</label>
+                    <textarea asp-for="RemediationSuggestion" class="form-control" rows="2"></textarea>
+                </div>
+
+                <div class="form-check form-switch mb-4">
+                    <input class="form-check-input" type="checkbox" asp-for="IsActive">
+                    <label class="form-check-label" asp-for="IsActive">Enable this Flag Rule immediately</label>
+                </div>
+
+                <div class="modal-footer mt-4">
+                    <button type="submit" class="btn btn-primary me-2">Save Rule</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

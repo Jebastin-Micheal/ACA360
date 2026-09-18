@@ -1,0 +1,227 @@
+﻿@using ACA360.Core.Models
+@model ValidationRule
+
+<form id="ruleForm" asp-action="@(Model.RuleId == 0 ? "Create" : "Edit")" method="post" class="row g-3">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" asp-for="RuleId" />
+
+    <div class="col-12">
+        <h6 class="fw-semibold text-primary">1. Rule Definition</h6>
+        <hr class="mt-0" />
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="RuleName" class="form-label fw-bold">Rule Name</label><span class="text-danger">*</span>
+        <input asp-for="RuleName" class="form-control" placeholder="e.g. Employee Age Check" />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="ValidationType" class="form-label fw-bold">Validation Type</label><span class="text-danger">*</span>
+        <select asp-for="ValidationType" class="form-select" asp-items="ViewBag.ValidationTypes">
+            <option value="">-- Select Type --</option>
+        </select>
+    </div>
+
+    <div class="col-12 mt-4">
+        <h6 class="fw-semibold text-primary">2. Target & Logic</h6>
+        <hr class="mt-0" />
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="TargetTable" class="form-label">Target Table</label><span class="text-danger">*</span>
+        <select asp-for="TargetTable" class="form-select" id="Rule_TableName" asp-items="ViewBag.TargetTables">
+            <option value="">-- Select Table --</option>
+        </select>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="TargetColumn" class="form-label">Target Column</label><span class="text-danger">*</span>
+        <select asp-for="TargetColumn" class="form-select" id="ColumnName">
+            <option value="">-- Select Column --</option>
+        </select>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="RuleParameter1" class="form-label">Parameter 1 (Value/Regex)</label>
+        <input asp-for="RuleParameter1" class="form-control" placeholder="Enter value..." />
+    </div>
+    <div class="col-md-6">
+        <label asp-for="RuleParameter2" class="form-label">Parameter 2 (Optional)</label>
+        <input asp-for="RuleParameter2" class="form-control" />
+    </div>
+
+    <div class="col-12 mt-4">
+        <h6 class="fw-semibold text-primary">3. Behavior & Messages</h6>
+        <hr class="mt-0" />
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="Severity" class="form-label">Severity Level</label>
+        <select asp-for="Severity" class="form-select" asp-items="ViewBag.Severities">
+            <option value="">-- Select --</option>
+        </select>
+    </div>
+
+    <div class="col-md-4 d-flex align-items-center pt-4">
+        <div class="form-check form-switch">
+            <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch">
+            <label asp-for="IsActive" class="form-check-label ms-2">Rule is Active</label>
+        </div>
+    </div>
+    <div class="col-md-4 d-flex align-items-center pt-4">
+        <div class="form-check form-switch">
+            <input asp-for="IsCorrectable" class="form-check-input" type="checkbox" role="switch">
+            <label asp-for="IsCorrectable" class="form-check-label ms-2">User Can Correct</label>
+        </div>
+    </div>
+    <div class="col-md-4 d-flex align-items-center pt-4">
+        <div class="form-check form-switch">
+            <input asp-for="IsAutoCorrect" class="form-check-input" type="checkbox" role="switch" id="autoCorrectSwitch">
+            <label asp-for="IsAutoCorrect" class="form-check-label ms-2">
+                Auto-Correct Data
+                <i class="bx bx-info-circle text-muted ms-1" data-bs-toggle="tooltip" title="System will attempt to fix errors automatically (e.g., removing special chars)"></i>
+            </label>
+        </div>
+    </div>
+
+    <div class="col-md-12 mt-2 collapse" id="autoCorrectOptions">
+        <div class="alert alert-primary d-flex align-items-center" role="alert">
+            <i class="bx bx-magic-wand me-2"></i>
+            <div>
+                <strong>Auto-Correction Logic:</strong>
+                <span class="small d-block">
+                    For "Matches Pattern": Invalid characters will be removed.<br />
+                    For "Required": A default value will be applied.
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="col-12">
+        <label asp-for="ErrorMessage" class="form-label fw-bold">Error Message (User Facing)</label><span class="text-danger">*</span>
+        <textarea asp-for="ErrorMessage" class="form-control" rows="2" placeholder="e.g. The date cannot be in the future."></textarea>
+    </div>
+
+    <div class="col-12">
+        <a class="d-inline-block mt-2 text-muted cursor-pointer" data-bs-toggle="collapse" href="#advancedNotes" role="button">
+            <i class="bx bx-chevron-down"></i> Show Advanced Notes (Help, Audit, Email)
+        </a>
+        <div class="collapse mt-3" id="advancedNotes">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="HelpText" class="form-label small">Help Text</label>
+                    <textarea asp-for="HelpText" class="form-control form-control-sm" rows="2"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Topic" class="form-label small">Topic / Category</label>
+                    <textarea asp-for="Topic" class="form-control form-control-sm" rows="2"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="AuditTabNote" class="form-label small">Audit Note</label>
+                    <textarea asp-for="AuditTabNote" class="form-control form-control-sm" rows="2"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="EmailSummaryNote" class="form-label small">Email Summary Note</label>
+                    <textarea asp-for="EmailSummaryNote" class="form-control form-control-sm" rows="2"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 text-end mt-4">
+        <button type="button" class="btn btn-label-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+    </div>
+</form>
+
+
+<partial name="_ValidationScriptsPartial" />
+<script>
+    $(document).ready(function() {
+        // 1. Cascading Dropdown
+        $('#Rule_TableName').off('change').on('change', function() {
+            var tableName = $(this).val();
+            if (tableName) {
+                $.getJSON('/Rules/GetColumnsForTable', { tableName: tableName }, function(data) {
+                    var items = '<option value="">-- Select Column --</option>';
+                    $.each(data, function(i, column) {
+                        items += '<option value="' + column + '">' + column + '</option>';
+                    });
+                    $('#ColumnName').html(items);
+                    var initialColumn = '@Model.TargetColumn';
+                    if(initialColumn) { $('#ColumnName').val(initialColumn); }
+                });
+            } else {
+                $('#ColumnName').html('<option value="">-- Select Column --</option>');
+            }
+        });
+
+        // 2. SweetAlert for Form Submission & Error Validation
+            $('#ruleForm').off('submit').on('submit', function (e) {
+        e.preventDefault();
+
+        var $form = $(this); // Capture form reference immediately
+
+        // Validation Check
+        if ($.isFunction($.fn.valid)) {
+            if (!$form.valid()) {
+
+                // Add red border to all invalid fields
+                $form.find('.input-validation-error').addClass('border-danger');
+
+                // Focus on the first invalid field for better UX
+                $form.find('.input-validation-error').first().focus();
+                
+                return false; // Stop execution
+            }
+        }
+
+        // Clear any lingering red borders just in case
+        $form.find('.border-danger').removeClass('border-danger');
+
+        Swal.fire({
+            title: 'Confirm Save?',
+            text: "Do you want to save these changes?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Save it!',
+            target: document.getElementById('RulesFormModal')
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Use the $form variable we captured at the top
+                $.post($form.attr('action'), $form.serialize(), function (response) {
+                    Swal.fire({
+                        title: 'Saved!',
+                        text: 'Rule updated successfully.',
+                        icon: 'success',
+                        target: document.getElementById('RulesFormModal')
+                    }).then(() => {
+                        $('#RulesFormModal').modal('hide');
+                        location.reload();
+                    });
+                }).fail(function() {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'System failed to save.',
+                        icon: 'error',
+                        target: document.getElementById('RulesFormModal')
+                    });
+                });
+            }
+        });
+    });
+
+    // Automatically remove the red border when the user starts typing/changing the field
+    $('#ruleForm').on('keyup change', '.border-danger, .input-validation-error', function() {
+        $(this).removeClass('border-danger');
+    });
+
+        // 3. Auto-Correct UI Toggle
+        $('#autoCorrectSwitch').on('change', function() {
+            if($(this).is(':checked')) { $('#autoCorrectOptions').show(); }
+            else { $('#autoCorrectOptions').hide(); }
+        }).trigger('change');
+
+        // 4. Initial Trigger
+        var initialTable = '@Model.TargetTable';
+        if (initialTable) { $('#Rule_TableName').trigger('change'); }
+    });
+</script>

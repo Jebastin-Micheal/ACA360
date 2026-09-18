@@ -1,0 +1,682 @@
+@using Microsoft.AspNetCore.Html
+@model ACA360.Core.Models.Tracker.EmployerServiceItem
+@{
+    bool edit = ViewBag.EditMode is bool b && b;
+    bool isModal = ViewBag.IsModal is bool m && m;
+
+    // Helper: safe date for <input type="date"> (needs YYYY-MM-DD)
+    Func<string, string> safeDate = (d) =>
+        !string.IsNullOrEmpty(d) && d.Length >= 10 ? d.Substring(0, 10) : (d ?? "");
+
+    // Helper: display date (YYYY-MM-DD or —)
+    Func<string, string> dispDate = (d) =>
+        !string.IsNullOrEmpty(d) && d.Length >= 10 ? d.Substring(0, 10) : "—";
+
+    // Helper: display decimal
+    Func<decimal?, string> dispDec = (v) => v.HasValue ? v.Value.ToString("0.##") : "—";
+
+    // Month name from stored value (could be "1"-"12" or a legacy date string "YYYY-MM-DD")
+    var _months = System.Globalization.DateTimeFormatInfo.CurrentInfo.MonthNames.Take(12).ToList();
+    int _mn = 0;
+    if (!string.IsNullOrEmpty(Model.MonthInitialData))
+    {
+        if (int.TryParse(Model.MonthInitialData, out int parsedInt))
+            _mn = parsedInt;
+        else if (DateTime.TryParse(Model.MonthInitialData, out DateTime parsedDate))
+            _mn = parsedDate.Month;
+    }
+}
+
+<style>
+    .fs-tiny {
+        font-size: 0.72rem !important;
+        letter-spacing: 0.25px;
+        text-transform: uppercase;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .svc-panel-content {
+        height: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: var(--bs-border-color) transparent;
+    }
+
+    .card-accent-primary {
+        border-top: 3px solid var(--bs-primary) !important;
+    }
+
+    .card-accent-info {
+        border-top: 3px solid var(--bs-info) !important;
+    }
+
+    .card-accent-warning {
+        border-top: 3px solid var(--bs-warning) !important;
+    }
+
+    .card-accent-success {
+        border-top: 3px solid var(--bs-success) !important;
+    }
+
+    .label-badge {
+        font-size: 0.65rem;
+        padding: 0.35em 0.65em;
+    }
+
+    .field-label {
+        font-weight: 500;
+        color: var(--dash-text-dark);
+    }
+
+    /* ── SVC PANEL FIELD LOCKING ── */
+    #frmSvcPanel input.svc-field[readonly],
+    #frmSvcPanel textarea.svc-field[readonly] {
+        background-color: var(--bs-body-bg) !important;
+        border-color: var(--bs-border-color) !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+
+        #frmSvcPanel input.svc-field[readonly]:focus,
+        #frmSvcPanel input.svc-field[readonly]:focus-visible,
+        #frmSvcPanel textarea.svc-field[readonly]:focus,
+        #frmSvcPanel textarea.svc-field[readonly]:focus-visible,
+        #frmSvcPanel select.svc-field.svc-sel-locked,
+        #frmSvcPanel select.svc-field.svc-sel-locked:focus,
+        #frmSvcPanel select.svc-field.svc-sel-locked:focus-visible {
+            background-color: var(--bs-body-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+
+    #frmSvcPanel input.svc-field:not([readonly]),
+    #frmSvcPanel textarea.svc-field:not([readonly]) {
+        background-color: var(--bs-paper-bg) !important;
+        border-color: var(--bs-primary) !important;
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb),.2) !important;
+        cursor: text;
+    }
+
+    #frmSvcPanel select.svc-field:not(.svc-sel-locked) {
+        border-color: var(--bs-primary) !important;
+        box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb),.2) !important;
+        cursor: pointer;
+    }
+
+    .select2-container--open {
+        z-index: 9999;
+    }
+
+    .flag-switch-success:checked {
+        background-color: var(--bs-primary) !important;
+        border-color: var(--bs-primary) !important;
+    }
+
+    .flag-switch-info:checked {
+        background-color: var(--bs-primary) !important;
+        border-color: var(--bs-primary) !important;
+    }
+
+    .flag-switch-warning:checked {
+        background-color: var(--bs-primary) !important;
+        border-color: var(--bs-primary) !important;
+    }
+
+    .flag-switch-primary:checked {
+        background-color: var(--bs-primary) !important;
+        border-color: var(--bs-primary) !important;
+    }
+</style>
+
+@if (isModal)
+{
+    <div class="modal-header border-bottom py-3 px-4">
+        <div class="d-flex align-items-center flex-grow-1" style="min-width:0">
+            <div class="avatar avatar-sm rounded bg-label-primary me-3 d-flex align-items-center justify-content-center shadow-sm flex-shrink-0">
+                <i class="bx bx-edit fs-4"></i>
+            </div>
+            <div class="me-auto" style="min-width:0">
+                <h5 class="modal-title fw-bold mb-0">@(string.IsNullOrEmpty(Model.ServiceName) ? "Service" : Model.ServiceName)</h5>
+            </div>
+            <span class="badge bg-label-primary rounded-pill ms-2 fw-semibold flex-shrink-0">
+                <i class="bx bx-calendar me-1"></i>Plan Year: @(Model.PlanYear > 0 ? Model.PlanYear.ToString() : "—")
+            </span>
+        </div>
+        <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    @Html.Raw("<div class=\"modal-body py-3 px-4\" style=\"max-height:75vh; overflow-y:auto;\">")
+    @Html.Raw("<form id=\"frmSvcPanel\" onsubmit=\"return false;\">")
+
+    <input type="hidden" name="EmployerServiceId" value="@Model.EmployerServiceId" />
+    <input type="hidden" name="EmployerId" value="@Model.EmployerId" />
+    <input type="hidden" name="ServiceId" value="@Model.ServiceId" />
+    <input type="hidden" name="PlanYear" value="@Model.PlanYear" />
+    // style = "background:var(--bs-tertiary-bg)"
+    <div class="card border shadow-none mb-3 mx-3">
+        <div class="card-body p-3">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="fs-tiny field-label text-primary mb-1">Status</label>
+                    <select asp-for="Status" asp-items="ViewBag.Statuses" class="form-select form-select-sm fw-semibold svc-field svc-sel-locked">
+                        <option value="">-- Select Status --</option>
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <label class="fs-tiny field-label text-primary mb-1">Receipt ID</label>
+                    <div id="receiptBadgeContainerModal"
+                         data-emp-id="@Model.EmployerId"
+                         data-emp-svc-id="@Model.EmployerServiceId"
+                         data-svc-id="@Model.ServiceId"
+                         data-plan-year="@Model.PlanYear"
+                         data-svc-name="@Model.ServiceName"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="card-body svc-panel-content animate__animated animate__fadeIn px-3 py-3">
+    @if (!isModal)
+    {
+        @Html.Raw("<form id=\"frmSvcPanel\" onsubmit=\"return false;\">")
+        <input type="hidden" name="EmployerServiceId" value="@Model.EmployerServiceId" />
+        <input type="hidden" name="EmployerId" value="@Model.EmployerId" />
+        <input type="hidden" name="ServiceId" value="@Model.ServiceId" />
+        <input type="hidden" name="PlanYear" value="@Model.PlanYear" />
+    }
+
+    @* ── CARD 1: CONTRACTING & LOGISTICS ── *@
+    <div class="card mb-3 shadow-none border card-accent-success">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="avatar avatar-xs me-2">
+                    <span class="avatar-initial rounded bg-label-success"><i class="bx bx-file fs-6"></i></span>
+                </div>
+                <h6 class="m-0 fw-bold small text-uppercase">Contracting &amp; Logistics</h6>
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Proposal Sent Date</label>
+                    <input type="date" class="form-control form-control-sm svc-field" name="ProposalSentDate" value="@safeDate(Model.ProposalSentDate)" readonly />
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Proposal Sent Date</label>
+                    <input type="date" class="form-control form-control-sm svc-field" name="ProposalSignedDate" value="@safeDate(Model.ProposalSignedDate)" readonly />
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Contract Sent Date</label>
+                    <input type="date" class="form-control form-control-sm svc-field" name="ContractSentDate" value="@safeDate(Model.ContractSentDate)" readonly />
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Contract Signed Date</label>
+                    <input type="date" class="form-control form-control-sm svc-field" name="ContractSignedDate" value="@safeDate(Model.ContractSignedDate)" readonly />
+                </div>
+            </div>
+            <div class="row g-2">
+                @{
+                    var flags = new[]
+                    {
+                                new { Name="MedcomCOBRA",   Label="Medcom-COBRA", Val=Model.MedcomCOBRA,   Color="success" },
+                                new { Name="Required131",   Label="Req 1/31",     Val=Model.Required131,   Color="info"    },
+                                new { Name="WillNotSignSA", Label="No SA Sign",   Val=Model.WillNotSignSA, Color="warning" },
+                                new { Name="CDHPClient",    Label="CDHP Client",  Val=Model.CDHPClient,    Color="primary" }
+                                };
+                }
+                @foreach (var f in flags)
+                {
+                    <div class="col-6">
+                        <div class="form-check form-switch mb-0 d-flex align-items-center">
+                            <input class="form-check-input flag-switch-@f.Color" type="checkbox"
+                                   name="@f.Name" value="true"
+                                   @(f.Val ? "checked" : "") />
+                            <label class="form-check-label x-small fw-semibold ms-2 pt-1" style="font-size:0.75rem">@f.Label</label>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* ── CARD 2: BILLING & FINANCIALS ── *@
+    <div class="card mb-3 shadow-none border card-accent-warning">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="avatar avatar-xs me-2">
+                    <span class="avatar-initial rounded bg-label-warning"><i class="bx bx-credit-card fs-6"></i></span>
+                </div>
+                <h6 class="m-0 fw-bold small text-uppercase">Financials &amp; Billing</h6>
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-4">
+                    <label class="fs-tiny field-label">Pricing</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light px-2">$</span>
+                        <input type="number" step="0.01" class="form-control form-control-sm svc-field" name="Pricing" value="@Model.Pricing" readonly min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                    </div>
+                </div>
+                <div class="col-4">
+                    <label class="fs-tiny field-label">Initial Bill</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light px-2">$</span>
+                        <input type="number" step="0.01" class="form-control form-control-sm svc-field" name="InitialBill" value="@Model.InitialBill" readonly min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                    </div>
+                </div>
+                <div class="col-4">
+                    <label class="fs-tiny field-label">Final Bill</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light px-2">$</span>
+                        <input type="number" step="0.01" class="form-control form-control-sm svc-field" name="FinalBill" value="@Model.FinalBill" readonly min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                    </div>
+                </div>
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="fs-tiny field-label">SOS Amount</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light px-2">$</span>
+                        <input type="number" step="0.01" class="form-control form-control-sm svc-field" name="SOSAmount" value="@Model.SOSAmount" readonly min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Addl. Invoice Amount</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light px-2">$</span>
+                        <input type="number" step="0.01" class="form-control form-control-sm svc-field" name="AdditionalInvoiceAmount" value="@Model.AdditionalInvoiceAmount" readonly min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                    </div>
+                </div>
+
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="fs-tiny field-label">ACA Overage Bill</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light px-2">$</span>
+                        <input type="number" step="0.01" class="form-control form-control-sm svc-field" name="ACAOverageBill" value="@Model.ACAOverageBill" readonly min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label">FTE Overage Bill</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light px-2">$</span>
+                        <input type="number" step="0.01" class="form-control form-control-sm svc-field" name="FTEOverageBill" value="@Model.FTEOverageBill" readonly min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                    </div>
+                </div>
+
+            </div>
+            <div class="row g-2">
+                <div class="col-6">
+                    <label class="fs-tiny field-label">First 50% Invoice Date</label>
+                    <input type="date" class="form-control form-control-sm svc-field" name="FirstInvoiceDate" value="@safeDate(Model.FirstInvoiceDate)" readonly />
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Final 50% Invoice Date</label>
+                    <input type="date" class="form-control form-control-sm svc-field" name="FinalInvoiceDate" value="@safeDate(Model.FinalInvoiceDate)" readonly />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── CARD 3: OPERATIONAL PROGRESS ── *@
+    <div class="card mb-3 shadow-none border card-accent-primary">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="avatar avatar-xs me-2">
+                    <span class="avatar-initial rounded bg-label-primary"><i class="bx bx-infinite fs-6"></i></span>
+                </div>
+                <h6 class="m-0 fw-bold small text-uppercase">Process Progression</h6>
+            </div>
+
+            @{
+                string step1095 = Model.ProcessStep1095;
+                string lu1095 = string.IsNullOrEmpty(step1095) || step1095 == "— Select —" ? "" : safeDate(Model.LastUpdated1095);
+                string nf1095 = string.IsNullOrEmpty(step1095) || step1095 == "— Select —" || safeDate(Model.NextFollowUp1095) == lu1095 ? "" : safeDate(Model.NextFollowUp1095);
+
+                string stepFTE = Model.FTETrackingStep;
+                string luFTE = string.IsNullOrEmpty(stepFTE) || stepFTE == "— Select —" ? "" : safeDate(Model.LastUpdatedFTE);
+                string nfFTE = string.IsNullOrEmpty(stepFTE) || stepFTE == "— Select —" || safeDate(Model.NextFollowUpFTE) == luFTE ? "" : safeDate(Model.NextFollowUpFTE);
+
+                string stepState = Model.StateFilingStep;
+                string luState = string.IsNullOrEmpty(stepState) || stepState == "— Select —" ? "" : safeDate(Model.LastUpdatedState);
+                string nfState = string.IsNullOrEmpty(stepState) || stepState == "— Select —" || safeDate(Model.NextFollowUpState) == luState ? "" : safeDate(Model.NextFollowUpState);
+            }
+
+            @* 1095-C *@
+            <div class="row g-2 mb-3 pb-2 border-bottom">
+                <div class="col-12 mb-1">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label class="fs-tiny field-label text-primary m-0">1095 Process Step</label>
+                        <a href="javascript:void(0);" class="text-secondary process-history-btn" data-category="1" title="Process History">
+                            <i class="bx bx-history fs-5"></i>
+                        </a>
+                    </div>
+                    <select id="ProcessStep1095" class="form-select form-select-sm shadow-none border-primary svc-field svc-sel-locked" asp-for="ProcessStep1095" asp-items="ViewBag.ProcessSteps">
+                        <option value="">— Select —</option>
+                    </select>
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Last Updated</label>
+                    <input id="LastUpdated1095" type="date" class="form-control form-control-sm svc-field" asp-for="LastUpdated1095" value="@lu1095" readonly />
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Next Follow-up</label>
+                    <input id="NextFollowUp1095" type="date" class="form-control form-control-sm" asp-for="NextFollowUp1095" value="@nf1095" readonly />
+                </div>
+            </div>
+
+            @* FTE *@
+            <div class="row g-2 mb-3 pb-2 border-bottom">
+                <div class="col-12 mb-1">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label class="fs-tiny field-label text-info m-0">FTE Tracking Step</label>
+                        <a href="javascript:void(0);" class="text-secondary process-history-btn" data-category="2" title="Process History">
+                            <i class="bx bx-history fs-5"></i>
+                        </a>
+                    </div>
+                    <select id="FTETrackingStep" class="form-select form-select-sm shadow-none border-info svc-field svc-sel-locked" asp-for="FTETrackingStep" asp-items="ViewBag.FTESteps">
+                        <option value="">— Select —</option>
+                    </select>
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Last Updated</label>
+                    <input id="LastUpdatedFTE" type="date" class="form-control form-control-sm svc-field" asp-for="LastUpdatedFTE" value="@luFTE" readonly />
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Next Follow-up</label>
+                    <input id="NextFollowUpFTE" type="date" class="form-control form-control-sm" asp-for="NextFollowUpFTE" value="@nfFTE" readonly />
+                </div>
+            </div>
+
+            @* State Filing *@
+            <div class="row g-2">
+                <div class="col-12 mb-1">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label class="fs-tiny field-label text-warning m-0">State Filing Process Step</label>
+                        <a href="javascript:void(0);" class="text-secondary process-history-btn" data-category="3" title="Process History">
+                            <i class="bx bx-history fs-5"></i>
+                        </a>
+                    </div>
+                    <select id="StateFilingStep" class="form-select form-select-sm shadow-none border-warning svc-field svc-sel-locked" asp-for="StateFilingStep" asp-items="ViewBag.StateSteps">
+                        <option value="">— Select —</option>
+                    </select>
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Last Updated</label>
+                    <input id="LastUpdatedState" type="date" class="form-control form-control-sm svc-field" asp-for="LastUpdatedState" value="@luState" readonly />
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Next Follow-up</label>
+                    <input id="NextFollowUpState" type="date" class="form-control form-control-sm" asp-for="NextFollowUpState" value="@nfState" readonly />
+                </div>
+            </div>
+
+            @* Shared history collapse panel *@
+            <div class="collapse mt-3" id="sharedHistoryCollapse">
+                <div class="card border shadow-none" style="background:var(--bs-tertiary-bg)">
+                    <div class="card-body p-3 history-panel">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h6 class="m-0 fw-bold small text-uppercase text-heading">
+                                <i class="bx bx-time-five me-1" id="historyIcon"></i>
+                                <span id="historyTitle">Audit Trail</span>
+                                <span class="badge bg-label-secondary ms-2 history-count" style="display:none">0</span>
+                            </h6>
+                            <button type="button" class="btn btn-sm btn-icon btn-label-secondary border-0"
+                                    data-bs-toggle="collapse" data-bs-target="#sharedHistoryCollapse">
+                                <i class="bx bx-x"></i>
+                            </button>
+                        </div>
+                        <div class="text-center py-2 history-loader" style="display:none">
+                            <div class="spinner-border spinner-border-sm text-secondary"></div>
+                        </div>
+                        <ul class="timeline modern-timeline mt-1 mb-0 history-timeline" style="display:none"></ul>
+                        <div class="text-center mt-2 history-showmore-wrap" style="display:none">
+                            <button type="button" class="btn btn-sm btn-outline-secondary history-showmore-btn">
+                                <i class="bx bx-chevron-down me-1"></i><span class="history-showmore-label">Show more</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── CARD 4: AUDIT & COMPLIANCE ── *@
+    <div class="card mb-3 shadow-none border card-accent-info">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="avatar avatar-xs me-2">
+                    <span class="avatar-initial rounded bg-label-info"><i class="bx bx-shield-quarter fs-6"></i></span>
+                </div>
+                <h6 class="m-0 fw-bold small text-uppercase">Audit &amp; Compliance</h6>
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Potential Penalty</label>
+                    <select class="form-select form-select-sm svc-field svc-sel-locked" asp-for="PotentialPenalty" asp-items="ViewBag.Penalties">
+                        <option value="">— Select —</option>
+                    </select>
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Safe Harbor</label>
+                    <select class="form-select form-select-sm svc-field svc-sel-locked" asp-for="SafeHarbor" asp-items="ViewBag.SafeHarbors">
+                        <option value="">— Select —</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-12">
+                    <label class="fs-tiny field-label">Audit By</label>
+                    <select class="form-select form-select-sm svc-field svc-sel-locked" asp-for="AuditBy" asp-items="ViewBag.AuditUsers">
+                        <option value="">— Unassigned —</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-2">
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Audit Completed</label>
+                    <input type="date" class="form-control form-control-sm svc-field" name="AuditDate" value="@safeDate(Model.AuditDate)" readonly />
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Extension Filed</label>
+                    <input type="date" class="form-control form-control-sm svc-field" name="ExtensionFiled" value="@safeDate(Model.ExtensionFiled)" readonly />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── CARD 5: LIFECYCLE & METRICS ── *@
+    <div class="card mb-3 shadow-none border card-accent-secondary">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="avatar avatar-xs me-2">
+                    <span class="avatar-initial rounded bg-label-secondary"><i class="bx bx-analyse fs-6"></i></span>
+                </div>
+                <h6 class="m-0 fw-bold small text-uppercase">Lifecycle &amp; Metrics</h6>
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="fs-tiny field-label"># Forms Mailed</label>
+                    <input type="number" class="form-control form-control-sm svc-field" name="FormsMailed" value="@Model.FormsMailed" readonly min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label"># Employees Tracked</label>
+                    <input type="number" class="form-control form-control-sm svc-field" name="EmployeesTracked" value="@Model.EmployeesTracked" readonly min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                </div>
+                <div class="col-12 mt-2">
+                    <label class="fs-tiny field-label">Actual No. of Employees Tracked</label>
+                    <input type="number" class="form-control form-control-sm svc-field" name="ActualEmployeesTracked" value="@Model.ActualEmployeesTracked" readonly min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                </div>
+            </div>
+            <div class="row g-2 mb-3 border-top pt-2">
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Payer</label>
+                    <select class="form-select form-select-sm svc-field svc-sel-locked" asp-for="Payer" asp-items="ViewBag.Payers">
+                        <option value="">— Select —</option>
+                    </select>
+                </div>
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Month Initial Data Anticipated</label>
+                    <select class="form-select form-select-sm svc-field svc-sel-locked" name="MonthInitialData">
+                        <option value="">— Select —</option>
+                        @for (int i = 1; i <= 12; i++)
+                        {
+                            <option value="@i" selected="@(i == _mn ? "selected" : null)">@_months[i - 1]</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="row g-2 border-top pt-2">
+                <div class="col-6">
+                    <label class="fs-tiny field-label">Renewal Date</label>
+                    <input type="date" class="form-control form-control-sm svc-field" name="RenewalDate" value="@safeDate(Model.RenewalDate)" readonly />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── CARD 6: SERVICE NOTES ── *@
+    <div class="card mb-3 shadow-none border card-accent-secondary">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center mb-2">
+                <div class="avatar avatar-xs me-2">
+                    <span class="avatar-initial rounded bg-label-secondary"><i class="bx bx-notepad fs-6"></i></span>
+                </div>
+                <h6 class="m-0 fw-bold small text-uppercase">Service Notes</h6>
+            </div>
+            <textarea class="form-control svc-field" name="Notes" rows="3"
+                      placeholder="Enter service notes here..." readonly>@Model.Notes</textarea>
+        </div>
+    </div>
+
+    @Html.Raw("</form>")
+</div>
+
+@if (isModal)
+{
+    @Html.Raw("</div>")
+    <div class="modal-footer border-top bg-light py-3 px-4">
+        <div class="d-flex align-items-center justify-content-between w-100">
+            <span class="text-muted x-small text-heading">
+                <i class="bx bx-info-circle me-1"></i>Double-click any field to edit
+            </span>
+            <button type="button" class="btn btn-success px-4 fw-bold shadow-sm" onclick="saveSvcPanel()">
+                <i class="bx bx-save me-2"></i>Save
+            </button>
+        </div>
+    </div>
+}
+
+<script>
+
+    $(function () {
+
+        /* ── LOCK ALL fields on load ── */
+        $('#frmSvcPanel select.svc-field').addClass('svc-sel-locked');
+
+        /* ── DOUBLE-CLICK operation ── */
+        $(document).off('dblclick.svcfield').on('dblclick.svcfield',
+            '#frmSvcPanel input.svc-field[readonly], #frmSvcPanel textarea.svc-field[readonly]',
+            function () {
+                var $el = $(this);
+                $el.removeAttr('readonly');
+                if (this.type === 'date') {
+                    try { this.showPicker(); } catch (e) { $el.focus(); }
+                } else {
+                    $el.focus().select();
+                }
+            }
+        );
+
+        $(document).off('mousedown.svclocked').on('mousedown.svclocked',
+            '#frmSvcPanel select.svc-field.svc-sel-locked',
+            function (e) { e.preventDefault(); $(this).focus(); }
+        );
+
+      $(document).off('dblclick.svclocked').on('dblclick.svclocked',
+        '#frmSvcPanel select.svc-field.svc-sel-locked',
+        function () {
+            var $sel = $(this).removeClass('svc-sel-locked');
+            if (['ProcessStep1095', 'FTETrackingStep', 'StateFilingStep'].indexOf(this.id) !== -1) {
+                if (!$sel.hasClass('select2-hidden-accessible')) {
+                    $sel.select2({ width: '100%', allowClear: false, minimumResultsForSearch: 0 });
+                }
+                $sel.select2('open');
+            } else {
+                $sel.focus();
+            }
+        }
+      );
+
+       window.svcPanelRelockAll = function () {
+        $('#frmSvcPanel input.svc-field, #frmSvcPanel textarea.svc-field').attr('readonly', true);
+        ['#ProcessStep1095', '#FTETrackingStep', '#StateFilingStep'].forEach(function (id) {
+            var $s = $(id);
+            if ($s.hasClass('select2-hidden-accessible')) $s.select2('destroy');
+        });
+        $('#frmSvcPanel select.svc-field').addClass('svc-sel-locked');
+       };
+
+        $(document).off('change.svccalc', '#ProcessStep1095, #FTETrackingStep, #StateFilingStep, #LastUpdated1095, #LastUpdatedFTE, #LastUpdatedState')
+                   .on('change.svccalc',  '#ProcessStep1095, #FTETrackingStep, #StateFilingStep, #LastUpdated1095, #LastUpdatedFTE, #LastUpdatedState', function () {
+            var idAttr = $(this).attr('id');
+            var lastUpdatedId, nextFollowUpId, processDropdownId, categoryId;
+
+            if (idAttr === 'ProcessStep1095' || idAttr === 'LastUpdated1095') {
+                lastUpdatedId = 'LastUpdated1095'; nextFollowUpId = 'NextFollowUp1095'; processDropdownId = 'ProcessStep1095';
+                categoryId = 1;
+            } else if (idAttr === 'FTETrackingStep' || idAttr === 'LastUpdatedFTE') {
+                lastUpdatedId = 'LastUpdatedFTE';  nextFollowUpId = 'NextFollowUpFTE';  processDropdownId = 'FTETrackingStep';
+                categoryId = 2;
+            } else if (idAttr === 'StateFilingStep' || idAttr === 'LastUpdatedState') {
+                lastUpdatedId = 'LastUpdatedState'; nextFollowUpId = 'NextFollowUpState'; processDropdownId = 'StateFilingStep';
+                categoryId = 3;
+            }
+
+            var processName     = $('#' + processDropdownId).val();
+            var selectedDateStr = $('#' + lastUpdatedId).val();
+
+            if (!processName || processName === '' || processName === '-- Select --' || processName === '— Select —') {
+                $('#' + lastUpdatedId).val('');
+                $('#' + nextFollowUpId).val('').removeClass('border-danger text-danger bg-label-danger');
+                return;
+            }
+
+            if (!selectedDateStr) {
+                var today = new Date();
+                selectedDateStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+                $('#' + lastUpdatedId).val(selectedDateStr);
+            }
+
+            $('#' + nextFollowUpId).val('').removeClass('border-danger text-danger bg-label-danger');
+
+            $.get('/Employer/CalculateFollowUpDate', { processName: processName, baseDateStr: selectedDateStr, categoryId: categoryId })
+    .done(function (r) {
+        if (r.success) {
+            if (!r.nextDate || r.nextDate === selectedDateStr) {
+                $('#' + nextFollowUpId).val('');
+            } else {
+                $('#' + nextFollowUpId).val(r.nextDate);
+                checkDeadlinesSvc();
+            }
+        }
+    });
+        });
+
+        window.checkDeadlinesSvc = function () {
+            var today = new Date().toISOString().split('T')[0];
+            $('#NextFollowUp1095, #NextFollowUpFTE, #NextFollowUpState').each(function () {
+                var v = $(this).val();
+                if (v && v < today) $(this).addClass('border-danger text-danger bg-label-danger');
+                else $(this).removeClass('border-danger text-danger bg-label-danger');
+            });
+        };
+
+        $(document).off('change.svcdl', '#NextFollowUp1095, #NextFollowUpFTE, #NextFollowUpState')
+                   .on('change.svcdl',  '#NextFollowUp1095, #NextFollowUpFTE, #NextFollowUpState', checkDeadlinesSvc);
+
+        setTimeout(checkDeadlinesSvc, 500);
+    });
+</script>

@@ -1,0 +1,112 @@
+﻿@model AddEmployerViewModel
+
+<div class="card p-4 mb-3">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label">Employer Name</label>
+            <input asp-for="Employer.Name" class="form-control" placeholder="Employer Name" id="employerName" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">EIN</label>
+            <input asp-for="Employer.TaxId" class="form-control" placeholder="EIN" id="employerTaxId" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Type</label>
+            <select asp-for="Employer.Type" class="form-select" id="employerType">
+                <option value="">Select Type</option>
+                <option value="Primary">Primary</option>
+                <option value="Secondary">Secondary</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Filing Year</label>
+            <input asp-for="Employer.FilingYear" class="form-control" placeholder="Filing Year" id="employerFilingYear" readonly />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Foreign Address</label>
+            <select asp-for="Employer.IsForeignAddress" class="form-select" id="employerIsForeignAddress">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+            </select>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <label class="form-label">Address 1</label>
+            <input asp-for="Employer.Address1" class="form-control" placeholder="Address 1" id="employerAddress1" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <label class="form-label">Address 2</label>
+            <input asp-for="Employer.Address2" class="form-control" placeholder="Address 2" id="employerAddress2" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">City</label>
+            <input asp-for="Employer.City" class="form-control" placeholder="City" id="employerCity" />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">State</label>
+            @* <input asp-for="Employer.State" class="form-control" placeholder="State" id="employerState" /> *@
+            <div class="input-group input-group-merge">
+                <span class="input-group-text"><i class="icon-base bx bx-building"></i></span>
+                @* <select asp-for="Employer.State" asp-items="@(new SelectList(Model.Dropdowns.State, "Key", "Value"))" class="form-select ps-3" id="employerState"></select> *@
+                <select asp-for="Employer.StateId" class="form-select ps-3" id="employerState">
+                    <option value="">-- Select State --</option>
+                    @foreach (var state in Model.Dropdowns.State)
+                    {
+                        <option value="@state.Key">@state.Value</option>
+                    }
+                </select>
+                @* <select asp-for="employer_trackerinfo.FirmId" asp-items="@(new SelectList(Model.Dropdowns.Firms, "Key", "Value"))" class="form-select tracker_Firm ps-3"></select> *@
+            </div>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Zip Code</label>
+            <input asp-for="Employer.ZipCode" class="form-control" placeholder="Zip Code" id="employerZipCode" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Country</label>
+            @* <input asp-for="Employer.Country" class="form-control" placeholder="Country" id="employerCountry" /> *@
+            <div class="input-group input-group-merge">
+                <span class="input-group-text"><i class="icon-base bx bx-building"></i></span>
+                @* <select asp-for="Employer.Country" asp-items="@(new SelectList(Model.Dropdowns.Country, "Key", "Value"))" class="form-select ps-3" id="employerCountry"></select> *@
+                <select asp-for="Employer.CountryId" class="form-select ps-3" id="employerCountry">
+                    <option value="">-- Select Country --</option>
+                    @foreach (var country in Model.Dropdowns.Country)
+                    {
+                        <option value="@country.Key">@country.Value</option>
+                    }
+                </select>
+                @* <select asp-for="employer_trackerinfo.FirmId" asp-items="@(new SelectList(Model.Dropdowns.Firms, "Key", "Value"))" class="form-select tracker_Firm ps-3"></select> *@
+            </div>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Enable Call Center</label>
+            <select asp-for="Employer.enableCallCenter" class="form-select" id="employerEnableCallCenter">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Corrected</label>
+            <select asp-for="Employer.IsCorrected" class="form-select" id="employerIsCorrected">
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+            </select>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12 text-end">
+            <button type="submit" class="btn btn-primary" id="btnSaveEmployer">
+                <i class="bi bi-save"></i> Save
+            </button>
+        </div>
+    </div>
+</div>

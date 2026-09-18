@@ -1,0 +1,73 @@
+﻿@model ACA360.Web.Models.FileDetailsViewModel
+
+@{
+    ViewData["Title"] = "File Upload Details";
+}
+
+
+<div>
+    <h4>@Model.FileLog.OriginalFileName</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-3">
+            File Name
+        </dt>
+        <dd class="col-sm-9">
+            @Model.FileLog.OriginalFileName
+        </dd>
+        <dt class="col-sm-3">
+            Upload Date
+        </dt>
+        <dd class="col-sm-9">
+            @Model.FileLog.UploadedAt.ToString("F")
+        </dd>
+        <dt class="col-sm-3">
+            Current Status
+        </dt>
+        <dd class="col-sm-9">
+            @Model.FileLog.WorkflowStatus
+        </dd>
+        <dt class="col-sm-3">
+            File Path
+        </dt>
+        <dd class="col-sm-9">
+            @Model.FileLog.FilePath
+        </dd>
+    </dl>
+</div>
+
+@* This now assumes your @model.Errors is a list of StagingRowError objects *@
+@if (Model.Errors.Any())
+{
+    <div class="mt-4">
+        <h4>Validation Errors</h4>
+        <div class="alert alert-danger">
+            <dl>
+                @foreach (var errorGroup in Model.Errors.GroupBy(e => new { e.StagingTableName, e.StagingRowId }))
+                {
+                    <dt>@errorGroup.Key.StagingTableName (Row ID: @errorGroup.Key.StagingRowId)</dt>
+                    <dd>
+                        <ul>
+                            @foreach (var error in errorGroup)
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        </ul>
+                    </dd>
+                }
+            </dl>
+        </div>
+    </div>
+}
+else if (Model.FileLog.WorkflowStatus.Contains("Failed"))
+{
+    <div class="alert alert-warning mt-4">
+        No specific errors were logged, but the processing failed. Check system logs for more details.
+    </div>
+}
+
+@* <div class="mt-4 float-end">
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+
+    <a asp-action="Delete" asp-route-id="@Model.FileLog.FileLogId" class="btn btn-danger">Delete</a>
+</div> *@

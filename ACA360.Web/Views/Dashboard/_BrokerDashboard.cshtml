@@ -1,0 +1,134 @@
+﻿@using ACA360.Web.Helpers
+@model ACA360.Core.Models.DashboardViewModel
+@{
+    var clients = Model.AmPortfolio ?? new List<ACA360.Core.Models.AmClientPortfolioDto>();
+    var onTrack = Model.TotalEmployers - Model.MissingDataClients;
+    var missing = Model.MissingDataClients;
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="d-card" style="background:linear-gradient(135deg,#03c3ec 0%,#1da0c7 100%);border-color:transparent;">
+            <div class="card-body text-white d-flex justify-content-between align-items-center p-4">
+                <div>
+                    <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;opacity:.75;">Broker Portal</div>
+                    <h4 class="text-white fw-bold mb-1 mt-1">
+                        Welcome, @Model.Profile_Name
+                    </h4>
+                    <p class="mb-0 opacity-80">
+                        You are managing <strong>@Model.TotalEmployers</strong> clients this filing season.
+                    </p>
+                </div>
+                <i class='bx bx-briefcase' style="font-size:4rem;opacity:.3;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="d-metric">
+            <div class="d-metric-label">Total Clients</div>
+            <div class="d-metric-value counter pb-5" data-target="@Model.TotalEmployers">@Model.TotalEmployers</div>
+            <i class='bx bx-briefcase-alt-2 d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="d-metric accent-success">
+            <div class="d-metric-label">On Track</div>
+            <div class="d-metric-value counter text-success" data-target="@onTrack">@onTrack</div>
+            <div class="d-metric-sub mt-1">Data received</div>
+            <i class='bx bx-check-shield d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="d-metric accent-warning">
+            <div class="d-metric-label">Attention Needed</div>
+            <div class="d-metric-value counter text-warning" data-target="@missing">@missing</div>
+            <div class="d-metric-sub mt-1">Missing data</div>
+            <i class='bx bx-time-five d-metric-icon'></i>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="d-metric accent-info">
+            <div class="d-metric-label">Compliance Rate</div>
+            @{
+                var compPct = Model.TotalEmployers > 0 ? (onTrack * 100 / Model.TotalEmployers) : 0;
+            }
+            <div class="d-metric-value text-info pb-2">@compPct<span style="font-size:1.1rem;">%</span></div>
+            <div class="d-progress mt-2"><div class="d-progress-fill" data-pct="@compPct" style="--fill-color:var(--d-info);"></div></div>
+            <i class='bx bx-check-circle d-metric-icon'></i>
+        </div>
+    </div>
+</div>
+
+<div class="d-card">
+    <div class="d-card-header">
+        <h6 class="d-card-title"><i class='bx bx-list-ul me-2 text-primary'></i>Your Client Portfolio</h6>
+        <input type="text" id="brokerSearch" class="form-control form-control-sm" placeholder="Search clients…" style="width:200px;">
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size:.82rem;">
+            <thead style="background:rgba(105,108,255,.04);">
+                <tr>
+                    <th class="ps-4 py-3" style="font-size:.68rem;letter-spacing:.5px;">CLIENT</th>
+                    <th class="py-3" style="font-size:.68rem;letter-spacing:.5px;">LAST UPLOAD</th>
+                    <th class="py-3" style="font-size:.68rem;letter-spacing:.5px;">STATUS</th>
+                    <th class="pe-4 py-3" style="font-size:.68rem;letter-spacing:.5px;">ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var client in clients)
+                {
+                    <tr>
+                        <td class="ps-4">
+                            <div class="fw-semibold">@client.EmployerName</div>
+                            <div class="text-muted" style="font-size:.72rem;">EIN: @(CanViewSSNorEIN? client.TaxId: DataMasker.MaskEIN(client.TaxId))</div>
+                        </td>
+                        <td>
+                            @if (client.LastUploadDate.HasValue)
+                            {
+                                <span>@client.LastUploadDate.Value.ToString("MMM dd, yyyy")</span>
+                            }
+                            else
+                            {
+
+                                <span class="text-muted fst-italic">—</span>
+                            }
+                        </td>
+                        <td>
+                            @if (client.ComplianceStatusId == 2)
+                            {
+                                <span class="risk-high">Missing Data</span>
+                            }
+                            else
+                            {
+
+                                <span class="risk-ok">Up to Date</span>
+                            }
+                        </td>
+                        <td class="pe-4">
+                            <a href="@Url.Action("Index", "FileUpload", new { employerId = client.EmployerId })"
+                               class="btn btn-sm btn-outline-info">
+                                <i class='bx bx-upload me-1'></i>Upload
+                            </a>
+                        </td>
+                    </tr>
+                }
+                @if (!clients.Any())
+                {
+                    <tr><td colspan="4" class="text-center py-5 text-muted">No clients assigned.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.getElementById('brokerSearch').addEventListener('keyup', function() {
+        const v = this.value.toLowerCase();
+        document.querySelectorAll('table tbody tr').forEach(tr => {
+            tr.style.display = tr.textContent.toLowerCase().includes(v) ? '' : 'none';
+        });
+    });
+</script>

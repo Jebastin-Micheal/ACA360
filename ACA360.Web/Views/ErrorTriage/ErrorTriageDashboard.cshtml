@@ -1,0 +1,590 @@
+﻿@using ACA360.Core.Extensions
+@using ACA360.Core.Helpers
+@using System.Security.Claims
+@model ACA360.Core.Models.ErrorTriageViewModel
+@{
+    ViewData["Title"] = "Error Triage";
+
+    // Role flags
+    var userRole = User.FindFirstValue(System.Security.Claims.ClaimTypes.Role) ?? "";
+    // isDA / isAM removed — with the approval step gone, the only role question this
+    // screen asks is whether the user may import.
+
+    // Workflow state
+    bool isComplete = Model.WorkflowStatusId == WS.Complete;
+
+    // Mirrors FileUploadWorkflowService.CanImport. The AM approval step was removed, so
+    // the analyst who clears triage is the one who imports.
+    bool canImport = userRole is ACA360.Core.Constants.UserRoles.SuperAdmin
+                               or ACA360.Core.Constants.UserRoles.Admin
+                               or ACA360.Core.Constants.UserRoles.ACADirector
+                               or ACA360.Core.Constants.UserRoles.DASupervisor
+                               or ACA360.Core.Constants.UserRoles.AMSupervisor
+                               or ACA360.Core.Constants.UserRoles.DataAnalyst
+                               or ACA360.Core.Constants.UserRoles.AccountManager;
+}
+
+@Html.AntiForgeryToken()
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    #triageLoader {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,.92);
+        backdrop-filter: blur(3px);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+
+    .swal2-container {
+        z-index: 11000 !important;
+    }
+</style>
+
+<div id="triageLoader">
+    <div class="text-center">
+        <div class="spinner-border text-primary mb-3" style="width:3.5rem;height:3.5rem;" role="status"></div>
+        <h5 class="fw-bold mb-1" id="loaderText">Updating Data…</h5>
+        <p class="text-muted small" id="loaderSubText">Please wait while we revalidate the ACA rules.</p>
+    </div>
+</div>
+
+<div id="TriageAppContainer" class="position-relative">
+
+    @* ── Header card ──────────────────────────────────────────────────────── *@
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-lg-7 d-flex align-items-center gap-4">
+                    <div style="height:100px;width:100px;flex-shrink:0;">
+                        <canvas id="healthChart"></canvas>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1">@Model.OriginalFileName</h5>
+                        <div class="text-muted small mb-2">
+                            Batch #@Model.FileLogId
+                            @if (!string.IsNullOrEmpty(Model.EmployerName))
+                            {
+                                <span class="ms-2">· @Model.EmployerName</span>
+                            }
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2">
+                                <i class="bx bx-x-circle me-1"></i>
+                                <span id="stat-error">@Model.ErrorCount</span> Errors
+                                <small class="opacity-75">(blocks import)</small>
+                            </span>
+                            <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2">
+                                <i class="bx bx-error me-1"></i>
+                                <span id="stat-warning">@Model.WarningCount</span> Warnings
+                                <small class="opacity-75">(allowed)</small>
+                            </span>
+                            <span class="badge bg-info bg-opacity-10 text-info px-3 py-2">
+                                <i class="bx bx-info-circle me-1"></i>
+                                @Model.InformationCount Info
+                            </span>
+                            <span class="badge bg-label-secondary px-3 py-2">
+                                Error rate: @Model.ErrorPercentage.ToString("F1")%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5 text-end d-flex justify-content-end gap-2 flex-wrap mt-3 mt-lg-0">
+                    <a class="btn btn-outline-secondary"
+                       href="@Url.Action("Index", "FileUpload")">
+                        <i class="bx bx-arrow-back me-1"></i>Back
+                    </a>
+
+                    <button class="btn btn-outline-success"
+                            onclick="TriageApp.downloadReport(@Model.FileLogId)">
+                        <i class="bx bx-download me-1"></i>Export Report
+                    </button>
+
+                    @* There is no AM approval step. Once the fatal errors are cleared the file
+                       is imported from the File Upload screen, where the impact preview and
+                       the Merge/Overwrite choice live. *@
+                    @if (canImport && !isComplete)
+                    {
+                        <a id="btnReadyImport"
+                           class="btn btn-success @(Model.ErrorCount > 0 ? "disabled" : "")"
+                           asp-controller="FileUpload"
+                           asp-action="Index"
+                           title="@(Model.ErrorCount > 0
+                                        ? "Fix all errors first — warnings are allowed"
+                                        : "Return to File Upload to review the impact and import")">
+                            <i class="bx bx-cloud-upload me-1"></i>Ready to Import
+                        </a>
+                    }
+
+                    @* Completed badge *@
+                    @if (isComplete)
+                    {
+                        <span class="btn btn-success disabled pe-none">
+                            <i class="bx bx-check-double me-1"></i>Imported
+                        </span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── Error list card ──────────────────────────────────────────────────── *@
+    <div class="card border-0 shadow-sm">
+        <div class="card-header border-bottom p-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+
+                @* Severity filter chips *@
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-secondary filter-btn active"
+                            data-filter="all">
+                        All
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger filter-btn"
+                            data-filter="Error">
+                        Errors <span class="badge bg-danger ms-1">@Model.ErrorCount</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning filter-btn"
+                            data-filter="Warning">
+                        Warnings <span class="badge bg-warning ms-1">@Model.WarningCount</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-info filter-btn"
+                            data-filter="Information">
+                        Info
+                    </button>
+                </div>
+
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+
+                    @* Bulk skip *@
+                    <div id="bulkActions" class="d-none">
+                        <button class="btn btn-sm btn-warning fw-semibold"
+                                onclick="TriageApp.bulkSkip()">
+                            <i class="bx bx-check-double me-1"></i>
+                            Skip Selected (<span id="selectedCount">0</span>)
+                        </button>
+                        <div class="vr mx-2"></div>
+                    </div>
+
+                    @* Column-aware search *@
+                    <div class="input-group input-group-sm input-group-merge" style="width:340px;">
+                        <button class="btn btn-outline-secondary dropdown-toggle"
+                                type="button" data-bs-toggle="dropdown">
+                            <span id="searchLabel">All Cols</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item search-col-item" href="#" data-col="">All Columns</a></li>
+                            <li><a class="dropdown-item search-col-item" href="#" data-col="TargetColumn">Field Name</a></li>
+                            <li><a class="dropdown-item search-col-item" href="#" data-col="ErrorMessage">Error Message</a></li>
+                            <li><a class="dropdown-item search-col-item" href="#" data-col="StagingTableName">Table Name</a></li>
+                        </ul>
+                        <input type="text" id="triageSearch" class="form-control"
+                               placeholder="Search errors…">
+                    </div>
+
+                    @* Column visibility toggle *@
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                type="button" data-bs-toggle="dropdown">
+                            <i class="bx bx-columns me-1"></i>Cols
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end p-2" id="colVisDropdown">
+                            <li>
+                                <label class="dropdown-item">
+                                    <input type="checkbox" class="form-check-input me-2 col-toggle"
+                                           data-col="col-severity" checked> Severity
+                                </label>
+                            </li>
+                            <li>
+                                <label class="dropdown-item">
+                                    <input type="checkbox" class="form-check-input me-2 col-toggle"
+                                           data-col="col-row" checked> Row #
+                                </label>
+                            </li>
+                            <li>
+                                <label class="dropdown-item">
+                                    <input type="checkbox" class="form-check-input me-2 col-toggle"
+                                           data-col="col-table" checked> Table / Field
+                                </label>
+                            </li>
+                            <li>
+                                <label class="dropdown-item">
+                                    <input type="checkbox" class="form-check-input me-2 col-toggle"
+                                           data-col="col-value" checked> Incorrect Value
+                                </label>
+                            </li>
+                            <li>
+                                <label class="dropdown-item">
+                                    <input type="checkbox" class="form-check-input me-2 col-toggle"
+                                           data-col="col-issue" checked> Issue Details
+                                </label>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button class="btn btn-sm btn-icon btn-light" onclick="TriageApp.refresh()"
+                            title="Refresh list">
+                        <i class="bx bx-refresh"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div id="ErrorTriageListContainer">
+                @await Html.PartialAsync("_ErrorTriageListPartial", Model)
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ── Offcanvas editor ──────────────────────────────────────────────────────── *@
+<div class="offcanvas offcanvas-end" tabindex="-1" id="editOffcanvas" style="width:520px;">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title fw-semibold">
+            <i class="bx bx-edit-alt me-2 text-primary"></i>Correction Editor
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body bg-light" id="editOffcanvasBody"></div>
+    <div class="offcanvas-footer border-top p-3 d-flex justify-content-between align-items-center">
+        <button type="button" class="btn btn-outline-secondary"
+                data-bs-dismiss="offcanvas">
+            Cancel
+        </button>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-primary" id="btnSave">
+                <i class="bx bx-save me-1"></i>Save
+            </button>
+            <button type="button" class="btn btn-primary" id="btnSaveNext">
+                Save & Next <i class="bx bx-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const TriageApp = {
+            state: {
+                id:           '@Model.FileLogId',
+                page:         1,
+                pageSize:     10,
+                search:       '',
+                searchColumn: '',
+                sortCol:      0,
+                sortOrder:    'asc',
+                severity:     'all',
+                currentRowId: 0,
+                selectedRows: []
+            },
+
+            // ── Init ────────────────────────────────────────────────────────────────
+            init() {
+                this.initChart();
+                this.bindEvents();
+            },
+
+            // ── Loader ──────────────────────────────────────────────────────────────
+            showProcessing(msg, sub) {
+                $('#loaderText').text(msg   || 'Processing…');
+                $('#loaderSubText').text(sub || 'Please do not refresh the page.');
+                $('#triageLoader').css('display', 'flex');
+            },
+            hideProcessing() { $('#triageLoader').hide(); },
+
+            // ── Health doughnut ──────────────────────────────────────────────────────
+            initChart() {
+                const ctx = document.getElementById('healthChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels:   ['Errors', 'Warnings', 'Info'],
+                        datasets: [{
+                            data: [@Model.ErrorCount, @Model.WarningCount, @Model.InformationCount],
+                            backgroundColor: ['#ff5b5c', '#fdac41', '#39da8a'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, cutout: '75%',
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            },
+
+            // ── Event binding ────────────────────────────────────────────────────────
+            bindEvents() {
+                // Severity filter
+                $('.filter-btn').on('click', function() {
+                    $('.filter-btn').removeClass('active');
+                    $(this).addClass('active');
+                    TriageApp.state.severity = $(this).data('filter');
+                    TriageApp.state.page = 1;
+                    TriageApp.loadData();
+                });
+
+                // Column search
+                $('.search-col-item').click(function(e) {
+                    e.preventDefault();
+                    TriageApp.state.searchColumn = $(this).data('col');
+                    $('#searchLabel').text($(this).text());
+                    TriageApp.loadData();
+                });
+
+                // Search with debounce
+                let timer;
+                $('#triageSearch').on('input', function() {
+                    clearTimeout(timer);
+                    TriageApp.state.search = $(this).val();
+                    timer = setTimeout(() => { TriageApp.state.page = 1; TriageApp.loadData(); }, 450);
+                });
+
+                // Column visibility
+                $('.col-toggle').change(function() {
+                    const cls = $(this).data('col');
+                    $(`.${cls}`).toggleClass('d-none', !$(this).is(':checked'));
+                });
+
+                // Select all checkbox
+                $(document).on('change', '#chkSelectAll', function() {
+                    $('.chk-row').prop('checked', $(this).is(':checked')).trigger('change');
+                });
+
+                // Row checkboxes
+                $(document).on('change', '.chk-row', function() {
+                    const id = $(this).val();
+                    if ($(this).is(':checked')) {
+                        if (!TriageApp.state.selectedRows.includes(id))
+                            TriageApp.state.selectedRows.push(id);
+                    } else {
+                        TriageApp.state.selectedRows = TriageApp.state.selectedRows.filter(x => x !== id);
+                    }
+                    TriageApp.updateBulkUI();
+                });
+
+                // Edit and skip buttons (delegated — survive AJAX reloads)
+                $(document).on('click', '.edit-row-btn', function() {
+                    const btn = $(this);
+                    TriageApp.openEditor(btn.data('filelogid'), btn.data('tablename'), btn.data('rowid'));
+                });
+                $(document).on('click', '.skip-btn', function() {
+                    TriageApp.skipWarning($(this));
+                });
+
+                // Pagination
+                $(document).on('click', '.page-link', function(e) {
+                    e.preventDefault();
+                    const pg = $(this).data('pageindex');
+                    if (pg) { TriageApp.state.page = pg; TriageApp.loadData(); }
+                });
+
+                // Offcanvas save buttons
+                $('#btnSave').click(()     => TriageApp.saveRow(false));
+                $('#btnSaveNext').click(() => TriageApp.saveRow(true));
+            },
+
+            // ── Bulk UI ──────────────────────────────────────────────────────────────
+            updateBulkUI() {
+                const count = this.state.selectedRows.length;
+                $('#selectedCount').text(count);
+                $('#bulkActions').toggleClass('d-none', count === 0);
+            },
+
+            bulkSkip() {
+                if (!this.state.selectedRows.length) return;
+                Swal.fire({
+                    title: 'Skip Selected?',
+                    text:  `Skip ${this.state.selectedRows.length} warning(s)?`,
+                    icon:  'warning',
+                    showCancelButton:    true,
+                    confirmButtonText:   'Yes, Skip'
+                }).then(r => {
+                    if (!r.isConfirmed) return;
+                    $.ajax({
+                        url:         '/ErrorTriage/BulkSkipWarnings',
+                        type:        'POST',
+                        contentType: 'application/json',
+                        headers:     { RequestVerificationToken: $('[name="__RequestVerificationToken"]').val() },
+                        data:        JSON.stringify({ ErrorIds: TriageApp.state.selectedRows }),
+                        success(res) {
+                            Swal.fire('Skipped!', `${res.count} warning(s) skipped.`, 'success');
+                            TriageApp.state.selectedRows = [];
+                            TriageApp.updateBulkUI();
+                            TriageApp.loadData();
+                        }
+                    });
+                });
+            },
+
+            // ── Load list partial ────────────────────────────────────────────────────
+            loadData() {
+                $('#ErrorTriageListContainer').css('opacity', '.5');
+                $.ajax({
+                    url:  '/ErrorTriage/ErrorTriageListPartial',
+                    data: {
+                        id:           this.state.id,
+                        pageIndex:    this.state.page,
+                        pageSize:     this.state.pageSize,
+                        search:       this.state.search,
+                        searchColumn: this.state.searchColumn,
+                        severity:     this.state.severity === 'all' ? '' : this.state.severity
+                    },
+                    success(html) {
+                        $('#ErrorTriageListContainer').html(html).css('opacity', '1');
+                        // Re-apply hidden columns
+                        $('.col-toggle').each(function() {
+                            if (!$(this).is(':checked'))
+                                $(`.${$(this).data('col')}`).addClass('d-none');
+                        });
+                    },
+                    error() {
+                        $('#ErrorTriageListContainer').css('opacity', '1');
+                    }
+                });
+            },
+
+            // ── Open offcanvas editor ────────────────────────────────────────────────
+            openEditor(fileLogId, tableName, rowId) {
+                this.state.currentRowId = rowId;
+                const bsOC = new bootstrap.Offcanvas(document.getElementById('editOffcanvas'));
+                bsOC.show();
+
+                $('#editOffcanvasBody').html(
+                    '<div class="text-center mt-5">' +
+                    '<div class="spinner-border text-primary mb-2"></div>' +
+                    '<p class="text-muted small">Loading row data…</p></div>');
+
+                $.get(`/ErrorTriage/GetStagingRow?fileLogId=${fileLogId}&tableName=${tableName}&rowId=${rowId}`)
+                 .done(html  => $('#editOffcanvasBody').html(html))
+                 .fail(()    => $('#editOffcanvasBody').html(
+                     '<div class="alert alert-danger m-3">Failed to load row data.</div>'));
+            },
+
+            // ── Save row + revalidate ────────────────────────────────────────────────
+            saveRow(loadNext) {
+                const $btn = loadNext ? $('#btnSaveNext') : $('#btnSave');
+                $btn.prop('disabled', true);
+                this.showProcessing('Saving changes…', 'Applying your correction to the staging record.');
+
+                const values = {};
+                $('#editRowForm').serializeArray().forEach(f => values[f.name] = f.value);
+
+                const payload = {
+                    FileLogId: parseInt($('#hdn_FileLogId').val()),
+                    TableName: $('#hdn_TableName').val(),
+                    RowId:     parseInt($('#hdn_RowId').val()),
+                    Values:    values
+                };
+
+                $.ajax({
+                    url:         '/ErrorTriage/UpdateField',
+                    type:        'POST',
+                    contentType: 'application/json',
+                    headers:     { RequestVerificationToken: $('[name="__RequestVerificationToken"]').val() },
+                    data:        JSON.stringify(payload),
+                    beforeSend:  () => this.showProcessing('Revalidating…', 'Checking against ACA compliance rules.'),
+                    success: res => {
+                        this.hideProcessing();
+                        if (res.isSuccess) {
+                            // Update error badge and unlock "Send for Approval" if errors hit zero
+                            if (res.newErrorCount !== undefined) {
+                                $('#stat-error').text(res.newErrorCount);
+                                this.updateApprovalButton(res.newErrorCount);
+                            }
+                            if (res.newWarningCount !== undefined)
+                                $('#stat-warning').text(res.newWarningCount);
+
+                            const Toast = Swal.mixin({
+                                toast: true, position: 'top-end',
+                                showConfirmButton: false, timer: 3000, timerProgressBar: true
+                            });
+                            Toast.fire({ icon: 'success', title: 'Fixed & re-validated' });
+
+                            this.loadData();
+
+                            if (loadNext) {
+                                const nextBtn = $(`tr[data-row-id="${payload.RowId}"]`)
+                                    .nextAll('tr').find('.edit-row-btn').first();
+                                if (nextBtn.length)
+                                    nextBtn.trigger('click');
+                                else
+                                    bootstrap.Offcanvas.getInstance(
+                                        document.getElementById('editOffcanvas')).hide();
+                            } else {
+                                bootstrap.Offcanvas.getInstance(
+                                    document.getElementById('editOffcanvas')).hide();
+                            }
+                        } else {
+                            Swal.fire('Validation Error',
+                                res.errors ? res.errors.join('<br>') : 'Unknown error.', 'error');
+                        }
+                    },
+                    error: () => {
+                        Swal.fire('System Error',
+                            'The revalidation engine timed out. Please try again.', 'error');
+                    },
+                    complete: () => {
+                        $btn.prop('disabled', false);
+                        this.hideProcessing();
+                    }
+                });
+            },
+
+            // Enable the "Ready to Import" link as soon as the last fatal error clears,
+            // so the analyst does not have to reload the page to see it unlock.
+            updateApprovalButton(errorCount) {
+                const $btn = $('#btnReadyImport');
+                if (!$btn.length) return;
+                if (errorCount <= 0) {
+                    $btn.removeClass('disabled')
+                        .attr('title', 'Return to File Upload to review the impact and import');
+                } else {
+                    $btn.addClass('disabled')
+                        .attr('title', 'Fix all errors first — warnings are allowed');
+                }
+            },
+
+            // ── Skip single warning ──────────────────────────────────────────────────
+            skipWarning($btn) {
+                $btn.addClass('disabled');
+                const rowErrorId = $btn.data('rowerrorid');
+                $.ajax({
+                    url:         '/ErrorTriage/UpdateErrorStatus',
+                    type:        'POST',
+                    contentType: 'application/json',
+                    headers:     { RequestVerificationToken: $('[name="__RequestVerificationToken"]').val() },
+                    data:        JSON.stringify({ StagingRowErrorId: rowErrorId, Status: 'Skipped' }),
+                    success(res) {
+                        if (res.success) {
+                            $btn.closest('tr').addClass('table-secondary');
+                            $btn.closest('td').html('<span class="text-muted fst-italic small">Skipped</span>');
+                            $('#stat-warning').text(Math.max(0, parseInt($('#stat-warning').text()) - 1));
+                            const Toast = Swal.mixin({ toast: true, position: 'top-end',
+                                showConfirmButton: false, timer: 2500 });
+                            Toast.fire({ icon: 'info', title: 'Warning skipped' });
+                        }
+                    }
+                });
+            },
+
+            // sendForApproval() and approveAndImport() were removed with the AM
+            // authorisation step. The import is confirmed on the File Upload screen,
+            // which owns the impact preview and the Merge/Overwrite choice.
+
+
+            downloadReport(id) { window.location.href = `/ErrorTriage/DownloadErrorReport/${id}`; },
+            refresh() { this.state.search = ''; $('#triageSearch').val(''); this.loadData(); }
+        };
+
+        $(document).ready(() => TriageApp.init());
+    </script>
+}

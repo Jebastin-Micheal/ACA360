@@ -1,0 +1,118 @@
+﻿@model ACA360.Core.Models.ErrorLogListViewModel
+
+<style>
+    #errorLogDataTable thead th {
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: .5px;
+        color: #6c757d;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    #errorLogDataTable tbody tr:hover {
+        background-color: #f8f9fb;
+    }
+
+    #errorLogDataTable tr.shown {
+        background-color: #fff3f3 !important;
+    }
+
+    .dt-search input {
+        border-radius: 20px;
+        padding-left: 14px;
+    }
+    /* Highlights the active/visible columns in the DataTables ColVis dropdown */
+    div.dt-button-collection .dt-button.active {
+        background-color: rgba(105, 108, 255, 0.08) !important; /* Sneat Primary Light */
+        color: #696cff !important; /* Sneat Primary Text */
+        font-weight: 600;
+    }
+
+        div.dt-button-collection .dt-button.active::before {
+            content: "\eac2"; /* BoxIcons Checkmark */
+            font-family: 'boxicons';
+            margin-right: 8px;
+        }
+</style>
+<div class="table-responsive">
+    <table class="table table-hover table-striped mb-0">
+        <thead class="table-light">
+            <tr>
+                <th class="cursor-pointer" onclick="sortError('Level')">Level <i class='bx bxs-sort-alt'></i></th>
+                <th class="cursor-pointer" onclick="sortError('Type')">Type <i class='bx bxs-sort-alt'></i></th>
+                <th>Message</th>
+                <th class="cursor-pointer" onclick="sortError('User_Ip')">IP Address <i class='bx bxs-sort-alt'></i></th>
+                <th class="cursor-pointer" onclick="sortError('LoggedOnDate')">Time <i class='bx bxs-sort-alt'></i></th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Logs.Any())
+            {
+                foreach (var log in Model.Logs)
+                {
+                    <tr>
+                        <td>
+                            @if (log.Level == "Error" || log.Level == "Fatal")
+                            {
+                                <span class="badge bg-label-danger">@log.Level</span>
+                            }
+                            else if (log.Level == "Warning")
+                            {
+                                <span class="badge bg-label-warning">@log.Level</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-label-info">@log.Level</span>
+                            }
+                        </td>
+                        <td>@log.Type</td>
+                        <td class="text-wrap" style="max-width: 300px;">@log.Message</td>
+                        <td>@log.User_Ip</td>
+                        <td>@log.LoggedOnDate.ToString("MMM dd, yyyy HH:mm")</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#stackTrace-@log.LogId">
+                                Details
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="collapse" id="stackTrace-@log.LogId">
+                        <td colspan="6" class="bg-light p-3">
+                            <strong>Call Site:</strong> @log.CallSite <br />
+                            <strong>Additional Info:</strong> @log.AdditionalInfo <br />
+                            <strong>Stack Trace:</strong>
+                            <pre class="bg-dark text-white p-2 mt-2 rounded" style="max-height: 200px; overflow-y: auto;"><small>@log.StackTrace</small></pre>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center py-5">
+                        <i class='bx bx-search-alt fs-1 text-muted'></i>
+                        <p class="mt-2 text-muted">No error records found.</p>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="d-flex justify-content-between align-items-center p-3 border-top">
+        <small class="text-muted">Showing page @Model.CurrentFilter.Page of @Model.TotalPages (@Model.TotalRecords Total)</small>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(Model.CurrentFilter.Page == 1 ? "disabled" : "")">
+                    <a class="page-link" href="javascript:void(0)" onclick="loadErrorPage(@(Model.CurrentFilter.Page - 1))">Previous</a>
+                </li>
+                @* Add your standard pagination loop here (matching the Audit log) *@
+                <li class="page-item @(Model.CurrentFilter.Page == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" href="javascript:void(0)" onclick="loadErrorPage(@(Model.CurrentFilter.Page + 1))">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}

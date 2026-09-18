@@ -1,0 +1,497 @@
+﻿@using ACA360.Core.Models
+@model UserAccounts
+@{
+    var pwdPolicy = ViewBag.PasswordPolicy as ACA360.Core.Models.SecuritySettingsDto
+                    ?? new ACA360.Core.Models.SecuritySettingsDto();
+}
+<style>
+    .file-input-wrapper {
+        position: relative;
+        margin-bottom: 10px;
+    }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            left: 0;
+            top: 0;
+        }
+
+    .file-display {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid #ced4da;
+        padding: 6px 12px;
+        border-radius: 4px;
+        background-color: #fff;
+    }
+
+    .file-name {
+        flex-grow: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .password-toggle {
+        cursor: pointer;
+        position: absolute;
+        right: 10px;
+        top: 30px;
+        font-size: x-large;
+    }
+    /* Force SweetAlert2 container above Bootstrap modal */
+    .high-z-index {
+        z-index: 2000 !important;
+    }
+
+    .pwd-checklist {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+    }
+
+    .pwd-rule {
+        font-size: 0.72rem;
+        padding: 2px 8px;
+        border-radius: 12px;
+        background: #f1f3f5;
+        color: #6c757d;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s ease;
+    }
+
+        .pwd-rule i {
+            font-size: 12px;
+        }
+
+        .pwd-rule.valid {
+            background: #d1f7e0;
+            color: #198754;
+        }
+
+</style>
+
+<div class="col-12">
+    <div class="card">
+        <div class="card-body">
+            <form id="UserAccountsForm" asp-action="@(Model.UserAccounts_ID == 0 ? "Create" : "Edit")" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="UserAccounts_ID" />
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="UserAccounts_FName" class="form-label"></label><span class="text-danger">*</span>
+                            <input asp-for="UserAccounts_FName" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label asp-for="UserAccounts_LName" class="form-label"></label><span class="text-danger">*</span>
+                            <input asp-for="UserAccounts_LName" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Role</label><span class="text-danger">*</span>
+
+                            @if (Model.UserAccounts_ID == 0)
+                            {
+                                <!-- Show dropdown when creating a new user -->
+                                <select asp-for="UserAccounts_Role" class="form-select" asp-items="ViewBag.RoleOptions">
+                                    <option value="">-- Select Role --</option>
+                                </select>
+                            }
+                            else
+                            {
+                                <!-- Show read-only label for existing user -->
+                                <input type="text" class="form-control" value="@Model.UserAccounts_Role_Name" disabled />
+                                <!-- Keep the role value during form submit -->
+                                <input type="hidden" asp-for="UserAccounts_Role" />
+                            }
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="UserAccounts_Email" class="form-label"></label><span class="text-danger">*</span>
+                            <input asp-for="UserAccounts_Email" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group position-relative">
+                            @if (Model.UserAccounts_ID == 0)
+                            {
+                                <a href='javascript:;' id="generatepass" class="random ms-2">Generate Random Password</a>
+                                <input asp-for="UserAccounts_Password" type="text" class="form-control" id="UserAccounts_Password" />
+                            }
+                            else
+                            {
+                                <div class="form-check form-check-inline ms-2">
+                                    <input class="form-check-input" type="checkbox" id="chkChangePassword" />
+                                    <label class="form-check-label" for="chkChangePassword">Change Password</label>
+                                </div>
+                                <a href='javascript:;' id="generatepass" class="random ms-2" style="display:none;">Generate Random Password</a>
+                                <input asp-for="UserAccounts_Password" type="text" class="form-control" readonly id="UserAccounts_Password" />
+                            }
+                            <i class="password-toggle bx bx-show" onclick="togglePassword(this)"></i>
+
+                            @* ★ NEW - policy hint + live feedback *@
+                            <div class="pwd-checklist mt-2" id="pwdChecklist">
+                                <span class="pwd-rule" id="ruleLength" data-min="@pwdPolicy.MinPasswordLength">
+                                    <i class="bx bx-x-circle"></i> Min @pwdPolicy.MinPasswordLength chars
+                                </span>
+                                @if (pwdPolicy.RequireDigits)
+                                {
+                                    <span class="pwd-rule" id="ruleDigit">
+                                        <i class="bx bx-x-circle"></i> 1 number
+                                    </span>
+                                }
+                                @if (pwdPolicy.RequireUppercase)
+                                {
+                                    <span class="pwd-rule" id="ruleUpper">
+                                        <i class="bx bx-x-circle"></i> 1 uppercase
+                                    </span>
+                                }
+                            </div>
+                            <small class="text-danger d-block mt-1 d-none" id="pwdError"></small>
+                        </div>
+                    </div>
+
+
+
+                </div>
+
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="UserAccounts_Phone" class="form-label"></label>
+                            <input asp-for="UserAccounts_Phone" class="form-control  mask-us-phone" />
+                            <span asp-validation-for="UserAccounts_Phone" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="UserAccounts_Status" class="form-label"></label><span class="text-danger">*</span>
+                        <select asp-for="UserAccounts_Status" class="form-select" asp-items="ViewBag.StatusOptions">
+                            <option value="">-- Select Status --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="UserAccounts_Addr1" class="form-label"></label>
+                            <input asp-for="UserAccounts_Addr1" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="UserAccounts_Addr2" class="form-label"></label>
+                            <input asp-for="UserAccounts_Addr2" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="UserAccounts_City" class="form-label"></label>
+                            <input asp-for="UserAccounts_City" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="UserAccounts_State" class="form-label"></label>
+                            <select asp-for="UserAccounts_State" class="form-select" asp-items="ViewBag.StateOptions">
+                                <option value="">-- Select State --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- Existing fields... -->
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="UserAccounts_Zip" class="form-label"></label>
+                            <input asp-for="UserAccounts_Zip" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="IsMFA" class="form-label"></label>
+                            <select asp-for="IsMFA" class="form-select" asp-items="ViewBag.MFAOptions">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rest of the form... -->
+
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <label asp-for="ProfilePicture" class="form-label">Profile Picture</label>
+
+                        <div class="file-input-wrapper">
+                            <input type="file" asp-for="ProfilePictureFile" id="Profile_Picture" class="form-control-file" accept="image/*" onchange="updateFileDisplay(this)" />
+
+                            <div class="file-display">
+                                <span class="file-name" id="filenameDisplay">
+                                    @if (!string.IsNullOrEmpty(Model.ProfilePicture))
+                                    {
+                                        @Model.ProfilePicture
+                                    }
+                                    else
+                                    {
+                                        @:No file chosen
+                                    }
+                                </span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('Profile_Picture').click()">Choose File</button>
+                            </div>
+                        </div>
+
+                        <span asp-validation-for="ProfilePictureFile" class="text-danger"></span>
+
+                        @if (!string.IsNullOrEmpty(Model.ProfilePicture))
+                        {
+                            <div class="mt-2">
+                                <img src="~/uploads/profile-pictures/@Model.ProfilePicture" alt="Current Profile"
+                                     style="max-width: 100px; max-height: 100px;" class="img-thumbnail" />
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="modal-footer mt-10">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="saveUserAccountsBtn" class="btn btn-primary">Save User Accounts</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+<partial name="_ValidationScriptsPartial" />
+<script>
+
+        const pwdMinLength = @pwdPolicy.MinPasswordLength;
+        const pwdReqUpper  = @pwdPolicy.RequireUppercase.ToString().ToLower();
+        const pwdReqDigit  = @pwdPolicy.RequireDigits.ToString().ToLower();
+
+        function generateRandomPassword() {
+            const lower = "abcdefghijklmnopqrstuvwxyz";
+            const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const digits = "0123456789";
+            const symbols = "!#$%^&*_+";
+
+            let requiredChars = [];
+            if (pwdReqUpper) requiredChars.push(upper.charAt(Math.floor(Math.random() * upper.length)));
+            if (pwdReqDigit) requiredChars.push(digits.charAt(Math.floor(Math.random() * digits.length)));
+            requiredChars.push(lower.charAt(Math.floor(Math.random() * lower.length)));
+
+            const allChars = lower + (pwdReqUpper ? upper : "") + (pwdReqDigit ? digits : "") + symbols;
+            const targetLength = Math.max(pwdMinLength, 12);
+
+            while (requiredChars.length < targetLength) {
+                requiredChars.push(allChars.charAt(Math.floor(Math.random() * allChars.length)));
+            }
+
+            for (let i = requiredChars.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [requiredChars[i], requiredChars[j]] = [requiredChars[j], requiredChars[i]];
+            }
+
+            return requiredChars.join('');
+        }
+
+            function updateRuleUI(el, isValid) {
+            if (!el) return;
+            const icon = el.querySelector('i');
+            if (isValid) {
+                el.classList.add('valid');
+                icon.className = 'bx bx-check-circle';
+            } else {
+                el.classList.remove('valid');
+                icon.className = 'bx bx-x-circle';
+            }
+        }
+
+            function validatePasswordField() {
+        const val = $('#UserAccounts_Password').val() || '';
+        const lengthOk = val.length >= pwdMinLength;
+        const upperOk  = !pwdReqUpper || /[A-Z]/.test(val);
+        const digitOk  = !pwdReqDigit || /[0-9]/.test(val);
+
+        updateRuleUI(document.getElementById('ruleLength'), lengthOk);
+        updateRuleUI(document.getElementById('ruleDigit'), digitOk);
+        updateRuleUI(document.getElementById('ruleUpper'), upperOk);
+
+        return lengthOk && upperOk && digitOk;
+    }
+
+        // Manual typing live check
+        $(document).on('input', '#UserAccounts_Password', function () {
+            validatePasswordField();
+        });
+
+          $(document).ready(function() {
+
+              $('#saveUserAccountsBtn').on('click', function() {
+                  var $form = $('#UserAccountsForm'); // Keep it as a jQuery object
+
+                  if ($('#chkChangePassword').length && !$('#chkChangePassword').is(':checked')) {
+            $('#UserAccounts_Password').rules('remove', 'required');
+        }
+
+         var isPwdRequired = $('#chkChangePassword').length === 0 || $('#chkChangePassword').is(':checked');
+            if (isPwdRequired && !validatePasswordField()) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Weak Password',
+                    text: 'Password does not meet the required security policy. Please check the requirements below the password field.',
+                    confirmButtonText: 'OK'
+                });
+                $('#UserAccounts_Password').addClass('border-danger').focus();
+                return;
+            }
+
+                  // Use jQuery Validation .valid() to trigger ASP.NET Core Unobtrusive Validation
+                  if (!$form.valid()) {
+                      // Add border-danger to all inputs that failed validation
+                      $form.find('.input-validation-error').addClass('border-danger');
+                      // Focus on the first invalid field for better UX
+                      $form.find('.input-validation-error').first().focus();
+                      return; // Stop execution if form is invalid
+                  }
+
+                  // Optional: Remove border-danger if the form becomes valid
+                  $form.find('.border-danger').removeClass('border-danger');
+
+                  Swal.fire({
+                      title: 'Are you sure?',
+                      text: "Do you want to save these User Accounts?",
+                      icon: 'question',
+                      showCancelButton: true,
+                      confirmButtonColor: '#3085d6',
+                      cancelButtonColor: '#d33',
+                      confirmButtonText: 'Yes, save it!',
+                      cancelButtonText: 'Cancel',
+                      customClass: {
+                          container: 'high-z-index'
+                      }
+                  }).then((result) => {
+                      if (result.isConfirmed) {
+
+                          Swal.fire({
+                title: 'Saving...',
+                text: 'Please wait while we save the user account.',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                customClass: {
+                    container: 'high-z-index'
+                },
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+                          $form.submit();
+                      }
+                  });
+              });
+
+              // Add an event listener to clear the 'border-danger' class when the user starts typing/correcting
+              $('#UserAccountsForm').on('input change', '.input-validation-error', function() {
+                  $(this).removeClass('border-danger');
+              });
+          });
+
+
+          function togglePassword(icon) {
+              const input = icon.previousElementSibling; // Get the input next to icon
+              if (input.type === "password") {
+                  input.type = "text";
+                  icon.classList.remove("bx-hide");
+                  icon.classList.add("bx-show");
+              } else {
+                  input.type = "password";
+                  icon.classList.remove("bx-show");
+                  icon.classList.add("bx-hide");
+              }
+          }
+
+                  $(document).on('change', '#chkChangePassword', function () {
+            var $pwd = $('#UserAccounts_Password');
+            if ($(this).is(':checked')) {
+                $pwd.prop('readonly', false);
+                $pwd.val('');
+                $pwd.focus();
+                $('#generatepass').show();
+            } else {
+                $pwd.prop('readonly', true);
+                $pwd.val('');
+                $('#generatepass').hide();
+            }
+        });
+
+          function updateFileDisplay(input) {
+              const display = document.getElementById('filenameDisplay');
+              if (input.files.length > 0) {
+                  const file = input.files[0];
+                  display.textContent = file.name;
+                  display.style.color = '#212529';
+
+                  // Preview image if it's an image file
+                  if (file.type.startsWith('image/')) {
+                      const previewContainer = document.createElement('div');
+                      previewContainer.className = 'mt-2';
+
+                      const imgPreview = document.createElement('img');
+                      imgPreview.src = URL.createObjectURL(file);
+                      imgPreview.alt = 'Preview';
+                      imgPreview.style.maxWidth = '100px';
+                      imgPreview.style.maxHeight = '100px';
+                      imgPreview.className = 'img-thumbnail';
+
+                      previewContainer.appendChild(imgPreview);
+
+                      // Remove existing preview if any
+                      const existingPreview = input.parentNode.parentNode.querySelector('.mt-2 img');
+                      if (existingPreview) {
+                          existingPreview.parentNode.remove();
+                      }
+
+                      input.parentNode.parentNode.insertAdjacentElement('afterend', previewContainer);
+                  }
+              } else {
+                  display.textContent = 'No file chosen';
+                  display.style.color = '#6c757d';
+              }
+          }
+
+
+        // When the link is clicked
+            $('#generatepass').on('click', function (e) {
+            e.preventDefault();
+            const password = generateRandomPassword();    // no arg, policy-based
+            $('#UserAccounts_Password').val(password);
+            validatePasswordField();
+        });
+
+
+</script>

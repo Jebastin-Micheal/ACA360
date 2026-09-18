@@ -1,0 +1,114 @@
+﻿<environment include="Development">
+    <!-- jQuery 3.7.1 (latest as of June 2025) -->
+    <script src="@(Url.Content("~/assets/vendor/libs/jquery/jquery.js"))"></script>
+
+    <script src="@(Url.Content("~/assets/vendor/js/jquery.mask.min.js"))"></script>
+    <!-- Core Vendor Scripts -->
+    <script src="@(Url.Content("~/assets/vendor/libs/popper/popper.js"))"></script>
+    <script src="@(Url.Content("~/assets/vendor/js/bootstrap.js"))"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/algolia/autocomplete-js.js"))"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/pickr/pickr.js"))"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"))"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/hammer/hammer.js"))"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/i18n/i18n.js"))"></script>
+    <script src="@(Url.Content("~/assets/vendor/js/menu.js"))"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/apex-charts/apexcharts.js"))"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/jquery.blockUI/jquery.blockUI.min.js"))"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/blockui/notiflix.js"))"></script>
+@*     <script src="@(Url.Content("~/assets/vendor/libs/blockui/extended-ui-blockui.js"))"></script> *@
+    <script src="@(Url.Content("~/assets/js/forms-selects.js"))"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/select2/select2.js"))"></script>
+
+    <script src="@(Url.Content("~/assets/vendor/libs/cards-actions/cards-actions.js"))"></script>
+
+    <!-- Helpers and Config -->
+    <script src="@(Url.Content("~/assets/vendor/js/helpers.js"))"></script>
+    <script src="@(Url.Content("~/assets/vendor/js/template-customizer.js"))"></script>
+    <script src="@(Url.Content("~/assets/js/config.js"))"></script>
+
+    <!-- Optional Plugins -->
+    <script src="@(Url.Content("~/assets/vendor/js/sweetalert2.js"))"></script>
+    <script src="@(Url.Content("~/assets/vendor/js/tom-select.js"))"></script>
+
+    <!-- Main JS -->
+    <script src="@(Url.Content("~/assets/js/main.js"))"></script>
+    <script src="@(Url.Content("~/js/site.js"))"></script>
+    <!-- App-Specific Scripts -->
+    <script src="~/js/VScript/selectEmployer.js"></script>
+    <script src="~/js/VScript/LayoutScript.js"></script>
+
+    <!-- App-datatables Scripts -->
+    <!-- ✅ CSS -->
+    <link href="~/assets/vendor/libs/datatables/jquery.datatables.min.css" rel="stylesheet" />
+    <link href="~/assets/vendor/libs/datatables/buttons.datatables.min.css" rel="stylesheet" />
+    <!-- ✅ Export buttons -->
+    <script src="~/assets/vendor/libs/datatables/jquery.datatables.min.js"></script>
+    <script src="~/assets/vendor/libs/datatables/datatables.buttons.min.js"></script>
+    <script src="~/assets/vendor/libs/datatables/buttons.html5.min.js"></script>
+    <script src="~/assets/vendor/libs/datatables/buttons.print.min.js"></script>
+    <script src="~/assets/vendor/libs/datatables/jszip.min.js"></script>
+    <script src="~/assets/vendor/libs/datatables/pdfmake.min.js"></script>
+    <script src="~/assets/vendor/libs/datatables/vfs_fonts.js"></script>
+    <script src="~/assets/vendor/libs/datatables/buttons.colvis.min.js"></script>
+    <script src="~/assets/vendor/libs/toastr/toastr.js"></script>
+
+    <script src="~/assets/js/custom-mask.js"></script>
+    <!-- App-datatables Scripts -->
+</environment>
+<environment exclude="Development">
+    <!-- jQuery 3.7.1 (latest as of June 2025) -->
+    <script src="@(Url.Content("~/assets/vendor/libs/jquery/jquery.js"))" asp-append-version="true"></script>
+
+    <script src="@(Url.Content("~/assets/vendor/js/jquery.mask.min.js"))" asp-append-version="true"></script>
+    <!-- Core Vendor Scripts -->
+    <script src="@(Url.Content("~/assets/vendor/libs/popper/popper.js"))" asp-append-version="true"></script>
+    <script src="@(Url.Content("~/assets/vendor/js/bootstrap.js"))" asp-append-version="true"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/algolia/autocomplete-js.js"))" asp-append-version="true"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/pickr/pickr.js"))" asp-append-version="true"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"))" asp-append-version="true"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/hammer/hammer.js"))" asp-append-version="true"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/i18n/i18n.js"))" asp-append-version="true"></script>
+    <script src="@(Url.Content("~/assets/vendor/js/menu.js"))" asp-append-version="true"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/apex-charts/apexcharts.js"))" asp-append-version="true"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/jquery.blockUI/jquery.blockUI.min.js"))" asp-append-version="true"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/blockui/notiflix.js"))" asp-append-version="true"></script>
+    @*     <script src="@(Url.Content("~/assets/vendor/libs/blockui/extended-ui-blockui.js"))" asp-append-version="true"></script> *@
+    <script src="@(Url.Content("~/assets/js/forms-selects.js"))" asp-append-version="true"></script>
+    <script src="@(Url.Content("~/assets/vendor/libs/select2/select2.js"))" asp-append-version="true"></script>
+
+    <script src="@(Url.Content("~/assets/vendor/libs/cards-actions/cards-actions.js"))" asp-append-version="true"></script>
+
+    <!-- Helpers and Config -->
+    <script src="@(Url.Content("~/assets/vendor/js/helpers.js"))" asp-append-version="true"></script>
+    <script src="@(Url.Content("~/assets/vendor/js/template-customizer.js"))" asp-append-version="true"></script>
+    <script src="@(Url.Content("~/assets/js/config.js"))" asp-append-version="true"></script>
+
+    <!-- Optional Plugins -->
+    <script src="@(Url.Content("~/assets/vendor/js/sweetalert2.js"))" asp-append-version="true"></script>
+    <script src="@(Url.Content("~/assets/vendor/js/tom-select.js"))" asp-append-version="true"></script>
+
+    <!-- Main JS -->
+    <script src="@(Url.Content("~/assets/js/main.js"))" asp-append-version="true"></script>
+    <script src="@(Url.Content("~/js/site.js"))" asp-append-version="true"></script>
+    <!-- App-Specific Scripts -->
+    <script src="~/js/VScript/selectEmployer.js" asp-append-version="true"></script>
+    <script src="~/js/VScript/LayoutScript.js" asp-append-version="true"></script>
+
+    <!-- App-datatables Scripts -->
+    <!-- ✅ CSS -->
+    <link href="~/assets/vendor/libs/datatables/jquery.datatables.min.css" rel="stylesheet" />
+    <link href="~/assets/vendor/libs/datatables/buttons.datatables.min.css" rel="stylesheet" />
+    <!-- ✅ Export buttons -->
+    <script src="~/assets/vendor/libs/datatables/jquery.datatables.min.js" asp-append-version="true"></script>
+    <script src="~/assets/vendor/libs/datatables/datatables.buttons.min.js" asp-append-version="true"></script>
+    <script src="~/assets/vendor/libs/datatables/buttons.html5.min.js" asp-append-version="true"></script>
+    <script src="~/assets/vendor/libs/datatables/buttons.print.min.js" asp-append-version="true"></script>
+    <script src="~/assets/vendor/libs/datatables/jszip.min.js" asp-append-version="true"></script>
+    <script src="~/assets/vendor/libs/datatables/pdfmake.min.js" asp-append-version="true"></script>
+    <script src="~/assets/vendor/libs/datatables/vfs_fonts.js" asp-append-version="true"></script>
+    <script src="~/assets/vendor/libs/datatables/buttons.colvis.min.js" asp-append-version="true"></script>
+    <script src="~/assets/vendor/libs/toastr/toastr.js" asp-append-version="true"></script>
+
+    <script src="~/assets/js/custom-mask.js" asp-append-version="true"></script>
+    
+</environment>

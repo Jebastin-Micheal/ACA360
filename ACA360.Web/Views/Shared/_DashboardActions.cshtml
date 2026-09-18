@@ -1,0 +1,60 @@
+﻿@using ACA360.Core.Models
+@model EmployerDashboardPageViewModel
+
+@if (Model.Employer != null && !Model.Context.IsImpersonating)
+{
+    <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-outline-info shadow-sm" type="button" onclick="runHealthScan()">
+            <i class="bx bx-scan me-1"></i> AI Data Scan
+        </button>
+
+        <button class="btn btn-outline-danger shadow-sm" type="button" data-employer-name="@(Model?.Employer?.Name ?? "Employer")" onclick="downloadDashboardPDF()">
+            <i class="bx bxs-file-pdf me-1"></i> Export PDF
+        </button>
+
+        <div class="dropdown">
+            <button class="btn btn-success dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bx bx-download me-1"></i> Download Reports
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item download-report" href="@Url.Action("DownloadCodeReport", "Downloads", new { employerId = Model.Employer.Id, year = Model.FilingYear })"><i class="bx bx-file-blank me-2 text-primary"></i> Code Report</a></li>
+                <li><a class="dropdown-item download-report" href="@Url.Action("DownloadPenaltyReport", "Downloads", new { employerId = Model.Employer.Id, year = Model.FilingYear })"><i class="bx bx-shield-quarter me-2 text-danger"></i> Penalty Summary</a></li>
+                <li><hr class="dropdown-divider" /></li>
+                <li><a class="dropdown-item download-report" href="@Url.Action("DownloadFullReport", "Downloads", new { employerId = Model.Employer.Id, year = Model.FilingYear })"><i class="bx bx-spreadsheet me-2 text-success"></i> Employer Full Report</a></li>
+            </ul>
+        </div>
+
+        <div class="dropdown">
+            <button class="btn btn-info shadow-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bx bx-bxl-react me-1"></i> Quick Actions
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="@Url.Action("CodeReview", "ACA", new { employerId = Model.Employer.Id, year = Model.FilingYear })"><i class="bx bx-list-check me-2"></i> Review Codes</a></li>
+                <li><a class="dropdown-item" href="@Url.Action("Index", "Integration", new { id = Model.Employer.Id })"><i class="bx bx-network-chart me-2"></i> API Keys</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="modal fade" id="scanModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">AI Data Scan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body" id="scanResultBody">
+                                <div class="text-center py-5">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <p class="mt-2">Scanning dataset for anomalies...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

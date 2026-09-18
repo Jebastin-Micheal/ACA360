@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<n1:ACABulkRequestTransmitterStatusDetailResponse 
+    xmlns:n1="urn:us:gov:treasury:irs:ext:aca:air:7.0" 
+    xmlns:irs="urn:us:gov:treasury:irs:common">
+    <n1:ACATransmitterStatusDetail>
+        <n1:ReceiptId>1095C-16-00000002</n1:ReceiptId>
+        <n1:TransmissionStatusCd>Rejected</n1:TransmissionStatusCd>
+        <n1:TransmitterErrorDetail>
+            <n1:InformationReturnSubmissionId>0</n1:InformationReturnSubmissionId>
+            <n1:ErrorMessageCd>TPE1101</n1:ErrorMessageCd>
+            <n1:ErrorMessageTxt>The TCC in the Manifest file does not match the IRS database.</n1:ErrorMessageTxt>
+        </n1:TransmitterErrorDetail>
+    </n1:ACATransmitterStatusDetail>
+</n1:ACABulkRequestTransmitterStatusDetailResponse>

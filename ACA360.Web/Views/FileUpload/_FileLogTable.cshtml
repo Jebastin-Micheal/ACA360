@@ -1,0 +1,747 @@
+﻿@using ACA360.Core.Constants
+@using ACA360.Core.Helpers
+@using ACA360.Core.Models
+@using System.Security.Claims
+@model ACA360.Web.Models.GroupedDashboardViewModel
+@{
+    var userRole = User.FindFirstValue(ClaimTypes.Role) ?? "";
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                     ?? User.FindFirstValue("UserId") ?? "";
+
+    bool isEmployer = userRole == UserRoles.Employer;
+    bool isStaff = userRole is UserRoles.DataAnalyst or UserRoles.AccountManager
+                             or UserRoles.AMSupervisor or UserRoles.SuperAdmin
+                             or UserRoles.Admin or UserRoles.ACADirector
+                             or UserRoles.DASupervisor or UserRoles.StaffAC
+                             or UserRoles.StaffAU;
+    bool isDA = userRole is UserRoles.DataAnalyst or UserRoles.DASupervisor or UserRoles.SuperAdmin;
+    bool isAM = userRole is UserRoles.AccountManager or UserRoles.AMSupervisor or UserRoles.SuperAdmin;
+    bool isManager = userRole is UserRoles.SuperAdmin or UserRoles.DASupervisor or UserRoles.Admin;
+    bool canDelete = userRole is UserRoles.SuperAdmin or UserRoles.Admin or UserRoles.AccountManager;
+    // AM authorisation was removed, so the analyst who cleared the file also imports it.
+    // Must stay in step with FileUploadWorkflowService.CanImport, which enforces this
+    // server-side — this flag only decides whether the button is drawn.
+    bool canImport = userRole is UserRoles.SuperAdmin or UserRoles.Admin or UserRoles.ACADirector
+                              or UserRoles.DASupervisor or UserRoles.AMSupervisor
+                              or UserRoles.DataAnalyst or UserRoles.AccountManager;
+    bool canHold = userRole is UserRoles.SuperAdmin or UserRoles.Admin
+                             or UserRoles.DASupervisor or UserRoles.AMSupervisor;
+
+    // 1. UPDATED: Pipeline steps for the Split-Validation Zero-Touch Architecture
+    var pipelineSteps = new[] { "Ingestion", "Routing", "Validation", "Remediation", "Authorization", "Integration", "Complete" };
+}
+
+@if (Model.FileGroups == null || !Model.FileGroups.Any())
+{
+    <div class="text-center py-5 my-4">
+        <span class="avatar avatar-xl rounded-circle bg-label-secondary mb-3
+                                 d-inline-flex align-items-center justify-content-center">
+            <i class="bx bx-folder-open fs-1 text-muted"></i>
+        </span>
+        <h5 class="text-muted mb-1">No files found</h5>
+
+        <p class="text-muted small mb-0">Adjust your filters or upload a new file to get started.</p>
+    </div>
+}
+else
+{
+    <div class="accordion" id="filesAccordion">
+        @for (int i = 0; i < Model.FileGroups.Count; i++)
+        {
+            var group = Model.FileGroups[i];
+            var collapseId = $"collapse{i}";
+            var headerId = $"heading{i}";
+            var isFirst = i == 0;
+
+            // 2. UPDATED: Metric counts now include ALL new 200-series Workflow Statuses
+            var total = group.Files.Count;
+            var cleanCount = group.Files.Count(f =>
+            f.ValidationStatusId is VS.Clean or VS.ValidWithWarnings or VS.Imported);
+            var errorCount = group.Files.Count(f =>
+            f.ValidationStatusId is VS.DataError or VS.StructureError or VS.Failed or VS.Partial or VS.MappingRequired
+            || f.WorkflowStatusId is WS.SystemRejected or WS.AMRejected or WS.DARejected);
+            var workCount = group.Files.Count(f =>
+            f.WorkflowStatusId is WS.PreProcessing or WS.DAReviewing or WS.Processing or WS.Importing or WS.QueuedForImport
+            || f.ValidationStatusId is VS.Pending or VS.PreProcessing or VS.Validating);
+            var holdCount = group.Files.Count(f => f.WorkflowStatusId is WS.OnHold or WS.AwaitingClientInput);
+
+            int cleanPct = total == 0 ? 0 : (cleanCount * 100) / total;
+            int errorPct = total == 0 ? 0 : (errorCount * 100) / total;
+            int workPct = total == 0 ? 0 : (workCount * 100) / total;
+
+            string empBadge = "", empColor = "secondary";
+            if (errorCount > 0) { empBadge = $"{errorCount} Error{(errorCount > 1 ? "s" : "")}"; empColor = "danger"; }
+            else if (holdCount > 0) { empBadge = $"{holdCount} On Hold"; empColor = "secondary"; }
+            else if (workCount > 0) { empBadge = "Processing"; empColor = "info"; }
+            else if (cleanCount == total && total > 0) { empBadge = "All Ready"; empColor = "success"; }
+
+            <div class="card accordion-item @(isFirst ? "active" : "") border mb-3 shadow-sm">
+                <h2 class="accordion-header" id="@headerId">
+                    <button type="button"
+                            class="accordion-button @(isFirst ? "" : "collapsed") py-3"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#@collapseId"
+                            aria-expanded="@(isFirst ? "true" : "false")"
+                            aria-controls="@collapseId">
+
+                        <div class="d-flex align-items-center w-100 justify-content-between me-3 flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="avatar avatar-sm">
+                                    <span class="avatar-initial rounded-circle bg-label-primary fw-bold">
+                                        @((group.EmployerName?.Length > 0 ? group.EmployerName[0].ToString().ToUpper() : "?"))
+                                    </span>
+                                </span>
+
+                                <div class="lh-sm">
+                                    <div class="fw-semibold text-body">@group.EmployerName</div>
+                                    <small class="text-muted">EIN: @(CanViewSSNorEIN? group.TaxId: DataMasker.MaskEIN(group.TaxId))</small>
+                                </div>
+                            </div>
+                            <div class="d-none d-md-flex align-items-center gap-3">
+                                @if (!string.IsNullOrEmpty(empBadge))
+                                {
+                                    <span class="badge bg-label-@empColor">@empBadge</span>
+                                }
+
+                                <div class="d-flex flex-column" style="width:110px;">
+                                    <div class="progress rounded-pill mb-1" style="height:6px;" title="@cleanPct% Ready · @errorPct% Errors · @workPct% Processing">
+                                        <div class="progress-bar bg-success" style="width:@cleanPct%"></div>
+                                        <div class="progress-bar bg-warning" style="width:@workPct%"></div>
+
+                                        <div class="progress-bar bg-danger" style="width:@errorPct%"></div>
+                                    </div>
+
+                                    <small class="text-muted" style="font-size:.67rem;">
+                                        @cleanCount/@total ready
+                                    </small>
+                                </div>
+                                <span class="badge bg-label-secondary rounded-pill">
+                                    @group.FileCount @(group.FileCount == 1 ? "file" : "files")
+                                </span>
+                            </div>
+                        </div>
+                    </button>
+                </h2>
+
+                <div id="@collapseId"
+                     class="accordion-collapse collapse @(isFirst ? "show" : "")"
+                     aria-labelledby="@headerId"
+                     data-bs-parent="#filesAccordion">
+                    <div class="accordion-body p-0">
+                        <div class="table-responsive">
+
+                            <table class="table table-hover mb-0 align-middle" style="min-width:700px;">
+                                <thead class="table-light border-bottom">
+                                    <tr>
+                                        <th class="ps-4" style="min-width:220px;">File</th>
+                                        <th style="min-width:180px;">Pipeline Status</th>
+
+                                        @if (isStaff)
+                                        {
+                                            <th style="min-width:150px;">Assigned To</th>
+                                        }
+                                        <th style="min-width:170px;">Data Quality</th>
+                                        <th class="text-end pe-4" style="min-width:220px;">Actions</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @foreach (var item in group.Files)
+                                    {
+                                        var state = FileStatusResolver.Resolve(item.ValidationStatusId ?? 0, item.WorkflowStatusId ?? 0);
+
+                                        // Calculate this BEFORE the overrides
+                                        bool isAssigned = !string.IsNullOrEmpty(item.AssignedToUserId);
+                                        bool isAssignedToMe = item.AssignedToUserId == currentUserId;
+
+                                        // ==========================================================
+                                        // --- NEW: STRICT PIPELINE OVERRIDES ---
+                                        // ==========================================================
+
+                                        // 1. Force ANY Unassigned file to stay at Step 2 (Routing)
+                                        if (!isAssigned)
+                                        {
+                                            state = new FileDisplayState
+                                            {
+                                                Label = "Needs Assignment",
+                                                PipelineStep = 1, // Index 1 is Routing
+                                                Color = "warning",
+                                                Icon = "bx-user-plus",
+                                                IsWorking = false
+                                            };
+                                        }
+                                        // 2. Force assigned active files into Remediation
+                                        else if (item.WorkflowStatusId == WS.Processing || item.WorkflowStatusId == WS.DAReviewing)
+                                        {
+                                            if (item.ValidationStatusId is VS.Clean or VS.ValidWithWarnings or VS.Failed or VS.DataError or VS.StructureError)
+                                            {
+                                                bool hasErrors = item.ValidationStatusId == VS.Failed || item.ValidationStatusId == VS.DataError || item.ValidationStatusId == VS.StructureError;
+                                                state = new FileDisplayState
+                                                {
+                                                    Label = hasErrors ? "Data Errors" : "DA Review",
+                                                    PipelineStep = 3, // Index 3 is Remediation
+                                                    Color = hasErrors ? "danger" : "info",
+                                                    Icon = "bx-search-alt",
+                                                    IsWorking = false
+                                                };
+                                            }
+                                        }
+
+                                        // Lock interactive workflows *only* when it reaches Authorization (Step 5 / Index 4)
+                                        bool isLocked = !state.IsWorking && state.PipelineStep >= 4;
+
+                                        int totalRows = item.TotalRowsValidated ?? 0;
+                                        int errorRows = item.FatalErrorCount ?? 0;
+                                        int warnRows = item.WarningCount ?? 0;
+                                        int cleanRows = Math.Max(0, totalRows - errorRows);
+                                        double qualPct = totalRows > 0
+                                        ? Math.Min(100, Math.Max(0, (double)cleanRows / totalRows * 100))
+                                        : -1;
+                                        <tr class="@state.RowClass" data-fileid="@item.FileLogId">
+
+                                            @* ── FILE INFO ───────────────────────────────────────── *@
+                                            <td class="ps-4">
+                                                <div class="d-flex align-items-start gap-2">
+                                                    <i class="bx bxs-file-archive fs-4 text-secondary mt-1 flex-shrink-0"></i>
+                                                    <div class="overflow-hidden">
+                                                        <a href="javascript:void(0)"
+                                                           onclick="downloadFile(@item.FileLogId)"
+                                                           title="@item.OriginalFileName"
+                                                           class="fw-semibold text-heading text-decoration-none d-block text-truncate"
+                                                           style="max-width:195px;">
+                                                            @item.OriginalFileName
+                                                        </a>
+                                                        <div class="d-flex gap-1 flex-wrap mt-1">
+                                                            <small class="text-muted">
+                                                                <i class="bx bx-time-five"></i>
+                                                                @item.UploadedAt.ToString("MMM dd, HH:mm")
+                                                            </small>
+                                                            <small class="text-muted">·</small>
+                                                            <small class="text-muted text-truncate"
+                                                                   style="max-width:110px;"
+                                                                   title="@item.UploadedByName">
+                                                                @(item.UploadedByName ?? "System")
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            @* ── PIPELINE STATUS ─────────────────────────────────── *@
+                                            <td>
+                                                <div class="mb-1">
+                                                    <span class="badge bg-label-@state.Color"
+                                                          title="@state.Tooltip">
+                                                        <i class="bx @state.Icon @(state.IsWorking ? "bx-spin" : "") me-1"></i>
+                                                        @state.Label
+                                                    </span>
+                                                </div>
+
+                                                @* Pipeline stepper dots *@
+                                                @if (state.PipelineStep >= 0)
+                                                {
+                                                    <div class="d-flex align-items-center mt-1" style="max-width:145px;">
+                                                        @for (int s = 0; s < pipelineSteps.Length; s++)
+                                                        {
+                                                            bool isDone = s < state.PipelineStep;
+                                                            bool isCurrent = s == state.PipelineStep;
+                                                            string dotColor = isDone ? "bg-success"
+                                                            : isCurrent ? $"bg-{state.Color}"
+                                                            : "bg-light border";
+                                                            string dotSize = isCurrent ? "9px" : "6px";
+                                                            <div title="@pipelineSteps[s]"
+                                                                 style="width:@dotSize;height:@dotSize; border-radius:50%;flex-shrink:0; @(isCurrent ? $"box-shadow:0 0 0 2px var(--bs-{state.Color});" : "")"
+                                                                 class="@dotColor"></div>
+                                                            @if (s < pipelineSteps.Length - 1)
+                                                            {
+                                                                <div style="flex:1;height:1px; background:@(isDone ? "var(--bs-success)" : "#dee2e6"); min-width:5px;"></div>
+                                                            }
+                                                        }
+                                                    </div>
+                                                    <div style="font-size:.62rem;" class="text-muted mt-1">
+                                                        Step @(state.PipelineStep + 1)/@pipelineSteps.Length · @pipelineSteps[Math.Min(state.PipelineStep, pipelineSteps.Length - 1)]
+                                                    </div>
+                                                }
+
+                                                @if (state.IsWorking)
+                                                {
+                                                    <div class="progress mt-1 rounded-pill" style="height:3px;max-width:145px;">
+                                                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-@state.Color" style="width:100%"></div>
+                                                    </div>
+                                                }
+                                            </td>
+
+                                            @* ── ASSIGNED TO (staff only) ────────────────────────── *@
+                                            @if (isStaff)
+                                            {
+                                                <td class="assigned-cell" data-fileid="@item.FileLogId">
+                                                    @if (isAssigned)
+                                                    {
+                                                        var dn = item.AssignedToName ?? "Unknown";
+                                                        var initial = dn.Length > 0 ? dn[0].ToString().ToUpper() : "?";
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <span class="avatar avatar-xs flex-shrink-0">
+                                                                <span class="avatar-initial rounded-circle bg-label-@(isAssignedToMe ? "primary" : "secondary") small fw-semibold">
+                                                                    @initial
+                                                                </span>
+                                                            </span>
+                                                            <div class="lh-sm overflow-hidden">
+                                                                <div class="small fw-semibold @(isAssignedToMe ? "text-primary" : "text-body") text-truncate" style="max-width:95px;" title="@dn">
+                                                                    @(isAssignedToMe ? "You" : dn)
+                                                                </div>
+                                                                @if (isAssignedToMe)
+                                                                {
+                                                                    <span class="badge bg-label-primary" style="font-size:.6rem;">Mine</span>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted small">
+                                                            <i class="bx bx-user-x me-1"></i>Unassigned
+                                                        </span>
+                                                    }
+                                                </td>
+                                            }
+
+                                            @* ── DATA QUALITY ────────────────────────────────────── *@
+                                            <td>
+                                                @if (item.ValidationStatusId == VS.StructureError)
+                                                {
+                                                    <span class="text-danger small fw-semibold">
+                                                        <i class="bx bx-x-circle me-1"></i>Invalid template
+                                                    </span>
+                                                }
+                                                else if (qualPct >= 0)
+                                                {
+                                                    string qc = qualPct == 100 ? "success"
+                                                    : qualPct >= 50 ? "warning" : "danger";
+                                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                                        <div class="progress flex-grow-1 rounded-pill" style="height:6px;max-width:75px;" title="@cleanRows / @totalRows rows clean">
+                                                            <div class="progress-bar bg-@qc" style="width:@qualPct%"></div>
+                                                        </div>
+                                                        <span class="badge bg-label-@qc" style="min-width:40px;font-size:.7rem;">
+                                                            @qualPct.ToString("F0")%
+                                                        </span>
+                                                    </div>
+                                                    <div class="d-flex gap-2 flex-wrap">
+                                                        @if (cleanRows > 0)
+                                                        {
+                                                            <small class="text-success"><i class="bx bx-check"></i>@cleanRows clean</small>
+                                                        }
+                                                        @if (errorRows > 0)
+                                                        {
+                                                            <small class="text-danger fw-semibold"><i class="bx bx-error-circle"></i>@errorRows error@(errorRows > 1 ? "s" : "")</small>
+                                                        }
+                                                        @if (warnRows > 0)
+                                                        {
+                                                            <small class="text-warning"><i class="bx bx-error"></i>@warnRows warn</small>
+                                                        }
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">—</span>
+                                                }
+                                            </td>
+
+                                            @* ── ACTIONS ─────────────────────────────────────────── *@
+                                            <td class="text-end pe-3">
+                                                @if (Model.ViewMode == "RecycleBin")
+                                                {
+                                                    <div class="d-flex justify-content-end gap-1">
+                                                        <button class="btn btn-sm btn-icon btn-success" onclick="restoreFile(@item.FileLogId)" title="Restore">
+                                                            <i class="bx bx-undo"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-icon btn-danger" onclick="hardDelete(@item.FileLogId)" title="Permanent Delete">
+                                                            <i class="bx bx-trash-alt"></i>
+                                                        </button>
+                                                    </div>
+                                                }
+                                                else if (state.IsWorking)
+                                                {
+                                                    <span class="btn btn-sm btn-label-secondary disabled shadow-none pe-none">
+                                                        <span class="spinner-border spinner-border-sm me-1"></span> Working…
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <div class="d-flex justify-content-end align-items-center gap-1 flex-wrap">
+
+                                                        @* ── ASSIGNMENT CONTROLS (pre-processing only) ── *@
+                                                        @if (!isLocked && !state.IsOnHold)
+                                                        {
+                                                            if (isManager || isAM) // <--- NEW: Now allows AMs to see the dropdown
+                                                            {
+                                                                <select class="form-select form-select-sm assign-select"
+                                                                        data-fileid="@item.FileLogId"
+                                                                        style="max-width:155px;"
+                                                                        onclick="event.stopPropagation();"
+                                                                        title="Assign to Data Analyst">
+                                                                    <option value="">— Assign DA —</option>
+                                                                    @if (ViewBag.DataAnalysts != null)
+                                                                    {
+                                                                        foreach (var da in (List<SelectListItem>)ViewBag.DataAnalysts)
+                                                                        {
+                                                                            if (item.AssignedToUserId == da.Value)
+                                                                            {
+                                                                                <option value="@da.Value" selected>@da.Text</option>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <option value="@da.Value">@da.Text</option>
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                </select>
+                                                            }
+                                                            else if (isDA)
+                                                            {
+                                                                if (!isAssigned)
+                                                                {
+                                                                    <button class="btn btn-sm btn-primary btn-accept"
+                                                                            data-fileid="@item.FileLogId"
+                                                                            title="Claim this file — processing starts immediately">
+                                                                        <i class="bx bx-user-check me-1"></i>Accept
+                                                                    </button>
+                                                                }
+                                                                else if (isAssignedToMe)
+                                                                {
+                                                                    <button class="btn btn-sm btn-outline-warning btn-release"
+                                                                            data-fileid="@item.FileLogId">
+                                                                        <i class="bx bx-user-minus me-1"></i>Release
+                                                                    </button>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="badge bg-label-secondary py-2 px-2">
+                                                                        <i class="bx bx-lock-alt me-1"></i>Assigned
+                                                                    </span>
+                                                                }
+                                                            }
+                                                        }
+
+                                                        @* ── ON HOLD badge + release button ──────────── *@
+                                                        @if (state.IsOnHold)
+                                                        {
+                                                            <span class="badge bg-label-secondary py-2 px-2 me-1">
+                                                                <i class="bx bx-pause-circle me-1"></i>On Hold
+                                                            </span>
+                                                            @if (canHold)
+                                                            {
+                                                                <button class="btn btn-sm btn-outline-secondary btn-toggle-hold"
+                                                                        data-fileid="@item.FileLogId"
+                                                                        data-is-on-hold="true"
+                                                                        title="Release hold">
+                                                                    <i class="bx bx-play"></i>
+                                                                </button>
+                                                            }
+                                                        }
+
+                                                        @* ── PRIMARY CTA ─────────────────────────────── *@
+                                                        @if (!state.IsWorking && !state.IsOnHold)
+                                                        {
+                                                            if (item.ValidationStatusId == VS.StructureError)
+                                                            {
+                                                                <button class="btn btn-sm btn-outline-danger" onclick="viewLogs(@item.FileLogId)">
+                                                                    <i class="bx bx-list-ul me-1"></i>View Errors
+                                                                </button>
+                                                            }
+                                                            else if (state.HasFixableErrors)
+                                                            {
+                                                                <a class="btn btn-sm btn-danger"
+                                                                   asp-controller="ErrorTriage"
+                                                                   asp-action="ErrorTriageDashboard"
+                                                                   asp-route-id="@item.FileLogId">
+                                                                    <i class="bx bx-wrench me-1"></i>Fix Errors
+                                                                </a>
+                                                                @if (canImport && totalRows > 0)
+                                                                {
+                                                                    <button class="btn btn-sm btn-outline-primary"
+                                                                            onclick="runAnalysis(@item.FileLogId)"
+                                                                            title="Preview import impact">
+                                                                        <i class="bx bx-bar-chart-alt-2"></i>
+                                                                    </button>
+                                                                }
+                                                            }
+                                                            else if (item.ValidationStatusId is VS.ValidWithWarnings or VS.Clean)
+                                                            {
+                                                                <div class="d-flex gap-1">
+                                                                    @* Review link — visible to all staff *@
+                                                                    @if (isStaff || isEmployer)
+                                                                    {
+                                                                        <a class="btn btn-sm btn-outline-secondary"
+                                                                           asp-controller="ErrorTriage"
+                                                                           asp-action="ErrorTriageDashboard"
+                                                                           asp-route-id="@item.FileLogId">
+                                                                            <i class="bx bx-search me-1"></i>Review
+                                                                        </a>
+                                                                    }
+                                                                    @* The file goes straight to import — there is no AM approval step.
+                                                                       runAnalysis opens the impact preview; the import is confirmed there. *@
+                                                                    @if (canImport && item.WorkflowStatusId != WS.Complete)
+                                                                    {
+                                                                        <button class="btn btn-sm btn-success"
+                                                                                onclick="runAnalysis(@item.FileLogId)"
+                                                                                title="Review the data impact, then import into the live database">
+                                                                            <i class="bx bx-check-double me-1"></i>Analyze &amp; Import
+                                                                        </button>
+                                                                    }
+                                                                </div>
+                                                            }
+                                                            else if (item.WorkflowStatusId == WS.Complete)
+                                                            {
+                                                                <button class="btn btn-sm btn-outline-secondary" onclick="viewImportReceipt(@item.FileLogId)">
+                                                                    <i class="bx bx-file me-1"></i>Receipt
+                                                                </button>
+                                                            }
+                                                            else if (item.ValidationStatusId == VS.Failed || item.WorkflowStatusId == WS.ImportFailed)
+                                                            {
+                                                                <button class="btn btn-sm btn-outline-danger" onclick="viewLogs(@item.FileLogId)">
+                                                                    <i class="bx bx-bug me-1"></i>View Error
+                                                                </button>
+                                                            }
+                                                        }
+
+                                                        @* ── KEBAB OVERFLOW MENU ─────────────────────── *@
+                                                        <div class="dropdown">
+                                                            <button type="button" class="btn btn-sm btn-icon btn-outline-secondary dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
+                                                                <i class="bx bx-dots-vertical-rounded"></i>
+                                                            </button>
+                                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+
+                                                                @* Error triage *@
+                                                                @if (state.HasFixableErrors || item.ValidationStatusId == VS.ValidWithWarnings)
+                                                                {
+                                                                    <li>
+                                                                        <a class="dropdown-item fw-semibold text-danger"
+                                                                           asp-controller="ErrorTriage"
+                                                                           asp-action="ErrorTriageDashboard"
+                                                                           asp-route-id="@item.FileLogId">
+                                                                            <i class="bx bx-wrench me-2"></i>Error Triage
+                                                                        </a>
+                                                                    </li>
+                                                                    <li><hr class="dropdown-divider my-1"></li>
+                                                                }
+
+                                                                @* DA Reject (before processing) *@
+                                                                @if (isDA && !isLocked && item.WorkflowStatusId != WS.DARejected)
+                                                                {
+                                                                    <li>
+                                                                        <a class="dropdown-item text-warning btn-reject-da"
+                                                                           href="javascript:void(0);"
+                                                                           data-fileid="@item.FileLogId">
+                                                                            <i class="bx bx-x-circle me-2"></i>Reject File
+                                                                        </a>
+                                                                    </li>
+                                                                }
+
+                                                                @* Reports. These used to hang off the AM approval stage, which meant the
+                                                                   analyst who actually did the work could never reach them. With approval
+                                                                   gone they follow the same rule as import. *@
+                                                                @if (canImport)
+                                                                {
+                                                                    <li>
+                                                                        <a class="dropdown-item"
+                                                                           href="javascript:void(0);"
+                                                                           onclick="downloadValidationReport('@Url.Action("DownloadReport", "FileUpload", new { fileLogId = item.FileLogId })','ValidationReport_@(item.FileLogId).xlsx')">
+                                                                            <i class="bx bx-file-find me-2"></i>Validation Report
+                                                                        </a>
+                                                                    </li>
+                                                                    <li>
+                                                                        <a class="dropdown-item"
+                                                                           href="javascript:void(0);"
+                                                                           onclick="downloadErrorReport(@item.FileLogId)">
+                                                                            <i class="bx bx-spreadsheet me-2"></i>Audit Log
+                                                                        </a>
+                                                                    </li>
+                                                                }
+
+                                                                @* Hold / Release hold *@
+                                                                @if (canHold && item.WorkflowStatusId != WS.Complete && item.WorkflowStatusId != WS.Importing)
+                                                                {
+                                                                    <li>
+                                                                        <a class="dropdown-item btn-toggle-hold @(state.IsOnHold ? "text-success" : "text-secondary")"
+                                                                           href="javascript:void(0);"
+                                                                           data-fileid="@item.FileLogId"
+                                                                           data-is-on-hold="@state.IsOnHold.ToString().ToLower()">
+                                                                            <i class="bx @(state.IsOnHold ? "bx-play" : "bx-pause") me-2"></i>
+                                                                            @(state.IsOnHold ? "Release Hold" : "Put On Hold")
+                                                                        </a>
+                                                                    </li>
+                                                                }
+
+                                                                @* Force unassign (manager & AM) *@
+                                                                @if ((isManager || isAM) && isAssigned && item.WorkflowStatusId != WS.Complete) // <--- NEW
+                                                                {
+                                                                    <li>
+                                                                        <a class="dropdown-item text-warning btn-release"
+                                                                           href="javascript:void(0);"
+                                                                           data-fileid="@item.FileLogId">
+                                                                            <i class="bx bx-user-minus me-2"></i>Force Unassign
+                                                                        </a>
+                                                                    </li>
+                                                                }
+
+                                                                @if (isManager || isDA || isAM)
+                                                                {
+                                                                    <li><hr class="dropdown-divider my-1"></li>
+                                                                }
+
+                                                                <li>
+                                                                    <a class="dropdown-item"
+                                                                       href="javascript:void(0);"
+                                                                       onclick="viewHistory(@item.FileLogId)">
+                                                                        <i class="bx bx-history me-2"></i>Timeline
+                                                                    </a>
+                                                                </li>
+                                                                <li>
+                                                                    <a class="dropdown-item"
+                                                                       href="javascript:void(0);"
+                                                                       onclick="downloadFile(@item.FileLogId)">
+                                                                        <i class="bx bx-download me-2"></i>Download
+                                                                    </a>
+                                                                </li>
+
+                                                                @if (state.HasFixableErrors || item.ValidationStatusId == VS.ValidWithWarnings)
+                                                                {
+                                                                    <li>
+                                                                        <a class="dropdown-item"
+                                                                           href="javascript:void(0);"
+                                                                           onclick="downloadValidationReport('@Url.Action("DownloadReport", "FileUpload", new { fileLogId = item.FileLogId })','ValidationReport_@(item.FileLogId).xlsx')">
+                                                                            <i class="bx bx-file-find me-2"></i>Validation Report
+                                                                        </a>
+                                                                    </li>
+                                                                    <li>
+                                                                        <a class="dropdown-item"
+                                                                           href="javascript:void(0);"
+                                                                           onclick="downloadErrorReport(@item.FileLogId)">
+                                                                            <i class="bx bx-spreadsheet me-2"></i>Audit Log
+                                                                        </a>
+                                                                    </li>
+                                                                }
+
+                                                                @if (isStaff && (state.HasFixableErrors || item.ValidationStatusId == VS.Failed))
+                                                                {
+                                                                    <li>
+                                                                        <a class="dropdown-item"
+                                                                           href="javascript:void(0);"
+                                                                           onclick="viewLogs(@item.FileLogId)">
+                                                                            <i class="bx bx-list-ul me-2"></i>System Logs
+                                                                        </a>
+                                                                    </li>
+                                                                }
+
+                                                                <li>
+                                                                    <a class="dropdown-item"
+                                                                       href="javascript:void(0);"
+                                                                       onclick="toggleArchive(@item.FileLogId)">
+                                                                        <i class="bx @(Model.ViewMode == "Archived" ? "bx-folder-open" : "bx-archive-in") me-2"></i>
+                                                                        @(Model.ViewMode == "Archived" ? "Unarchive" : "Archive File")
+                                                                    </a>
+                                                                </li>
+
+                                                                @if (canDelete)
+                                                                {
+                                                                    <li><hr class="dropdown-divider my-1"></li>
+                                                                    <li>
+                                                                        <form asp-action="Delete" method="post">
+                                                                            <input type="hidden" name="FileLogId" value="@item.FileLogId" />
+                                                                            @Html.AntiForgeryToken()
+                                                                            <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Delete this file?')">
+                                                                                <i class="bx bx-trash me-2"></i>Delete
+                                                                            </button>
+                                                                        </form>
+                                                                    </li>
+                                                                }
+                                                            </ul>
+                                                        </div>
+
+                                                    </div>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @* Pagination *@
+        @if (Model.TotalCount > Model.PageSize)
+        {
+            var totalPages = (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize);
+            var curr = Model.PageNumber;
+            int startPage = Math.Max(1, curr - 2);
+            int endPage = Math.Min(totalPages, curr + 2);
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(curr == 1 ? "disabled" : "")">
+                        <button class="page-link page-link-btn" data-page="@(curr - 1)">
+                            <i class="bx bx-chevron-left"></i>
+                        </button>
+                    </li>
+                    @for (int j = startPage; j <= endPage; j++)
+                    {
+                        <li class="page-item @(j == curr ? "active" : "")">
+                            <button class="page-link page-link-btn" data-page="@j">@j</button>
+                        </li>
+                    }
+                    <li class="page-item @(curr == totalPages ? "disabled" : "")">
+                        <button class="page-link page-link-btn" data-page="@(curr + 1)">
+                            <i class="bx bx-chevron-right"></i>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+}
+
+@* ── Additional JS for new actions wired in this partial ─────────────────── *@
+<script>
+    // Reject (DA) — with reason prompt
+    document.addEventListener('click', async function(e) {
+        const btn = e.target.closest('.btn-reject-da');
+        if (!btn) return;
+        const fileId = parseInt(btn.dataset.fileid);
+        const ok = await showConfirm('Reject File',
+            'Rejecting marks this file as wrong format or wrong client. It will be removed from your queue.',
+            'Reject', 'btn-warning');
+        if (!ok) return;
+        postAction('/FileUpload/RejectFile', { fileLogId: fileId }, 'File rejected.');
+    });
+
+    // Hold / Release hold
+    document.addEventListener('click', async function(e) {
+        const btn = e.target.closest('.btn-toggle-hold');
+        if (!btn) return;
+        const fileId   = parseInt(btn.dataset.fileid);
+        const isOnHold = btn.dataset.isOnHold === 'true';
+        const title    = isOnHold ? 'Release Hold' : 'Put File On Hold';
+        const msg      = isOnHold
+            ? 'The file will be returned to the pending assignment queue.'
+            : 'The file will be paused. No processing will occur until released.';
+        const ok = await showConfirm(title, msg,
+            isOnHold ? 'Release' : 'Hold', isOnHold ? 'btn-success' : 'btn-secondary');
+        if (!ok) return;
+        postAction('/FileUpload/ToggleHold', { fileLogId: fileId },
+            isOnHold ? 'Hold released.' : 'File placed on hold.');
+    });
+
+    // sendForApproval removed — the analyst imports the file directly via runAnalysis().
+
+    // Shared post helper used by reject/hold actions above
+    function postAction(url, data, successMsg) {
+        $.post(url, { ...data, __RequestVerificationToken: getToken() })
+         .done(function(res) {
+             if (res.success) { showToast('success', res.message || successMsg); loadFileData(currentState.page, true); }
+             else             { showToast('danger', res.message || 'Action failed.'); }
+         })
+         .fail(function() { showToast('danger', 'Server error. Please try again.'); });
+    }
+</script>

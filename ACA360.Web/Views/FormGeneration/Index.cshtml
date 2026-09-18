@@ -1,0 +1,2187 @@
+﻿@model ACA360.Core.Models.FormGenerationDashboardViewModel;
+@using ACA360.Web.ViewComponents;
+@{
+    ViewData["Title"] = "Form Generation Hub";
+
+    // Helper function to toggle sort icons
+    string GetSortIcon(string col)
+    {
+        if (Model.SortColumn != col) return "bx-sort-alt";
+        return Model.SortOrder == "Asc" ? "bx-sort-up" : "bx-sort-down";
+    }
+    string NextOrder = Model.SortOrder == "Asc" ? "Desc" : "Asc";
+}
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Form Geneation Hub",
+    items = new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Title = "Employer", Url = Url.Action("Index", "Employer"), IsActive = false },
+    new BreadcrumbItem { Title = "Generation Report", Url = "", IsActive = true }
+}
+})
+
+
+<style>
+    .glass {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    .card-lift {
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+    }
+
+        .card-lift:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
+        }
+
+    .selected-form-glow {
+        border: 2px solid #0d6efd;
+        box-shadow: 0 0 20px rgba(13, 110, 253, 0.15);
+        /* background: linear-gradient(135deg, rgba(13, 110, 253, 0.05) 0%, rgba(255, 255, 255, 0.7) 100%); */
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+/* Custom Slim Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent; 
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cdd4dc; 
+        border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #a8b1bc; 
+    }
+
+    .form-type-text{
+        font-size:12px;
+    }
+
+    /* NEW: Dynamic Filter Overlay CSS */
+    #employeeSidePanel {
+        transition: width 0.3s ease-in-out;
+    }
+
+    .filter-panel-hidden {
+        transform: translateX(120%);
+        opacity: 0;
+        position: absolute !important;
+        right: 0;
+        top: 0;
+        width: 320px;
+        z-index: 990;
+        pointer-events: none;
+    }
+
+    .filter-panel-overlay {
+        transform: translateX(0);
+        opacity: 1;
+        position: absolute !important;
+        right: 0;
+        top: 0;
+        width: 320px;
+        /* z-index: 990; */
+        box-shadow: -5px 0 25px rgba(0,0,0,0.15);
+        pointer-events: auto;
+    }
+
+    .filter-panel-fixed {
+        transform: translateX(0);
+        opacity: 1;
+        position: relative !important;
+        /* z-index: 10; */
+        box-shadow: none;
+        pointer-events: auto;
+    }
+
+    /* Floating Bar Animation CSS */
+    #stickyActionBar {
+        /* Changed to smooth material transition instead of bouncy */
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+    }
+
+    .action-bar-success {
+        min-width: 56px !important;
+        width: 56px !important;
+        height: 56px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        background-color: #0d6efd !important;
+        border: none !important;
+    }
+
+        .action-bar-success #actionBarContent {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease;
+        }
+
+    #successTick {
+        opacity: 0;
+        transform: scale(0);
+        transition: all 0.4s ease 0.3s;
+    }
+
+    .action-bar-success #successTick {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    /* NEW: Class to slide the bar down out of the screen */
+    .action-bar-slide-down {
+        transform: translate(-50%, 150px) !important;
+        opacity: 0 !important;
+    }
+</style>
+
+<div class="h-100">
+  
+            <form method="get" id="filterForm" class="row g-3 align-items-center">
+                <div class="col d-flex align-items-center gap-2">
+                   <select id="formTypeSelector" name="SelectedFormType"
+                     class="form-select form-select-sm border-light shadow-sm d-none" style="width: 160px;">
+                     <option value="" selected disabled>Select Form Type</option> 
+                     <option value="1094-C">1094-C (ALE)</option>
+                     <option value="1095-C">1095-C (ALE)</option>
+                     <option value="1094-B">1094-B (Non-ALE)</option>
+                     <option value="1095-B">1095-B (Non-ALE)</option>
+                     <option value="1094-C_1095-C">1094-C & 1095-C</option>
+                     <option value="1094-B_1095-B">1094-B & 1095-B</option>
+                   </select>
+                </div>
+                <input type="hidden" id="selectedYear" name="year" value="@Model.SelectedYear" />
+                <input type="hidden" id="filterStatus" name="filterStatus" value="@Model.FilterStatus" />
+                <input type="hidden" name="sortColumn" value="@Model.SortColumn" />
+                <input type="hidden" name="sortOrder" value="@Model.SortOrder" />
+            </form>
+       
+
+    <div id="riskContainer" class="row mb-4 d-none">
+        <div class="col-12">
+            <div class="card bg-label-danger border-start border-4 border-danger">
+                <div class="card-body d-flex justify-content-between align-items-center p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-md rounded p-2 me-3">
+                            <i class='bx bx-trending-down text-danger fs-3'></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 text-danger fw-bold">Penalty Exposure Detected</h6>
+                            <small class="text-muted">
+                                <span id="riskCount" class="fw-bold">0</span> employees have coverage gaps.
+                                Estimated Risk: <span id="riskAmount" class="fw-bold text-danger fs-5">$0</span>
+                            </small>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="showRiskDetails()">
+                        <i class='bx bx-search-alt'></i> View Details
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="fixContainer" class="alert alert-warning d-flex align-items-center justify-content-between d-none" role="alert">
+        <div>
+            <i class='bx bx-wrench me-2'></i>
+            <strong>Data Issue:</strong> <span id="fixCount">0</span> employees are missing "Plan Start Month". This is required for filing.
+        </div>
+        <div class="input-group input-group-sm" style="width: 250px;">
+            <span class="input-group-text">Set To:</span>
+            <select id="fixMonthSelect" class="form-select">
+                <option value="01">Jan (01)</option>
+                <option value="02">Feb (02)</option>
+            </select>
+            <button class="btn btn-primary" onclick="runAutoFix()">Fix All</button>
+        </div>
+    </div>
+
+
+      <div class="card">
+        <div class="row g-4 mt-0 mb-3 ms-0 transition-layout position-relative me-1" id="mainGenerationContent" style="overflow-x: hidden;">
+
+            <!-- NEW: Column 1 - Form Types -->
+            <aside class="col-md-2 p-3 mt-0 overflow-auto scrollbar-hide border-end bg-lighter" style="height: 75vh;">
+                <div class="mb-4">
+                    <h4 class="fw-bold mb-1 text-heading">Form Types</h4>
+                    <p class="text-muted small m-0">Select compliance document</p>
+                </div>
+
+                <div class="d-flex flex-column gap-3">
+                    <!-- 1094-C (ALE) -->
+                    <div class="card form-type-card p-3 border shadow-sm card-lift cursor-pointer" data-form-type="1094-C">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center mb-3 icon-container bg-label-primary w-px-40 h-px-40">
+                            <i class='bx bx-file text-primary fs-5'></i>
+                        </div>
+                        <h6 class="fw-bold mb-1 form-title text-heading">1094-C (ALE)</h6>
+                        <small class="text-muted m-0 form-type-text">Transmittal of Employer-Provided Health Insurance</small>
+                        <div class="active-indicator mt-2 d-none align-items-center gap-2">
+                            <span class="badge badge-dot bg-primary"></span>
+                            <small class="fw-bold text-primary text-uppercase" style="letter-spacing: 1px;">Active</small>
+                        </div>
+                    </div>
+
+                    <!-- 1095-C (ALE) -->
+                    <div class="card form-type-card p-3 border shadow-sm card-lift cursor-pointer" data-form-type="1095-C">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center mb-3 icon-container bg-label-secondary w-px-40 h-px-40">
+                            <i class='bx bxs-file text-secondary fs-5'></i>
+                        </div>
+                        <h6 class="fw-bold mb-1 form-title text-heading">1095-C (ALE)</h6>
+                        <small class="text-muted m-0 form-desc form-type-text">Employer-Provided Health Insurance Offer and Coverage</small>
+                        <div class="active-indicator mt-2 d-none align-items-center gap-2">
+                            <span class="badge badge-dot bg-primary"></span>
+                            <small class="fw-bold text-primary text-uppercase" style="letter-spacing: 1px;">Active</small>
+                        </div>
+                    </div>
+
+                    <!-- 1094-B -->
+                    <div class="card form-type-card p-3 border shadow-sm card-lift cursor-pointer" data-form-type="1094-B">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center mb-3 icon-container bg-label-secondary w-px-40 h-px-40">
+                            <i class='bx bx-file-blank text-secondary fs-5'></i>
+                        </div>
+                        <h6 class="fw-bold mb-1 form-title text-heading">1094-B</h6>
+                        <small class="text-muted m-0 form-type-text">Transmittal of Health Coverage Info Returns</small>
+                        <div class="active-indicator mt-2 d-none align-items-center gap-2">
+                            <span class="badge badge-dot bg-primary"></span>
+                            <small class="fw-bold text-primary text-uppercase" style="letter-spacing: 1px;">Active</small>
+                        </div>
+                    </div>
+
+                    <!-- 1095-B -->
+                    <div class="card form-type-card p-3 border shadow-sm card-lift cursor-pointer" data-form-type="1095-B">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center mb-3 icon-container bg-label-secondary w-px-40 h-px-40">
+                            <i class='bx bxs-user-detail text-secondary fs-5'></i>
+                        </div>
+                        <h6 class="fw-bold mb-1 form-title text-heading">1095-B</h6>
+                        <small class="text-muted m-0 form-type-text">Health Coverage Document for Individuals</small>
+                        <div class="active-indicator mt-2 d-none align-items-center gap-2">
+                            <span class="badge badge-dot bg-primary"></span>
+                            <small class="fw-bold text-primary text-uppercase" style="letter-spacing: 1px;">Active</small>
+                        </div>
+                    </div>
+
+                    <!-- 1094-C & 1095-C (Combined) -->
+                    <div class="card form-type-card p-3 border shadow-sm card-lift cursor-pointer" data-form-type="1094-C_1095-C">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center mb-3 icon-container bg-label-primary w-px-40 h-px-40">
+                            <i class='bx bx-layer text-primary fs-5'></i>
+                        </div>
+                        <h6 class="fw-bold mb-1 form-title text-heading">1094-C & 1095-C</h6>
+                        <small class="text-muted m-0 form-type-text">Combined Transmittal and Offer of Coverage</small>
+                        <div class="active-indicator mt-2 d-none align-items-center gap-2">
+                            <span class="badge badge-dot bg-primary"></span>
+                            <small class="fw-bold text-primary text-uppercase" style="letter-spacing: 1px;">Active</small>
+                        </div>
+                    </div>
+
+                    <!-- 1094-B & 1095-B (Combined) -->
+                    <div class="card form-type-card p-3 border shadow-sm card-lift cursor-pointer" data-form-type="1094-B_1095-B">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center mb-3 icon-container bg-label-secondary w-px-40 h-px-40">
+                            <i class='bx bx-layer text-secondary fs-5'></i>
+                        </div>
+                        <h6 class="fw-bold mb-1 form-title text-heading">1094-B & 1095-B</h6>
+                        <small class="text-muted m-0 form-type-text">Combined Transmittal and Health Coverage</small>
+                        <div class="active-indicator mt-2 d-none align-items-center gap-2">
+                            <span class="badge badge-dot bg-primary"></span>
+                            <small class="fw-bold text-primary text-uppercase" style="letter-spacing: 1px;">Active</small>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            <!-- Column 2: Employers (col-md-3) -->
+            <section class="col-md-3 border-end d-flex flex-column p-0 mt-1" style="height: 75vh;">
+
+                <!-- Sticky Header with Filters -->
+                <!-- Removed 'glass' class to prevent white background bleed in dark mode -->
+                <div class="position-sticky top-0 z-10 border-bottom p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0 fw-bold text-heading">Employers</h5>
+                        <!-- Replaced bg-light and text-dark with bg-label-secondary -->
+                        <span class="badge bg-label-secondary px-3 py-2 rounded-pill shadow-sm">@Model.Employers.Count Total</span>
+                    </div>
+
+                    <!-- Employer Column Filters -->
+                 
+<div class="d-flex gap-2 mb-3">
+    <select id="yearFilterDropdown" name="year" asp-items="ViewBag.Years" asp-for="SelectedYear"
+            class="form-select form-select-sm shadow-sm fw-bold text-primary"
+            style="width: 90px;">
+    </select>
+
+    <select id="statusFilterDropdown" name="filterStatus" class="form-select form-select-sm shadow-sm"
+            style="flex-grow: 1;">
+        <option value="All" selected="@(Model.FilterStatus == "All")">Show All</option>
+        <option value="Ready" selected="@(Model.FilterStatus == "Ready")">Ready Only</option>
+        <option value="NotReady" selected="@(Model.FilterStatus == "NotReady")">Needs Attention</option>
+    </select>
+</div>
+
+                    <!-- Search Bar -->
+                    <!-- Search Bar with Select All -->
+                    <div class="d-flex gap-2">
+                        <div class="input-group input-group-sm flex-grow-1 shadow-sm">
+                            <span class="input-group-text bg-transparent border-end-0"><i class="bx bx-search text-muted"></i></span>
+                            <input type="text" id="employerSearch" class="form-control border-start-0 bg-transparent" placeholder="Search Employer or EIN..." value="@Model.SearchTerm" autocomplete="off">
+                        </div>
+                        <div class="d-flex align-items-center px-2 border rounded bg-transparent shadow-sm">
+                            <input class="form-check-input mt-0 me-2" type="checkbox" id="selectAllEmployersList" style="cursor: pointer;">
+                            <label class="form-check-label fw-bold text-heading mb-0" for="selectAllEmployersList" style="font-size: 13px; cursor: pointer;">All</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employer Cards Container -->
+                <div id="employerContainer" class="p-3 d-flex flex-column gap-3 custom-scrollbar" style="overflow-y: auto; max-height: calc(100vh - 320px); min-height: 0;">
+                    <!-- Employer Cards Container -->
+                    <div id="employerContainer" class="p-3 d-flex flex-column gap-3 custom-scrollbar" style="overflow-y: auto; max-height: calc(100vh - 320px); min-height: 0;">
+
+                        @await Html.PartialAsync("_EmployerCardsPartial", Model.Employers)
+
+                    </div>
+                </div>
+            </section>
+            <!-- Column 3: Employees (col-md-5) -->
+            <section id="employeeSidePanel" class="col-md-7 border-end bg-transparent d-flex flex-column p-0" style="height: 75vh;">
+
+                <!-- DEFAULT EMPTY STATE (Shows when no employer is selected) -->
+                <div id="employeeEmptyState" class="d-none flex-column h-100 w-100">
+
+                    <!-- Top Sticky Header -->
+                    <!-- Removed inline rgba glass effect, replaced with bg-lighter -->
+                    <div class="p-3 border-bottom z-10">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <!-- Replaced inline rgba background with bg-label-primary -->
+                                <div class="rounded-3 d-flex align-items-center justify-content-center bg-label-primary" style="width: 48px; height: 48px;">
+                                    <i class='bx bx-buildings text-primary' style="font-size: 28px;"></i>
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center justify-content-between w-100 gap-5">
+                                        <!-- Replaced hardcoded color with text-heading -->
+                                        <h4 class="fw-bold mb-0 text-heading">Employees</h4>
+                                    </div>
+                                    <p class="text-muted m-0" style="font-size: 13px;">Select employees for batch generation</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <div class="input-group w-50 shadow-sm rounded-3">
+                                <span class="input-group-text bg-transparent border-end-0">
+                                    <i class="bx bx-search text-muted"></i>
+                                </span>
+                                <input type="text" 
+                                       class="form-control border-start-0 bg-transparent"
+                                       placeholder="Search employees by name or SSN..."
+                                       autocomplete="off" />
+                            </div>
+                            <div class="d-flex align-items-center px-3 border rounded-3 bg-transparent shadow-sm">
+                                <input class="form-check-input mt-0 me-2" type="checkbox" style="cursor: pointer;">
+                                <label class="form-check-label fw-bold text-heading mb-0" for="selectAllEmployees_Active" style="font-size: 14px; cursor: pointer;">Select All</label>
+                            </div>
+                        </div>
+                    </div>
+
+                <div class="flex-grow-1 overflow-auto p-3 custom-scrollbar d-flex flex-column justify-content-center align-items-center text-center mt-6"
+                 style="min-height: 0;">
+
+                 <!-- Replaced Icon with Modern Empty State Image -->
+                 <img src="~/images/Empty_EmployeeList_Card.png" alt="No Selection" class="mb-4" style="width: 220px; opacity: 0.9; filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.08));" />
+
+                     <h5 class="fw-bold text-muted mb-0">
+                            Select an Employer
+                     </h5>
+                     <!-- Optional: Oru chinna helper text add panniruken, nalla irukum -->
+                        <p class="text-muted small mt-2" style="font-size: 13px;">Choose an employer from the list to view its employees.</p>
+
+                </div>
+
+                </div>
+
+                <!-- EMPLOYEE CONTENT (Hidden by default, shown when employer is selected) -->
+                <div id="employeeContentWrapper" class="d-none flex-column h-100 w-100">
+
+                    <!-- Top Sticky Header -->
+                    <div class="p-3 border-bottom z-10">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-3 d-flex align-items-center justify-content-center bg-label-primary" style="width: 48px; height: 48px;">
+                                    <i class='bx bx-buildings text-primary' style="font-size: 28px;"></i>
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center justify-content-between w-100 gap-5">
+                                        <h4 class="fw-bold mb-0 text-heading">Employees</h4>
+
+                                        <!-- Replaced custom success classes with Sneat's bg-label-success -->
+                                        <span class="badge rounded-pill bg-label-success fw-bold text-uppercase"
+                                              style="font-size:10px; letter-spacing:0.5px;">
+                                            Ready for generation
+                                        </span>
+                                    </div>
+                                    <p class="text-muted m-0" style="font-size: 13px;" id="employeePanelSubtitle">Select employees for batch generation</p>
+                                </div>
+                            </div>
+                            <!-- NEW: Filter Icon Button (Shows only when Employees load) -->
+                            <button type="button" class="btn btn-outline-primary position-relative shadow-sm" id="btnToggleFilter" title="Open Filters">
+                                <i class='bx bx-filter-alt fs-5'></i>
+                                <!-- Active Indicator Dot -->
+                                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle d-none" id="filterActiveIndicator"></span>
+                            </button>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                           
+                                <div class="input-group w-50 shadow-sm rounded-3">
+                                    <span class="input-group-text bg-transparent border-end-0">
+                                        <i class="bx bx-search text-muted"></i>
+                                    </span>
+                                    <input type="text" id="employeeSearch"
+                                           class="form-control border-start-0 bg-transparent"
+                                           placeholder="Search employees by name or SSN..."
+                                           autocomplete="off" />
+                                </div>
+                           
+                            <div class="d-flex align-items-center px-3 border rounded-3 bg-transparent shadow-sm">
+                                <input class="form-check-input mt-0 me-2" type="checkbox" id="selectAllEmployees_Active" style="cursor: pointer;">
+                                <label class="form-check-label fw-bold text-heading mb-0" for="selectAllEmployees_Active" style="font-size: 14px; cursor: pointer;">Select All</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic List Container (Added custom-scrollbar here too!) -->
+                    <div class="flex-grow-1 overflow-auto p-3 custom-scrollbar" id="employeeListItems" style="min-height: 0;">
+                        <!-- Content will be injected by JavaScript -->
+                    </div>
+                </div>
+            </section>
+       
+           <!-- Column 4: Filters -->
+            <aside id="filterAsideWrapper" class="p-3 mt-0 border-start d-flex flex-column filter-panel-hidden bg-body" style="height: 75vh; transition: transform 0.3s ease-in-out, opacity 0.3s ease;">
+                @await Html.PartialAsync("_FormEmployeeFilterSidebar")
+            </aside>
+
+  
+
+        </div>
+     </div>
+</div>
+
+<!-- Employee Batch Preview Modal -->
+<div class="modal fade" id="employeeBatchPreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <!-- Header -->
+            <div class="modal-header bg-lighter py-2 d-flex align-items-center">
+
+                <!-- Left Side Title + Badge -->
+                <div class="d-flex align-items-center flex-grow-1">
+                    <h5 class="modal-title text-primary mb-0 d-flex align-items-center">
+                        <i class='bx bxs-file-pdf me-2'></i> Batch Preview
+                    </h5>
+                    <span id="employeePreviewCount" class="badge bg-label-secondary ms-2"></span>
+
+                    <!-- ✅ NEW: Fullscreen Button -->
+                    <button type="button" class="btn btn-sm btn-icon btn-outline-secondary ms-3 toggle-fullscreen" data-target-modal="employeeBatchPreviewModal" title="Toggle Fullscreen">
+                        <i class='bx bx-fullscreen'></i>
+                    </button>
+                </div>
+
+               
+
+                <!-- Close Button -->
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+
+            <!-- Body -->
+            <div class="modal-body p-0 bg-dark text-center position-relative">
+
+                <!-- ✅ Loader -->
+                <div id="employeePreviewLoader"
+                     class="position-absolute top-50 start-50 translate-middle text-center fw-bold text-white"
+                     style="z-index:9999; font-size:18px;display: block;">
+                    <div class="spinner-border text-light" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="text-light mt-2">Rendering PDF...</div>
+                </div>
+
+
+                <!-- PDF Viewer -->
+                <iframe id="employeePreviewFrame"
+                        class="w-100 h-100 border-0"
+                        style="min-height:95vh;">
+                </iframe>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="pdfPreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content h-100">
+
+            <!-- Header -->
+            <div class="modal-header bg-lighter py-2 align-items-center">
+
+                <h5 class="modal-title text-primary me-3">
+                    <i class='bx bxs-file-pdf me-2'></i> Form Preview
+                </h5>
+
+                <div class="d-flex align-items-center flex-grow-1">
+                    <select id="previewEmployeeSelect" class="form-select form-select-sm w-auto" style="min-width: 250px;">
+                        <option value="">Loading Employees...</option>
+                    </select>
+                    <span id="previewLabel" class="badge bg-label-secondary ms-2 fw-normal"></span>
+
+                    <!-- ✅ NEW: Fullscreen Button -->
+                    <button type="button" class="btn btn-sm btn-icon btn-outline-secondary ms-3 toggle-fullscreen" data-target-modal="pdfPreviewModal" title="Toggle Fullscreen">
+                        <i class='bx bx-fullscreen'></i>
+                    </button>
+                </div>
+
+              
+
+                <!-- Close Button -->
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-0 bg-dark text-center position-relative">
+                <div id="previewLoader" class="position-absolute top-50 start-50 translate-middle">
+                    <div class="spinner-border text-light" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="text-light mt-2">Rendering PDF...</div>
+                </div>
+                <iframe id="pdfFrame" src="" class="w-100 h-100 border-0"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="riskDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-label-danger">
+                <h5 class="modal-title text-danger">
+                    <i class='bx bx-error-circle me-2'></i> Penalty Risk Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <table class="table table-striped table-hover mb-0">
+                                <thead class="sticky-top">
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>SSN</th>
+                                        <th class="text-center">Bad Months</th>
+                                        <th class="text-end">Est. Penalty</th>
+                                        <th class="text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="riskTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-3">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Floating Bottom Action Bar -->
+<div id="stickyActionBar" class="bg-lighter border rounded-pill shadow-lg px-4 py-2 d-flex align-items-center justify-content-center transition-all"
+     style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1040; width: max-content; min-width: 600px; height: 56px;">
+
+    <!-- Content Wrapper (Hides during animation) -->
+    <div id="actionBarContent" class="d-flex align-items-center gap-3 w-100 transition-all">
+
+        <!-- Left Side: Selection Summary -->
+        <div class="d-flex align-items-center gap-2 me-auto">
+            <span id="stickyGenCount" class="d-flex align-items-center justify-content-center rounded-circle bg-primary text-white fw-bold shadow-sm"
+                  style="width: 24px; height: 24px; font-size: 12px;">0</span>
+            <span class="text-heading fw-medium mb-0" style="font-size: 14px;" id="selectionSummaryText"><b>0</b> Employees selected</span>
+        </div>
+
+        <div class="vr bg-secondary mx-1" style="height: 24px; width: 1px; opacity: 0.2;"></div>
+
+        <!-- Middle: Preview & Mask SSN -->
+        <div class="d-flex align-items-center gap-3">
+            <button type="button" id="previewSelectedBtn" class="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center gap-1 shadow-sm d-none" onclick="previewSelectedEmployees()">
+                <i class='bx bx-show fs-6'></i> Preview
+            </button>
+
+            <!-- ✅ Wrapper ID added here to show/hide dynamically -->
+            <div id="suppressSsnContainer" class="form-check form-switch mb-0 d-flex align-items-center">
+                <input class="form-check-input mt-0" type="checkbox" id="suppressSsnCheck" style="cursor: pointer;">
+                <label class="form-check-label fw-bold small text-muted ms-2 mt-1" for="suppressSsnCheck" style="cursor: pointer;">Suppress SSN</label>
+            </div>
+        </div>
+
+        <div class="vr bg-secondary mx-1" style="height: 24px; width: 1px; opacity: 0.2;"></div>
+
+        <!-- Right Side: Generate Button -->
+        <button type="button" id="stickyGenerateBtn" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2" style="font-size: 13px;" disabled>
+            Generate Forms <i class='bx bx-right-arrow-alt fs-5'></i>
+        </button>
+
+    </div>
+
+    <!-- Success Tick (Shows ONLY during animation) -->
+    <div id="successTick" class="position-absolute text-white d-flex align-items-center justify-content-center w-100 h-100">
+        <i class='bx bx-check' style="font-size: 32px;"></i>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/js/employee-filter-module.js"></script>
+    <script>
+            // Global variable to store current context
+        var currentRiskEmployerId = 0;
+                var canViewFullPii = @(CanViewSSNorEIN ? "true" : "false");
+        function maskSSNDisplay(ssn) {
+        if (!ssn) return "---";
+        var clean = String(ssn).replace(/\D/g, '');
+        if (clean.length !== 9) return ssn;
+        return "***-**-" + clean.substring(5, 9);
+        }
+
+           // --- 1. DOCUMENT READY (DOM Elements & Event Listeners) ---
+        $(document).ready(function() {
+            // Initialize Tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Initialize Popovers
+            var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+            var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+                return new bootstrap.Popover(popoverTriggerEl);
+            });
+
+
+            
+            // INITIALIZE FILTER SECTIONS
+    FilterSections.init('plan', 'Plan', []);
+    FilterSections.init('status', 'Status', [
+        { value: '0', text: 'FULL-TIME' }, { value: '1', text: 'PART-TIME' }, { value: '-2', text: 'No status' }
+    ]);
+    FilterSections.init('enrollment', 'Enrollment', [
+        { value: '1', text: 'Not Offered' }, { value: '2', text: 'Offered & Waived' },
+        { value: '3', text: 'Offered & Enrolled' }, { value: '4', text: 'Union' },
+        { value: '5', text: 'COBRA' }, { value: '6', text: 'Retiree' }
+    ]);
+    FilterSections.init('flag', 'Flags', []);
+    FilterSections.init('other', 'Others', [
+        { value: '1', text: 'Receiving Forms' }, { value: '0', text: 'Not Receiving Forms' }
+    ]);
+
+    loadGlobalFlags(); // Load flag dropdown data
+
+    // 1. Reset All Filters (Auto-Applies after resetting)
+    $('#btnResetAllFilters').click(function () { 
+        FilterSections.resetAll(); 
+        if (selectedEmployerIds.length > 0) {
+            loadEmployees(selectedEmployerIds);
+        }
+    });
+
+    // 2. AUTO-APPLY LOGIC: Triggers when any filter row, select all, or active chip remove is clicked
+    $(document).on('click', '.fs-row, .fs-selectall, .emp-chip-remove', function () {
+        // Use a small timeout (50ms) to ensure the filter module updates its internal state first
+        setTimeout(function() {
+            if (selectedEmployerIds.length > 0) {
+                loadEmployees(selectedEmployerIds);
+            }
+        }, 50);
+    });
+
+    
+            // Form Type Card Click Logic
+        
+            $(document).on('click', '.form-type-card', function() {
+
+                // 1. Reset all cards to Default (Inactive) State
+                $('.form-type-card').removeClass('selected-form-glow border-primary');
+                $('.form-type-card .active-indicator').removeClass('d-flex').addClass('d-none');
+                $('.form-type-card .form-title').removeClass('text-primary').addClass('text-heading');
+
+                // Reset all icons
+                $('.form-type-card .icon-container')
+                    .removeClass('bg-primary bg-label-primary')
+                    .addClass('bg-label-secondary');
+                $('.form-type-card .icon-container i')
+                    .removeClass('text-white text-primary')
+                    .addClass('text-secondary');
+
+                // 2. Activate Clicked Card
+                $(this).addClass('selected-form-glow border-primary');
+                $(this).find('.active-indicator').removeClass('d-none').addClass('d-flex');
+                $(this).find('.form-title').removeClass('text-heading').addClass('text-primary');
+
+                // Update active icon container
+                var $iconContainer = $(this).find('.icon-container');
+                $iconContainer.removeClass('bg-label-secondary bg-label-primary').addClass('bg-primary');
+                $iconContainer.find('i').removeClass('text-secondary text-primary').addClass('text-white');
+
+                // 3. Update the hidden select and trigger change for your existing logic
+                var selectedType = $(this).attr('data-form-type');
+                $('#formTypeSelector').val(selectedType).trigger('change');
+            });
+
+            // --- EVENT HANDLERS ---
+
+            // 1. IFrame Load Event (Fixes the ReferenceError)
+            $('#pdfFrame').on('load', function() {
+                $('#previewLoader').hide();
+            });
+
+            // 2. Select All Checkbox
+            $('#selectAll').change(function() {
+                $('.emp-select:not(:disabled)').prop('checked', this.checked);
+                updateToolbar();
+            });
+
+            // 3. Individual Checkbox
+            $(document).on('change', '.emp-select', function() {
+                if(!this.checked) $('#selectAll').prop('checked', false);
+                updateToolbar();
+            });
+
+            /// 4. Bulk Generate Button
+            $('#btnBulkGenerate').click(function() {
+                var selectedIds = [];
+                $('.emp-select:checked').each(function() {
+                    selectedIds.push(parseInt($(this).val()));
+                });
+
+                if (selectedIds.length === 0) return;
+
+                var formType = $('#formTypeSelector').val();
+                var formTypeText = $("#formTypeSelector option:selected").text();
+
+                if(!confirm(`You are about to generate ${formTypeText} for ${selectedIds.length} employers. \n\nThis process will run in the background. Continue?`)) {
+                    return;
+                }
+
+                startBatchGeneration(selectedIds, formType);
+            });
+
+            
+         $('#pdfPreviewModal').on('hidden.bs.modal', function () {
+
+            $('#pdfFrame').attr('src', 'about:blank');
+
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+                previewUrl = null;
+            }
+
+            $('#previewLoader').show();
+        });
+
+            // ✅ FULLSCREEN TOGGLE LOGIC FOR PREVIEW MODALS
+            $(document).on('click', '.toggle-fullscreen', function() {
+                let targetModalId = $(this).data('target-modal');
+                let $dialog = $('#' + targetModalId + ' .modal-dialog');
+                let $icon = $(this).find('i');
+
+                // Toggle Bootstrap's native fullscreen class and remove modal-xl temporarily
+                $dialog.toggleClass('modal-fullscreen modal-xl');
+
+                // Change the icon visually
+                if ($dialog.hasClass('modal-fullscreen')) {
+                    $icon.removeClass('bx-fullscreen').addClass('bx-exit-fullscreen');
+                } else {
+                    $icon.removeClass('bx-exit-fullscreen').addClass('bx-fullscreen');
+                }
+            });
+
+            // ✅ Reset the fullscreen state when the modal closes (So it opens normally next time)
+            $('.modal').on('hidden.bs.modal', function() {
+                let $dialog = $(this).find('.modal-dialog');
+                let $icon = $(this).find('.toggle-fullscreen i');
+
+                if ($dialog.hasClass('modal-fullscreen')) {
+                    $dialog.removeClass('modal-fullscreen').addClass('modal-xl');
+                    $icon.removeClass('bx-exit-fullscreen').addClass('bx-fullscreen');
+                }
+            });
+
+            // ✅ PREVENT EMPLOYER SELECTION IF FORM TYPE IS NOT SELECTED
+            $(document).on('click', '.emp-select', function(e) {
+                var formType = $('#formTypeSelector').val();
+
+                if (!formType) {
+                    e.preventDefault();
+                    toastr.warning("Please select a Form Type first before choosing employers.", "Action Required");
+                    return false; 
+                }
+            });
+
+            // Global variable to keep track of the active AJAX request
+            var employerAjaxRequest = null;
+
+            // --- 1. COMMON FUNCTION TO FETCH EMPLOYERS (AJAX) ---
+            function fetchEmployers() {
+                var term = $('#employerSearch').val();
+                var year = $('#yearFilterDropdown').val() || $('#selectedYear').val();
+                var status = $('#statusFilterDropdown').val() || $('#filterStatus').val();
+
+                // Update hidden inputs
+                $('#selectedYear').val(year);
+                $('#filterStatus').val(status);
+
+                // FUTURE PROOFING: Cancel the previous request if it's still running (prevents server overload)
+                if (employerAjaxRequest != null) {
+                    employerAjaxRequest.abort();
+                }
+
+                // UX IMPROVEMENT: Show a loader immediately before the request starts
+                $('#employerContainer').html(`
+                <div class="text-center py-5 w-100">
+                    <div class="spinner-border text-primary mb-2" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="text-muted fw-semibold">Loading Employers...</p>
+                </div>
+            `);
+
+                employerAjaxRequest = $.ajax({
+                    url: '@Url.Action("SearchEmployers", "FormGeneration")',
+                    type: 'GET',
+                    data: {
+                        searchTerm: term,
+                        year: year,
+                        filterStatus: status
+                    },
+                    success: function(html) {
+                        $('#employerContainer').html(html);
+
+                        // Restore employer checkbox selections
+                        selectedEmployerIds.forEach(id => {
+                            $(`.emp-select[value="${id}"]`).prop('checked', true);
+                            $(`.emp-select[value="${id}"]`).closest(".card").removeClass("border-success border-warning").addClass("border-primary border-2");
+                        });
+
+                        // Update "Select All" checkbox state
+                        let totalCardCount = $('.emp-select').length;
+                        let checkedCount = $('.emp-select:checked').length;
+                        let allChecked = totalCardCount > 0 && totalCardCount === checkedCount;
+                        $('#selectAllEmployersList').prop('checked', allChecked);
+
+                        // If no employers are found for the selected year
+                        if (totalCardCount === 0) {
+                            hideEmployeePanel(); // Reset employee side panel
+                        } else if (selectedEmployerIds.length > 0) {
+                            var formType = $('#formTypeSelector').val();
+                            if (formType === '1094-C' || formType === '1094-B') {
+                                hideEmployeeSidePanelOnly();
+                            } else if (formType) {
+                                showSidePanel(selectedEmployerIds);
+                            }
+                        } else {
+                            hideEmployeePanel();
+                        }
+
+                        $('[data-bs-toggle="tooltip"]').tooltip();
+                    },
+                    error: function(xhr) {
+                        // Ignore abort errors, show message for real errors
+                        if (xhr.statusText !== 'abort') {
+                            $('#employerContainer').html(`
+                            <div class="text-center py-5 w-100">
+                                <i class='bx bx-error-circle display-4 text-danger mb-3'></i>
+                                <p class="text-danger fw-semibold">Failed to load data. Please try again.</p>
+                            </div>
+                        `);
+                        }
+                    },
+                    complete: function() {
+                        // Reset the request variable once done
+                        employerAjaxRequest = null;
+                    }
+                });
+            }
+
+            // --- 2. BIND DROPDOWN CHANGES TO AJAX ---
+            $('#yearFilterDropdown, #statusFilterDropdown').on('change', function() {
+                fetchEmployers();
+            });
+
+            // --- 3. UPDATE SEARCH EVENT (Replace your old #employerSearch keyup logic) ---
+            $('#employerSearch').off('keyup').on('keyup', function() {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(fetchEmployers, 400);
+            });
+
+            // --- 4. EMPLOYERS "SELECT ALL" LOGIC ---
+            $('#selectAllEmployersList').on('change', function() {
+                var isChecked = this.checked;
+                var formType = $('#formTypeSelector').val();
+
+                if (isChecked && !formType) {
+                    toastr.warning("Please select a Form Type first before choosing employers.", "Action Required");
+                    $(this).prop('checked', false);
+                    return;
+                }
+
+                $('.emp-select').each(function() {
+                    $(this).prop('checked', isChecked);
+                    var empId = parseInt($(this).val());
+                    var $card = $(this).closest(".card");
+
+                    if (isChecked) {
+                        if (!selectedEmployerIds.includes(empId)) {
+                            selectedEmployerIds.push(empId);
+                        }
+                        // Add Blue Border
+                        $card.removeClass("border-success border-warning").addClass("border-primary border-2");
+                    } else {
+                        selectedEmployerIds = selectedEmployerIds.filter(id => id !== empId);
+                        // Remove Blue Border and Restore original
+                        $card.removeClass("border-primary border-2");
+                        if ($card.find(".badge").hasClass("bg-label-success")) {
+                            $card.addClass("border-success border-2");
+                        } else {
+                            $card.addClass("border-warning");
+                        }
+                    }
+                });
+
+                // Handle Side Effects (Plans & Panel)
+                if (selectedEmployerIds.length > 0) {
+                    if (typeof loadGlobalPlans === 'function') {
+                        loadGlobalPlans(selectedEmployerIds.join(','));
+                    }
+                    if (formType === '1094-C' || formType === '1094-B') {
+                        hideEmployeeSidePanelOnly();
+                    } else {
+                        showSidePanel(selectedEmployerIds);
+                    }
+                } else {
+                    if (typeof FilterSections !== 'undefined') {
+                        FilterSections.setOptions('plan', [], false);
+                    }
+                    hideEmployeePanel();
+                }
+
+                updateToolbar();
+            });
+
+            // --- 5. UNCHECK "SELECT ALL" IF INDIVIDUAL BOX IS UNCHECKED ---
+            $(document).on('change', '.emp-select', function() {
+                let allChecked = $('.emp-select').length > 0 && $('.emp-select').length === $('.emp-select:checked').length;
+                $('#selectAllEmployersList').prop('checked', allChecked);
+            });
+
+            // ==========================================
+            // SLIDING FILTER PANEL LOGIC
+            // ==========================================
+            let isFilterPinned = false;
+            let isFilterOpen = false;
+
+            // 1. Toggle Filter from Employee Header Icon
+            $('#btnToggleFilter').click(function() {
+                if (!isFilterOpen) {
+                    openFilterPanel();
+                } else {
+                    closeFilterPanel();
+                }
+            });
+
+            // 2. Close Button inside Filter
+            $('#btnCloseFilter').click(function() {
+                closeFilterPanel();
+            });
+
+            // 3. Fix / Pin Button Logic
+            $('#btnPinFilter').click(function() {
+                isFilterPinned = !isFilterPinned;
+                var $icon = $(this).find('i');
+
+                if (isFilterPinned) {
+                    // Change to solid Pin icon & Disable Close
+                    $icon.removeClass('bx-pin').addClass('bxs-pin text-primary');
+                    $('#btnCloseFilter').prop('disabled', true);
+
+                    // Adjust Grid (Fixed State)
+                    $('#filterAsideWrapper').removeClass('filter-panel-overlay').addClass('filter-panel-fixed col-md-2');
+                    $('#employeeSidePanel').removeClass('col-md-7').addClass('col-md-5');
+                } else {
+                    // Change to outline Pin icon & Enable Close
+                    $icon.removeClass('bxs-pin text-primary').addClass('bx-pin');
+                    $('#btnCloseFilter').prop('disabled', false);
+
+                    // Revert to Overlay State
+                    $('#filterAsideWrapper').removeClass('filter-panel-fixed col-md-2').addClass('filter-panel-overlay');
+                    $('#employeeSidePanel').removeClass('col-md-5').addClass('col-md-7');
+                }
+            });
+
+            function openFilterPanel() {
+                isFilterOpen = true;
+                if (!isFilterPinned) {
+                    $('#filterAsideWrapper').removeClass('filter-panel-hidden').addClass('filter-panel-overlay');
+                }
+                $('#filterActiveIndicator').addClass('d-none'); // Hide indicator when open
+            }
+
+            function closeFilterPanel() {
+                if (isFilterPinned) return; // Prevent closing if it's pinned
+                isFilterOpen = false;
+                $('#filterAsideWrapper').removeClass('filter-panel-overlay').addClass('filter-panel-hidden');
+                checkFilterIndicator(); // Check if indicator dot is needed
+            }
+
+            // 4. Indicator Logic: Checks if any filter is used when closed
+            function checkFilterIndicator() {
+                if (typeof FilterSections === 'undefined') return;
+
+                let isAnyFilterActive = !FilterSections.isDefault('plan') ||
+                    !FilterSections.isDefault('status') ||
+                    !FilterSections.isDefault('enrollment') ||
+                    !FilterSections.isDefault('flag') ||
+                    !FilterSections.isDefault('other');
+
+                if (isAnyFilterActive && !isFilterOpen) {
+                    $('#filterActiveIndicator').removeClass('d-none');
+                } else {
+                    $('#filterActiveIndicator').addClass('d-none');
+                }
+            }
+
+            // UPDATE AUTO-APPLY TO TRIGGER INDICATOR CHECK
+            $(document).on('click', '.fs-row, .fs-selectall, .emp-chip-remove', function() {
+                setTimeout(function() {
+                    if (selectedEmployerIds.length > 0) {
+                        loadEmployees(selectedEmployerIds);
+                    }
+                    checkFilterIndicator(); // Update dot dynamically
+                }, 50);
+            });
+
+            $('#btnResetAllFilters').click(function() {
+                FilterSections.resetAll();
+                if (selectedEmployerIds.length > 0) {
+                    loadEmployees(selectedEmployerIds);
+                }
+                checkFilterIndicator();
+            });
+
+
+        });
+
+            function updateToolbar() {
+                var empCount = $('.emp-select:checked').length;
+                var employeeCount = $('.employee-batch-chk:checked').length;
+                var formType = $('#formTypeSelector').val();
+                var totalSelected = 0;
+
+                if (formType === '1094-C' || formType === '1094-B') {
+                    totalSelected = empCount;
+                    $('#selectionCount').text(empCount + " Employers selected");
+                    //$('#selectionSummaryText').html(`<b>${empCount}</b> Employers selected`);
+                    $('#selectionSummaryText').html(` Employers selected`);
+                  //  $('#generateBatchBtn, #stickyGenerateBtn').prop('disabled', empCount === 0);
+                    $('#stickyGenerateBtn').prop('disabled', empCount === 0);
+
+                    if (empCount > 0) {
+                        $('#previewSelectedBtn').removeClass('d-none');
+                    } else {
+                        $('#previewSelectedBtn').addClass('d-none');
+                    }
+                } else {
+                    totalSelected = employeeCount;
+                    $('#selectionCount').text(employeeCount + " Employees selected");
+                   // $('#selectionSummaryText').html(`<b>${employeeCount}</b> Employees selected`);
+                $('#selectionSummaryText').html(` Employees selected`);
+                   // $('#generateBatchBtn, #stickyGenerateBtn').prop('disabled', employeeCount === 0);
+                    $('#stickyGenerateBtn').prop('disabled', employeeCount === 0);
+
+                    if (employeeCount > 0) {
+                        $('#previewSelectedBtn').removeClass('d-none');
+                    } else {
+                        $('#previewSelectedBtn').addClass('d-none');
+                    }
+                }
+
+                // Update sticky footer count badge (Always visible now)
+                $('#stickyGenCount').text(totalSelected);
+            }
+
+
+        function startBatchGeneration(ids, type) {
+            $.ajax({
+                url: '@Url.Action("StartBatchGeneration", "FormGeneration")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    employerIds: ids,
+                    year:  $('#selectedYear').val(),
+                    formType: type
+                }),
+                success: function(res) {
+                    if(res.success) {
+                        toastr.success(res.message);
+                    } else {
+                        toastr.error(res.message);
+                    }
+                },
+                error: function() {
+                    toastr.error("Failed to start batch process.");
+                }
+            });
+        }
+
+        // 1. New global variable to track context
+        var currentPreviewContext = { employerId: 0, year: 0, formType: '' };
+
+                       // 2. Updated openPreview Function
+                function openPreview(employerId, employerName) {
+            var formType = $('#formTypeSelector').val();
+
+            // ✅ NEW: Validation check to stop if Form Type is not selected
+            if (!formType) {
+                toastr.warning("Please select a Form Type first before previewing.", "Action Required");
+                return; // Stop execution here, don't open the modal
+            }
+
+            var year = $('#selectedYear').val() || $('select[name="year"]').val();
+
+            // Save context
+            currentPreviewContext = { employerId: employerId, year: year, formType: formType };
+
+            // Reset UI
+            $('#previewLabel').text(employerName + " (" + formType + ")");
+            $('#pdfFrame').attr('src', 'about:blank'); // Clear previous PDF
+            $('#previewLoader').show();
+
+            var $select = $('#previewEmployeeSelect');
+
+            // Show Modal first
+            $('#pdfPreviewModal').modal('show');
+
+            // ==========================================================
+            // 1. IF STRICTLY 1094 FORM -> SKIP EMPLOYEE DROPDOWN
+            // ==========================================================
+            if (formType === '1094-C' || formType === '1094-B') {
+                // Dropdown disable
+                $select.empty().append('<option>Employer Form - No Employee Needed</option>').prop('disabled', true);
+
+                var url = '/FormGeneration/GeneratePreview' +
+                    '?employerId=' + employerId +
+                    '&year=' + year +
+                    '&formType=' + formType;
+
+                $('#pdfFrame').attr('src', url);
+            }
+            // ==========================================================
+            // 2. IF 1095 FORM OR COMBINED FORM -> LOAD EMPLOYEES
+            // ==========================================================
+            else {
+                // Clear Dropdown and show loading
+                $select.empty().append('<option>Loading employees...</option>').prop('disabled', true);
+
+                // Fetch Employee List via AJAX
+                $.ajax({
+                    url: '/FormGeneration/GetEmployeeList',
+                    type: 'GET',
+                    data: {
+                        employerId: [employerId], // Passed as array
+                        year: year
+                    },
+                    traditional: true,
+                    success: function(data) {
+                        $select.empty();
+
+                        // Handle Combined Forms (add Employer form as first option)
+                        if (formType === '1094-C_1095-C') {
+                            $select.append('<option value="employer_1094C">Employer Form (1094-C)</option>');
+                        } else if (formType === '1094-B_1095-B') {
+                            $select.append('<option value="employer_1094B">Employer Form (1094-B)</option>');
+                        }
+
+                        if (!data || data.length === 0) {
+                            $select.append('<option value="">No employees found</option>');
+
+                            // Stop loading ONLY if it's NOT a combined form
+                            if (formType.indexOf('_') === -1) {
+                                $('#previewLoader').hide();
+                                return;
+                            }
+                        } else {
+                            // Populate Dropdown with employees
+                            data.forEach(function(emp) {
+                                var last4 = emp.ssn ? emp.ssn.slice(-4) : 'xxxx';
+                                var name = `${emp.firstName} ${emp.lastName} -(...${last4})`;
+                                $select.append(`<option value="${emp.id}">${name}</option>`);
+                            });
+                        }
+
+                        $select.prop('disabled', false);
+
+                        // Trigger change for the first option to load the preview automatically
+                        $select.find('option:first').prop('selected', true).trigger('change');
+                    },
+                    error: function() {
+                        $select.empty().append('<option value="">Error loading employees</option>');
+                        $('#previewLoader').hide();
+                    }
+                });
+            }
+        }
+
+
+                // Called by the IFrame onload="..."
+        function hideLoader() {
+            $('#previewLoader').hide();
+        }
+        function hideLoaderNew() {
+            $('#previewLoader').hide();
+        }
+
+        // Reset Iframe on close to free memory
+        $('#pdfPreviewModal').on('hidden.bs.modal', function () {
+            $('#pdfFrame').attr('src', 'about:blank');
+            $('#previewLoader').show();
+        });
+
+        $('#employeeBatchPreviewModal').on('hidden.bs.modal', function () {
+
+
+            $('#employeePreviewFrame').attr('src', 'about:blank');
+
+            if (employeePreviewUrl) {
+                URL.revokeObjectURL(employeePreviewUrl);
+                employeePreviewUrl = null;
+            }
+
+            $('#employeePreviewLoader').show();
+        });
+
+                   // 1. Updated Health Check Function
+        function checkEmployerHealth(empId) {
+             // Save ID for the "View Details" button to use later
+             currentRiskEmployerId = empId;
+
+             // Show a loading swal while checking
+             Swal.fire({
+                 title: 'Running Health Check...',
+                 text: 'Analyzing employee data for penalty risks and missing fields.',
+                 allowOutsideClick: false,
+                 didOpen: () => {
+                     Swal.showLoading();
+                 }
+             });
+
+             $.get('@Url.Action("GetRiskAnalysis", "FormGeneration")', { employerId: empId, year: $('#selectedYear').val() }, function(data) {
+
+                 let hasIssues = false;
+
+                 // Show/Hide Risk Widget
+                 if(data.estimatedPenaltyAmount > 0|| data.atRiskEmployeeCount > 0) {
+                     $('#riskCount').text(data.atRiskEmployeeCount);
+
+                     // Format Money
+                     var money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(data.estimatedPenaltyAmount);
+                     $('#riskAmount').text(money);
+                     $('#riskContainer').removeClass('d-none');
+
+                     hasIssues = true;
+                 } else {
+                     $('#riskContainer').addClass('d-none');
+                 }
+
+                 // Show/Hide Fix Widget
+                 if(data.missingPlanStartCount > 0) {
+                     $('#fixCount').text(data.missingPlanStartCount);
+                     $('#fixContainer').data('empid', empId).removeClass('d-none');
+
+                     hasIssues = true;
+                 } else {
+                     $('#fixContainer').addClass('d-none');
+                 }
+
+                 // Fire the result SweetAlert
+                 if (hasIssues) {
+                     Swal.fire({
+                         icon: 'warning',
+                         title: 'Issues Detected',
+                         text: 'We found potential penalty risks or missing data. Please review the highlighted sections.',
+                         customClass: {
+                             confirmButton: 'btn btn-warning'
+                         },
+                         buttonsStyling: false
+                     });
+                 } else {
+                     Swal.fire({
+                         icon: 'success',
+                         title: 'All Healthy!',
+                         text: 'No penalty risks or missing data found.',
+                         timer: 2500,
+                         showConfirmButton: false
+                     });
+                 }
+
+             }).fail(function() {
+                 Swal.fire({
+                     icon: 'error',
+                     title: 'Check Failed',
+                     text: 'There was an error connecting to the server to run the health check.',
+                     customClass: {
+                         confirmButton: 'btn btn-danger'
+                     },
+                     buttonsStyling: false
+                 });
+             });
+        }
+
+
+                // 2. NEW: Show Risk Details Function
+        function showRiskDetails() {
+              if (currentRiskEmployerId === 0) {
+                  //console.error("No Employer ID selected for risk details.");
+                  return;
+              }
+
+              var tbody = $('#riskTableBody');
+              tbody.html('<tr><td colspan="5" class="text-center"><div class="spinner-border text-primary"></div> Loading...</td></tr>');
+              $('#riskDetailsModal').modal('show');
+
+              $.get('@Url.Action("GetRiskDetails", "FormGeneration")',
+                    { employerId: currentRiskEmployerId, year:  $('#selectedYear').val() },
+                    function(res) {
+                        console.log("Risk Details Response:", res); // DEBUG LOG
+
+                        if (res.success) {
+                            tbody.empty();
+
+                            if (!res.data || res.data.length === 0) {
+                                tbody.html('<tr><td colspan="5" class="text-center">No risks found.</td></tr>');
+                                return;
+                            }
+
+                            res.data.forEach(emp => {
+                                // Ensure properties exist before accessing to prevent undefined errors
+                                var fName = emp.firstName || emp.FirstName || ""; // Try both casings
+                                var lName = emp.lastName || emp.LastName || "";
+                                var ssn = emp.ssn || emp.SSN || "---";
+                                if (!canViewFullPii) ssn = maskSSNDisplay(ssn);
+                                var badMonths = emp.badMonthCount || emp.BadMonthCount || 0;
+                                var penalty = emp.estimatedPenalty || emp.EstimatedPenalty || 0;
+
+                                var money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(penalty);
+
+                                var year = $('#selectedYear').val();
+
+                                var row = ` <tr>
+                               <td><span class="fw-bold">${fName}${lName}</span></td>
+                               <td>${ssn}</td>
+                               <td class="text-center"><span class="badge bg-label-danger">${badMonths}</span></td>
+                               <td class="text-end text-danger fw-bold">${money}</td>
+                               <td class="text-center">
+                               <a href="/ACA/CodeReview?employerId=${currentRiskEmployerId}&year=${year}&search=${lName}"
+                                target="_blank" class="btn btn-xs btn-outline-primary">
+                                <i class='bx bx-edit'></i> Fix
+                               </a>
+                               </td>
+                                </tr> `;
+
+                                tbody.append(row);
+                            });
+                        } else {
+                            tbody.html(`<tr><td colspan="5" class="text-center text-danger">Error: ${res.message}</td></tr>`);
+                        }
+                    })
+                    .fail(function() {
+                        tbody.html('<tr><td colspan="5" class="text-center text-danger">Server connection failed.</td></tr>');
+                    });
+        }
+
+        function runAutoFix() {
+            var empId = $('#fixContainer').data('empid');
+            var month = $('#fixMonthSelect').val();
+
+            if(!confirm(`Apply "Plan Start Month: ${month}" to all missing records for this employer?`)) return;
+
+            $.post('@Url.Action("AutoFixPlanStart", "FormGeneration")',
+                   { employerId: empId, year:  $('#selectedYear').val(), month: month },
+                   function(res) {
+                       if(res.success) {
+                           toastr.success(res.message);
+                           $('#fixContainer').addClass('d-none'); // Hide alert
+                       } else {
+                           toastr.error(res.message);
+                       }
+                   });
+        }
+
+
+        /* =======================
+           GLOBAL STATE
+        ======================= */
+        var selectedEmployerIds = [];
+        var selectedEmployeeIds = [];
+        var employeePreviewUrl = null;
+        var searchTimer = null;
+        var previewUrl = null;
+
+
+        /* =======================
+           DOCUMENT READY
+        ======================= */
+        $(document).ready(function () {
+
+        /* -----------------------
+            EMPLOYER CHECKBOX CHANGE
+        ----------------------- */
+        $(document).on('change', '.emp-select', function () {
+            var empId = parseInt($(this).val());
+            var formType = $('#formTypeSelector').val();
+
+            if (this.checked) {
+                if (!selectedEmployerIds.includes(empId)) {
+                    selectedEmployerIds.push(empId);
+                }
+            } else {
+                selectedEmployerIds = selectedEmployerIds.filter(id => id !== empId);
+            }
+
+            // 🚨 FIX: Load Plans accurately right after the array is updated!
+            if (selectedEmployerIds.length > 0) {
+                if (typeof loadGlobalPlans === 'function') {
+                    loadGlobalPlans(selectedEmployerIds.join(','));
+                }
+            } else {
+                if (typeof FilterSections !== 'undefined') {
+                    FilterSections.setOptions('plan', [], false);
+                }
+            }
+
+            // Toggle Side Panel only if it's NOT a 1094 form
+            if (selectedEmployerIds.length > 0) {
+                if (formType === '1094-C' || formType === '1094-B') {
+                    hideEmployeeSidePanelOnly(); // Hide panel but keep employers selected
+                } else {
+                    showSidePanel(selectedEmployerIds);
+                }
+            } else {
+                hideEmployeePanel(); // This is your existing function that clears everything
+            }
+
+            // Update the button state
+            updateToolbar();
+        });
+
+            /* -----------------------
+              EMPLOYEE CHECKBOX CHANGE
+           ----------------------- */
+            $(document).on('change', '.employee-batch-chk', function() {
+                var empId = parseInt($(this).val());
+                const MAX_LIMIT = 1000;
+
+                if (this.checked) {
+                    // ✅ Check limit before adding
+                    if (selectedEmployeeIds.length >= MAX_LIMIT) {
+                        toastr.warning("Limit Reached! You can only select a maximum of " + MAX_LIMIT + " employees per batch.");
+                        $(this).prop('checked', false); // Revert the checkbox UI
+                        return; // Stop execution
+                    }
+
+                    if (!selectedEmployeeIds.includes(empId)) {
+                        selectedEmployeeIds.push(empId);
+                    }
+                } else {
+                    selectedEmployeeIds = selectedEmployeeIds.filter(id => id !== empId);
+                }
+
+                $('#generateBatchBtn').prop('disabled', selectedEmployeeIds.length === 0);
+
+                // ✅ FIX: Auto Uncheck Select All if one unchecked
+                if (!this.checked) {
+                    $("#selectAllEmployees, #selectAllEmployees_Active").prop("checked", false);
+                }
+
+                // ✅ FIX: Auto Check Select All if all checked                         
+                // Add this one line
+                updateSelectAllState();
+                // ✅ Toggle Preview Button
+                if (selectedEmployeeIds.length > 0) {
+                    $('#previewSelectedBtn').removeClass('d-none');
+                } else {
+                    $('#previewSelectedBtn').addClass('d-none');
+                }
+
+                updateToolbar();
+            });
+
+
+            /* -----------------------
+               SEARCH (LETTER BY LETTER)
+            ----------------------- */
+            $('#employerSearch').on('keyup', function() {
+                var term = $(this).val();
+                clearTimeout(searchTimer);
+
+                searchTimer = setTimeout(function() {
+                    $.ajax({
+                        url: '@Url.Action("SearchEmployers", "FormGeneration")',
+                        type: 'GET',
+                        data: {
+                            searchTerm: term,
+                            year: $('#selectedYear').val()
+                        },
+                        success: function(html) {
+                            // ✅ FIX HERE: Remove .row because employerContainer directly holds the partial view cards
+                            $('#employerContainer').html(html);
+
+                            // ✅ Restore employer checkbox
+                            selectedEmployerIds.forEach(id => {
+                                $(`.emp-select[value="${id}"]`).prop('checked', true);
+                            });
+
+                            // ✅ Restore side panel
+                            if (selectedEmployerIds.length > 0) {
+                                showSidePanel(selectedEmployerIds);
+                            }
+
+                            $('[data-bs-toggle="tooltip"]').tooltip();
+                        }
+                    });
+                }, 400);
+            });
+
+            
+        /* -----------------------
+        SELECT ALL EMPLOYEES
+        ----------------------- */
+           $('#selectAllEmployees, #selectAllEmployees_Active').off('change').on('change', function() {
+    var isChecked = this.checked;
+    const MAX_LIMIT = 1000;
+
+    $('#selectAllEmployees, #selectAllEmployees_Active').prop('indeterminate', false).prop('checked', isChecked);
+
+    if (isChecked) {
+        let limitReached = false;
+        
+        $('.employee-batch-chk:visible:not(:checked)').each(function() {
+            if (selectedEmployeeIds.length >= MAX_LIMIT) {
+                limitReached = true;
+                return false; 
+            }
+            $(this).prop('checked', true);
+            var empId = parseInt($(this).val());
+            if (!selectedEmployeeIds.includes(empId)) {
+                selectedEmployeeIds.push(empId);
+            }
+        });
+
+        if (limitReached) {
+            toastr.warning("Limit Reached! Only up to " + MAX_LIMIT + " employees have been selected.");
+            updateSelectAllState();
+        }
+    } else {
+       
+        $('.employee-batch-chk:visible').prop('checked', false).each(function() {
+            var empId = parseInt($(this).val());
+            selectedEmployeeIds = selectedEmployeeIds.filter(id => id !== empId);
+        });
+    }
+
+    $('#generateBatchBtn').prop('disabled', selectedEmployeeIds.length === 0);
+    if (selectedEmployeeIds.length > 0) {
+        $('#previewSelectedBtn').removeClass('d-none');
+    } else {
+        $('#previewSelectedBtn').addClass('d-none');
+    }
+    updateToolbar();
+});
+        
+          $('#employeePreviewFrame').on('load', function () {
+
+            let src = $(this).attr("src");
+
+            // ✅ Ignore blank iframe load
+            if (!src || src === "about:blank") return;
+
+            // ✅ Hide Loader only for real PDF
+            $('#employeePreviewLoader').hide();
+            $('#employeePreviewFrame').show();
+        });
+
+
+       
+        /* -----------------------
+         FORM TYPE DROPDOWN CHANGE
+        ----------------------- */
+                  $('#formTypeSelector').change(function() {
+                        var formType = $(this).val();
+
+                        if (!formType) {
+                            hideEmployeeSidePanelOnly();
+                            $('#suppressSsnContainer').addClass('d-none');
+                            $('#suppressSsnCheck').prop('checked', false);
+                        }
+                        else if (formType === '1094-C' || formType === '1094-B') {
+                            hideEmployeeSidePanelOnly();
+                            $('#suppressSsnContainer').addClass('d-none');
+                            $('#suppressSsnCheck').prop('checked', false);
+                        } else {
+                            $('#suppressSsnContainer').removeClass('d-none');
+                            $('#suppressSsnCheck').prop('disabled', false);
+
+                            if (selectedEmployerIds.length > 0) {
+                                showSidePanel(selectedEmployerIds);
+                            }
+                        }
+                        updateToolbar();
+                    });
+
+              $('.form-type-card[data-form-type="1094-C"]').trigger('click');
+
+      
+         /* -----------------------
+          CODE REVIEW BUTTON CLICK (Same Tab)
+        ----------------------- */
+        $(document).on('click', '.btn-code-review', function () {
+           
+            var empId = $(this).data('employer-id');
+
+          
+            var year = $('#selectedYear').val();
+
+            
+            var url = '/ACA/CodeReview?employerId=' + empId + '&year=' + year;
+
+
+            window.location.href = url;
+        });
+
+
+       
+
+                // ✅ Employer Card Border Highlight
+         
+        $(document).on("change", ".emp-select", function () {
+
+            let $card = $(this).closest(".card");
+
+            if (this.checked) {
+                // Remove old borders
+                $card.removeClass("border-success border-warning");
+
+                // Add Bootstrap Blue Border
+                $card.addClass("border-primary border-2");
+            }
+            else {
+                // Remove Blue Border
+                $card.removeClass("border-primary border-2");
+
+                // Restore original border based on status
+                if ($card.find(".badge").hasClass("bg-success")) {
+                    $card.addClass("border-success border-2");
+                } else {
+                        $card.addClass("border-success");
+                }
+            }
+        });
+
+      
+
+
+            /* -----------------------
+               GENERATE BATCH (STICKY FOOTER BUTTON)
+            ----------------------- */
+            $('#stickyGenerateBtn').click(function() {
+                var formType = $('#formTypeSelector').val();
+
+                
+                if ((formType === '1095-C' || formType === '1095-B') && selectedEmployeeIds.length === 0) {
+                    toastr.warning("Please select at least one employee.");
+                    return;
+                }
+
+                
+                if (selectedEmployerIds.length === 0) {
+                    toastr.warning("Please select at least one employer.");
+                    return;
+                }
+
+                var requestData = {
+                    employerIds: selectedEmployerIds,
+                    employeeIds: selectedEmployeeIds, // Global state
+                    year: $('#selectedYear').val(),
+                    formType: formType,
+                    suppressSSN: $('#suppressSsnCheck').is(':checked')
+                };
+
+                var $btn = $(this);
+                var count = $('#stickyGenCount').text(); // Save current count
+
+                $btn.prop('disabled', true)
+                    .html('<i class="bx bx-loader bx-spin fs-5"></i> Processing...');
+
+                $.ajax({
+                    url: '@Url.Action("GenerateSpecificBatch", "FormGeneration")',
+                    type: 'POST',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(requestData),
+                    success: function(res) {
+                        if (res.success) {
+                            // 1. Trigger Shrink & Tick Animation
+                            $('#stickyActionBar').addClass('action-bar-success');
+
+                            toastr.success("Batch queued! You will be notified once ready.");
+
+                            // 2. Reset UI Data in background
+                            hideEmployeePanel();
+                            $('.emp-select').prop('checked', false);
+                            updateToolbar();
+                            selectedEmployerIds = [];
+                            selectedEmployeeIds = [];
+                            $('#previewSelectedBtn').addClass('d-none');
+
+                            // 3. Smooth Exit and Re-entry Sequence
+                            setTimeout(function() {
+                                // Step A: Slide the green tick circle down out of view
+                                $('#stickyActionBar').addClass('action-bar-slide-down');
+
+                                setTimeout(function() {
+                                    // Step B: While hidden, reset the shape back to the wide bar
+                                    $('#stickyActionBar').removeClass('action-bar-success');
+
+                                    setTimeout(function() {
+                                        // Step C: Slide the wide bar back up into view smoothly
+                                        $('#stickyActionBar').removeClass('action-bar-slide-down');
+                                    }, 50); // Small delay to let DOM apply classes
+
+                                }, 400); // Wait for the slide-down animation to finish (400ms)
+
+                            }, 2000); // Show the tick to the user for 2 seconds before sliding down
+
+                        } else {
+                            toastr.error(res.message);
+                        }
+                    },
+                    error: function() {
+                        toastr.error("Server error");
+                    },
+                    complete: function() {
+                        // Revert button UI state
+                        if (selectedEmployerIds.length === 0 && selectedEmployeeIds.length === 0) {
+                            $btn.prop('disabled', true);
+                            $('#stickyGenCount').text('0');
+                        } else {
+                            $btn.prop('disabled', false);
+                        }
+
+                        
+                        // Restore original text formatting matching the new floating design
+                        $btn.html('Generate Forms <i class="bx bx-right-arrow-alt fs-5"></i>');
+                    }
+                });
+            });
+
+         
+       
+            // 5. Dropdown Change Event Listener
+            $('#previewEmployeeSelect').change(function() {
+                var empId = $(this).val();
+                if (!empId) return;
+
+                var suppress = $('#suppressSsnCheck').is(':checked');
+                var previewFormType = currentPreviewContext.formType;
+                var finalEmpId = empId;
+
+                // ✅ Route Employer option to correct 1094 Endpoint for Combined Forms
+                if (empId === 'employer_1094C') {
+                    previewFormType = '1094-C';
+                    finalEmpId = '';
+                } else if (empId === 'employer_1094B') {
+                    previewFormType = '1094-B';
+                    finalEmpId = '';
+                }
+
+                // Construct URL
+                var url = '@Url.Action("GeneratePreview", "FormGeneration")' +
+                    `?employerId=${currentPreviewContext.employerId}` +
+                    `&year=${currentPreviewContext.year}` +
+                    `&formType=${previewFormType}` +
+                    (finalEmpId ? `&selectedEmployeeId=${finalEmpId}` : '') +
+                    `&suppressSSN=${suppress}`;
+
+                $('#previewLoader').show();
+                $('#pdfFrame').attr('src', url);
+            });
+
+
+
+                 //toggle: Employee list Employer name side button to hide and show employees
+                // ✅ Employer Collapse / Expand Toggle
+               $(document).on("click", ".employer-toggle", function () {
+
+            let targetId = $(this).data("target");
+
+            // Hide/Show employee list
+            $("#" + targetId).slideToggle(200);
+
+            // Arrow Up/Down toggle
+            let icon = $(this).find(".toggle-icon");
+
+            if (icon.hasClass("bx-chevron-down")) {
+                icon.removeClass("bx-chevron-down").addClass("bx-chevron-up");
+            } else {
+                icon.removeClass("bx-chevron-up").addClass("bx-chevron-down");
+            }
+        });
+
+
+        });
+
+        /* =======================
+           SIDE PANEL FUNCTIONS
+        ======================= */
+       function showSidePanel(empIds) {
+            // Hide the empty state message and show the employee content wrapper
+            $('#employeeEmptyState').addClass('d-none');
+            $('#employeeContentWrapper').removeClass('d-none').addClass('d-flex');
+
+            loadEmployees(empIds);
+        }
+
+
+
+        function hideEmployeePanel() {
+            // ✅ 1. Clear Global State
+            selectedEmployerIds = [];
+            selectedEmployeeIds = [];
+
+            // ✅ 2. Uncheck ALL Employer Checkboxes
+            $('.emp-select').prop('checked', false);
+
+            // ✅ 3. Remove Blue Highlight Border from Employer Cards
+            $('.card').removeClass("border-primary border-2");
+
+            // ✅ 4. Reset Employee Panel UI
+            $('#employeeSearch').val('');
+            $('#selectAllEmployees, #selectAllEmployees_Active').prop('checked', false);
+            $('#employeeListItems').empty();
+
+            // ✅ 5. Hide Preview Button & Disable Generate
+            $('#previewSelectedBtn').addClass('d-none');
+            $('#generateBatchBtn').prop('disabled', true);
+            $('#selectionCount').text("0 Employees selected");
+
+            // ✅ 6. SHOW EMPTY STATE TEXT, HIDE CONTENT
+            $('#employeeContentWrapper').removeClass('d-flex').addClass('d-none');
+            $('#employeeEmptyState').removeClass('d-none');
+
+            // ✅ 7. Disable Filters
+            $('#filterSidebarAside').addClass('filters-disabled');
+            
+            updateToolbar();
+        }
+
+
+        // 2. Update Preview Selected Function
+               function previewSelectedEmployees() {
+            var formType = $('#formTypeSelector').val();
+            var idsToPreview = [];
+            const token = $('input[name="__RequestVerificationToken"]').val();
+            // Check validation based on form type
+            if (formType === '1094-C' || formType === '1094-B') {
+                if (selectedEmployerIds.length === 0) {
+                    toastr.warning("Select at least one employer.");
+                    return;
+                }
+                $('#employeePreviewCount').text(selectedEmployerIds.length + " Employers");
+            } else {
+                if (selectedEmployeeIds.length === 0) {
+                    toastr.warning("Select at least one employee.");
+                    return;
+                }
+                idsToPreview = selectedEmployeeIds;
+                $('#employeePreviewCount').text(idsToPreview.length + " Employees");
+            }
+
+            // SHOW MODAL FIRST
+            $('#employeeBatchPreviewModal').modal('show');
+            $('#employeePreviewLoader').show().css("display", "block");
+            $('#employeePreviewFrame').attr('src', 'about:blank');
+
+            if (employeePreviewUrl) {
+                URL.revokeObjectURL(employeePreviewUrl);
+                employeePreviewUrl = null;
+            }
+
+            // NOW start fetch
+            fetch('/FormGeneration/GenerateBatchPreview', {
+                method: 'POST',
+                headers: {
+                   'Content-Type': 'application/json',
+                   'RequestVerificationToken': token
+                },
+                body: JSON.stringify({
+                    employerIds: selectedEmployerIds,
+                    employeeIds: idsToPreview, // Empty for 1094
+                    year: $('#selectedYear').val(),
+                    formType: formType,
+                    suppressSSN: $('#suppressSsnCheck').is(':checked') // ✅ NEW
+                })
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Failed to render preview.");
+                return res.blob();
+            })
+            .then(blob => {
+                employeePreviewUrl = URL.createObjectURL(blob);
+                $('#employeePreviewFrame').attr('src', employeePreviewUrl);
+            })
+            .catch((err) => {
+                toastr.error(err.message);
+                $('#employeeBatchPreviewModal').modal('hide');
+            });
+        }
+
+
+        
+        /* =======================
+           HIDE EMPLOYEE PANEL ONLY (Keeps Employer Selections)
+        ======================= */
+      function hideEmployeeSidePanelOnly() {
+            // 1. Clear Employee selections ONLY
+            selectedEmployeeIds = [];
+            $('.employee-batch-chk').prop('checked', false);
+            $('#selectAllEmployees, #selectAllEmployees_Active').prop('checked', false);
+            $('#employeeListItems').empty();
+            $('#previewSelectedBtn').addClass('d-none');
+
+            // 2. SHOW EMPTY STATE TEXT, HIDE CONTENT
+            $('#employeeContentWrapper').removeClass('d-flex').addClass('d-none');
+            $('#employeeEmptyState').removeClass('d-none');
+
+            // 3. Disable Filters
+            $('#filterSidebarAside').addClass('filters-disabled');
+        }
+
+        /* =======================
+           LOAD EMPLOYEES
+        ======================= */
+      
+        function loadEmployees(employerIds) {
+            $('#employeeListItems').html('<div class="text-center p-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Loading Employees...</p></div>');
+
+            // 1. Setup filter payload (Keep your original payload logic)
+            var requestData = {
+                employerId: employerIds,
+                year: $('#selectedYear').val(),
+                PlanIDs: typeof FilterSections !== 'undefined' ? FilterSections.getValues('plan') : [],
+                Statuses: typeof FilterSections !== 'undefined' ? FilterSections.getValues('status') : [],
+                EnrollmentIDs: typeof FilterSections !== 'undefined' ? FilterSections.getValues('enrollment') : [],
+                Flags: typeof FilterSections !== 'undefined' ? FilterSections.getValues('flag') : [],
+                OtherIDs: typeof FilterSections !== 'undefined' ? FilterSections.getValues('other') : []
+            };
+
+            $.ajax({
+                url: '@Url.Action("GetEmployeeList", "FormGeneration")',
+                type: 'GET',
+                data: requestData,
+                traditional: true,
+                success: function(data) {
+
+                    if (!data || data.length === 0) {
+                        $('#employeeListItems').html('<div class="text-center p-5"><i class="bx bx-user-x display-1 text-muted"></i><p class="text-muted mt-2">No employees found.</p></div>');
+                      //  $('#filterSidebarAside').addClass('filters-disabled');
+                        
+                        return;
+                    }
+                    $('#filterSidebarAside').removeClass('filters-disabled');
+                    // Group by Employer
+                    const grouped = {};
+                    data.forEach(emp => {
+                        if (!grouped[emp.employerName]) { grouped[emp.employerName] = []; }
+                        grouped[emp.employerName].push(emp);
+                    });
+
+                    let html = '';
+
+                    Object.keys(grouped).forEach(employerName => {
+                        let safeId = employerName.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
+                        let empCount = grouped[employerName].length;
+
+                        // Employer Header (Accordion style)
+                        html += `
+                                <div class="mb-4 employer-group bg-white border rounded-3 shadow-sm overflow-hidden">
+                                    <!-- Employer Header -->
+                                    <div class="d-flex justify-content-between align-items-center p-3 bg-light border-bottom employer-toggle" style="cursor:pointer;" data-target="${safeId}">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <h6 class="fw-bold mb-0 text-dark text-heading">${employerName}</h6>
+                                            <span class="badge bg-secondary bg-opacity-25 text-dark rounded-pill px-2 py-1 text-heading" style="font-size: 11px;">${empCount} Employees</span>
+                                        </div>
+                                        <i class="bx bx-chevron-down fs-5 text-muted toggle-icon"></i>
+                                    </div>
+
+                                    <!-- Employee Table Wrapper -->
+                                            <div class="employee-wrapper card border-0 rounded-0" id="${safeId}">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover table-borderless align-middle mb-0">
+                                                <thead class="">
+                                                    <tr class="text-muted text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
+                                                        <th class="ps-3 py-3 fw-bold">Employee</th>
+                                                        <th class="py-3 fw-bold">SSN</th>
+                                                        <th class="py-3 fw-bold">City</th>
+                                                        <th class="py-3 fw-bold">ZipCode</th>
+                                                        <th class="pe-3 py-3 w-10 text-center">Select</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                `;
+
+                        // Employee Rows
+                        grouped[employerName].forEach(emp => {
+                            let fInitial = emp.firstName ? emp.firstName.charAt(0).toUpperCase() : '';
+                            let lInitial = emp.lastName ? emp.lastName.charAt(0).toUpperCase() : '';
+                            let initials = fInitial + lInitial;
+                            let ssnDisplay = emp.ssn || 'N/A';
+
+                            // Handling empty City or Status gracefully
+                            let cityDisplay = emp.city ? emp.city : '<span class="fst-italic opacity-50">N/A</span>';
+                            let zipDisplay = emp.zip ? emp.zip : '<span class="fst-italic opacity-50">N/A</span>';
+
+                            // ✅ NEW: Array of 5 different Sneat colors
+                            const avatarColors = [
+                                'bg-label-primary text-primary',
+                                'bg-label-success text-success',
+                                'bg-label-warning text-warning',
+                                'bg-label-danger text-danger',
+                                'bg-label-info text-info'
+                            ];
+
+                            // ✅ NEW: Pick a color based on the Employee ID so it stays consistent
+                            let avatarClass = avatarColors[emp.id % avatarColors.length];
+
+                            html += `
+                <tr class="form-check-row border-bottom">
+                    <td class="ps-3 py-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <!-- ✅ NEW: Apply the dynamic avatarClass here -->
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold ${avatarClass}" style="width: 35px; height: 35px; font-size: 12px;">
+                                ${initials}
+                            </div>
+                            <div>
+                                <div class="fw-bold text-heading" style="font-size: 13px;">${emp.firstName} ${emp.lastName}</div>
+                                
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 text-muted fw-medium" style="font-size: 12px; font-family: monospace;">${ssnDisplay}</td>
+                           <td class="py-3 text-muted" style="font-size: 12px;">
+            ${cityDisplay}
+        </td>
+        <td class="py-3 text-muted" style="font-size: 12px;">
+            ${zipDisplay}
+        </td>
+                    <td class="pe-3 py-3 text-center">
+                        <input class="form-check-input employee-batch-chk shadow-sm mt-0" style="width: 18px; height: 18px; cursor: pointer;" type="checkbox" value="${emp.id}">
+                    </td>
+                </tr>
+            `;
+                        });
+
+                        html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+                    });
+                    $('#employeeListItems').html(html);
+
+                    // ✅ RESTORE EMPLOYEE CHECKBOX STATE
+                    selectedEmployeeIds.forEach(id => {
+                        $(`.employee-batch-chk[value="${id}"]`).prop('checked', true);
+                    });
+
+                    // Update search functionality to work with new table rows
+                    updateSearchLogic();
+                    updateSelectAllState();
+                },
+                error: function() {
+                    $('#employeeListItems').html('<div class="text-center p-5"><i class="bx bx-error-alt display-1 text-danger"></i><p class="text-danger mt-2">Failed to load employees.</p></div>');
+                }
+            });
+        }
+
+        // Helper function to update search logic for the new table rows
+      
+        function updateSearchLogic() {
+            
+            $('#employeeSearch, #employeeSearch_Active').off('keyup').on('keyup', function() {
+                let term = $(this).val().toLowerCase();
+
+                $('.employee-batch-chk').each(function() {
+                    // Find the parent table row (tr)
+                    let $row = $(this).closest('tr');
+                    // Get the text content of the row (Name, SSN, etc.)
+                    let rowText = $row.text().toLowerCase();
+
+                    if (rowText.includes(term)) {
+                        $row.show();
+                    } else {
+                        $row.hide();
+                    }
+                });
+                updateSelectAllState();
+            });
+        }
+        function updateSelectAllState() {
+            let $visibleCheckboxes = $('.employee-batch-chk:visible');
+            let totalVisible = $visibleCheckboxes.length;
+            let totalCheckedVisible = $visibleCheckboxes.filter(':checked').length;
+
+            let $selectAll = $('#selectAllEmployees, #selectAllEmployees_Active');
+
+            if (totalVisible === 0) {
+                $selectAll.prop('checked', false).prop('indeterminate', false).prop('disabled', true);
+            } else {
+                $selectAll.prop('disabled', false);
+                if (totalCheckedVisible === 0) {
+                    $selectAll.prop('checked', false).prop('indeterminate', false);
+                } else if (totalCheckedVisible === totalVisible) {
+                    $selectAll.prop('checked', true).prop('indeterminate', false);
+                } else {
+                    $selectAll.prop('checked', false).prop('indeterminate', true);
+                }
+            }
+        }
+    </script>
+
+}

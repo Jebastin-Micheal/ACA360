@@ -1,0 +1,77 @@
+@*
+    ACA Assistant — a scripted FAQ (Option B). General information only, not tax advice.
+    Bootstrap offcanvas + accordion; no external framework.
+*@
+<button type="button" class="btn btn-primary portal-assistant-launcher"
+        data-bs-toggle="offcanvas" data-bs-target="#acaAssistant" aria-controls="acaAssistant">
+    <i class="bx bx-bot me-1"></i> Need help?
+</button>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="acaAssistant" aria-labelledby="acaAssistantLabel">
+    <div class="offcanvas-header border-bottom">
+        <div class="d-flex align-items-center">
+            <span class="avatar avatar-sm me-2"><span class="avatar-initial rounded bg-label-primary"><i class="bx bx-bot"></i></span></span>
+            <div>
+                <h6 class="offcanvas-title mb-0" id="acaAssistantLabel">ACA Assistant</h6>
+                <small class="text-muted">Answers about your 1095-C</small>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="accordion" id="assistantFaq">
+            <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">What is Form 1095-C?</button></h2>
+                <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#assistantFaq">
+                    <div class="accordion-body small">It reports the health coverage your employer offered you. Keep it for your records — you don't attach it to your tax return.</div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">When will my form be ready?</button></h2>
+                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#assistantFaq">
+                    <div class="accordion-body small">Forms are usually available by early in the year. If yours isn't ready, click <strong>Notify me when ready</strong> and we'll email you as soon as it is.</div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">Electronic or paper — which should I pick?</button></h2>
+                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#assistantFaq">
+                    <div class="accordion-body small">Electronic is fastest and most secure — you get it as soon as it's ready and can download it anytime. Paper is mailed to your address on file.</div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">How do I download my form?</button></h2>
+                <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#assistantFaq">
+                    <div class="accordion-body small">Once your form is ready and you've consented to electronic delivery, a <strong>Download</strong> button appears under "Your Tax Forms". If you chose paper, it's delivered by mail instead.</div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">How do I change my notification email?</button></h2>
+                <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#assistantFaq">
+                    <div class="accordion-body small">In the "Electronic Delivery Active" panel, click <strong>Change</strong>, update the email, then <strong>Save Preference</strong>.</div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">How do I withdraw electronic consent?</button></h2>
+                <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#assistantFaq">
+                    <div class="accordion-body small">Use <strong>Withdraw Electronic Consent</strong> in the right panel. You'll then receive your forms by mail.</div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">Can I change a previous year's preference?</button></h2>
+                <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#assistantFaq">
+                    <div class="accordion-body small">No — only the current year's delivery preference can be changed. Past years are view-only.</div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq8">I forgot my password.</button></h2>
+                <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#assistantFaq">
+                    <div class="accordion-body small">On the sign-in page, use <strong>Forgot password?</strong> and verify with your work email, the last 4 digits of your SSN, and your date of birth.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-light border small mt-3 mb-0">
+            <i class="bx bx-info-circle me-1"></i> This is general information, not tax advice. For tax questions, contact your employer's HR team or a tax professional.
+        </div>
+    </div>
+</div>

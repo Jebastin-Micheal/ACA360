@@ -1,0 +1,138 @@
+﻿@model ACA360.Core.Models.ErrorTriageViewModel
+@{
+    // 1. Priority to Metadata (View-Specific), fallback to Pagination (Service-Originated)
+    var meta = Model.Metadata ?? Model.Pagination;
+
+    // 2. Ensure we have a valid object to prevent crashes
+    if (meta == null)
+    {
+        meta = new ACA360.Core.Models.PaginationViewEntity { TotalCount = Model.TotalErrorsCount, CurrentPage = 1, PageSize = 10 };
+    }
+}
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th style="width: 40px;">
+                    <input class="form-check-input" type="checkbox" id="chkSelectAll">
+                </th>
+                <th class="col-severity">Severity</th>
+                <th class="col-row">Row</th>
+                <th class="col-table">Table / Field</th>
+                <th class="col-value">Incorrect Value</th>
+                <th class="col-issue">Issue Details</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Errors != null && Model.Errors.Count > 0)
+            {
+                @foreach (var error in Model.Errors)
+                {
+                    <tr data-row-id="@error.StagingRowId">
+                        <td>
+                            @if (error.Severity == "Warning")
+                            {
+                                <input class="form-check-input chk-row" type="checkbox" value="@error.StagingRowErrorId">
+                            }
+                        </td>
+                        <td class="col-severity">
+                            @if (error.Severity == "Error")
+                            {
+                                <span class="badge bg-danger bg-opacity-10 text-danger">Error</span>
+                            }
+                            else if (error.Severity == "Information")
+                            {
+
+                                <span class="badge bg-info bg-opacity-10 text-info">Info</span>
+                            }
+                            else
+                            {
+
+                                <span class="badge bg-warning bg-opacity-10 text-warning">Warning</span>
+                            }
+                        </td>
+                        <td class="col-row"><span class="text-muted">#@error.RowNumber</span></td>
+                        <td class="col-table">
+                            <div class="fw-bold">@error.StagingTableName?.Replace("Staging_", "")</div>
+                            <small class="text-muted">@error.TargetColumn</small>
+                        </td>
+                        <td class="col-value">
+                            <span class="font-monospace text-danger bg-light px-1 rounded">
+                                @(string.IsNullOrWhiteSpace(error.BadValue) ? "(Blank)" : error.BadValue)
+                            </span>
+                        </td>
+                        <td class="col-issue">
+                            <div>@error.ErrorMessage</div>
+                            <small class="text-muted">@error.HelpText</small>
+                        </td>
+                        <td class="text-end">
+                            @if (error.Status == "Skipped")
+                            {
+                                <span class="text-muted fst-italic small">Skipped</span>
+                            }
+                            else
+                            {
+                                <div class="dropdown">
+                                    <button type="button" class="btn btn-sm btn-icon hide-arrow" data-bs-toggle="dropdown"><i class="bx bx-dots-vertical-rounded"></i></button>
+                                    <div class="dropdown-menu dropdown-menu-end">
+                                        @if (error.IsCorrectable)
+                                        {
+                                            <a class="dropdown-item edit-row-btn" href="javascript:void(0);" data-filelogid="@Model.FileLogId" data-tablename="@error.StagingTableName" data-rowid="@error.StagingRowId">
+                                                <i class="bx bx-edit-alt me-2"></i>Edit Data
+                                            </a>
+                                        }
+                                        @if (error.Severity == "Warning")
+                                        {
+                                            <a class="dropdown-item skip-btn" href="javascript:void(0);" data-rowerrorid="@error.StagingRowErrorId">
+                                                <i class="bx bx-check-circle me-2"></i>Skip Warning
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="7" class="text-center py-5 text-muted">No issues found.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (meta != null && meta.TotalCount > 0)
+{
+    <div class="d-flex justify-content-between align-items-center mt-3 px-3 py-2 bg-light rounded border">
+
+        <div class="text-muted small">
+            Showing <strong>@((meta.CurrentPage - 1) * meta.PageSize + 1)</strong> -
+            <strong>@Math.Min(meta.CurrentPage * meta.PageSize, meta.TotalCount)</strong>
+            of <strong>@meta.TotalCount</strong> records
+        </div>
+
+        @if (meta.TotalPages > 1)
+        {
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(meta.CurrentPage == 1 ? "disabled" : "")">
+                        <button class="page-link" data-pageindex="1"><i class="bx bx-chevrons-left"></i></button>
+                    </li>
+                    <li class="page-item @(meta.CurrentPage == 1 ? "disabled" : "")">
+                        <button class="page-link" data-pageindex="@(meta.CurrentPage - 1)"><i class="bx bx-chevron-left"></i></button>
+                    </li>
+                    <li class="page-item active"><span class="page-link">@meta.CurrentPage</span></li>
+                    <li class="page-item @(meta.CurrentPage >= meta.TotalPages ? "disabled" : "")">
+                        <button class="page-link" data-pageindex="@(meta.CurrentPage + 1)"><i class="bx bx-chevron-right"></i></button>
+                    </li>
+                    <li class="page-item @(meta.CurrentPage >= meta.TotalPages ? "disabled" : "")">
+                        <button class="page-link" data-pageindex="@(meta.TotalPages)"><i class="bx bx-chevrons-right"></i></button>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+}

@@ -1,0 +1,88 @@
+﻿@using ACA360.Core.ViewModels
+@model ProcessListViewModel
+@{
+    var metadata = Model?.Metadata;
+    int countIndex = metadata != null ? ((metadata.CurrentPage - 1) * metadata.PageSize) + 1 : 1;
+}
+
+@if (Model == null || !Model.Processes.Any())
+{
+    <div class="text-center p-5 text-muted">
+        <i class="typcn typcn-info-large fs-1"></i>
+        <p>No processes found matching your criteria.</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive ui-table-responsive">
+        <table class="table table-hover table-bordered mb-0 ui-table">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">#</th>
+                    <th class="cursor-pointer" onclick="sortGrid('ProcessName')">
+                        Process Step Name @(Model.SortColumn == "ProcessName" ? (Model.SortOrder == "ASC" ? "▲" : "▼") : "")
+                    </th>
+                    <th class="cursor-pointer" onclick="sortGrid('WebName')">
+                        Web Name @(Model.SortColumn == "WebName" ? (Model.SortOrder == "ASC" ? "▲" : "▼") : "")
+                    </th>
+                    <th class="cursor-pointer" onclick="sortGrid('CategoryName')">
+                        Category @(Model.SortColumn == "CategoryName" ? (Model.SortOrder == "ASC" ? "▲" : "▼") : "")
+                    </th>
+                    <th class="cursor-pointer" onclick="sortGrid('FollowUpDays')">
+                        Follow Up Days @(Model.SortColumn == "FollowUpDays" ? (Model.SortOrder == "ASC" ? "▲" : "▼") : "")
+                    </th>
+                    <th class="cursor-pointer" onclick="sortGrid('CompletionPercentage')">
+                        Completion % @(Model.SortColumn == "CompletionPercentage" ? (Model.SortOrder == "ASC" ? "▲" : "▼") : "")
+                    </th>
+                    <th class="cursor-pointer" onclick="sortGrid('DisplayOrder')">
+                        Order @(Model.SortColumn == "DisplayOrder" ? (Model.SortOrder == "ASC" ? "▲" : "▼") : "")
+                    </th>
+                    <th class="text-center" style="width: 100px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Processes)
+                {
+                    <tr>
+                        <td class="text-muted">@(countIndex++)</td>
+                        <td class="text-primary cursor-pointer" onclick="openModal(@item.ProcessId)">@item.ProcessName</td>
+                        <td>@item.WebName</td>
+                        <td><span class="badge bg-label-secondary">@item.CategoryName</span></td>
+                        <td>
+                            @if (item.IsDoNotDisplay || item.FollowUpDays == 0 || item.FollowUpDays == null)
+                            {
+                            }
+                            else
+                            {
+                                <span>@item.FollowUpDays</span>
+                            }
+                        </td>
+                        <td><span class="badge bg-label-success">@item.CompletionPercentage%</span></td>
+                        <td>@item.DisplayOrder</td>
+
+                        <td class="text-nowrap">
+                            <div class="d-flex align-items-center gap-1">
+                                <button class="btn btn-sm btn-icon" onclick="openModal(@item.ProcessId)">
+                                    <i class="icon-base bx bx-edit icon-sm bg-info fs-4 text-secondary"></i>
+                                </button>
+                                <div class="dropdown">
+                                    <a href="javascript:;" class="btn btn-sm btn-icon dropdown-toggle hide-arrow action-dots-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="icon-base bx bx-dots-vertical-rounded icon-md"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end m-0">
+                                        <a href="javascript:;" class="dropdown-item" onclick="deleteProcess(@item.ProcessId)">
+                                            <i class="icon-base bx bx-trash bg-danger icon-md me-1"></i>Delete
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@* Reuse the same common pagination partial used by Role / SalesRep / Service *@
+@await Html.PartialAsync("_GridPagination", Model.Metadata)

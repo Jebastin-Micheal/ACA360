@@ -1,0 +1,123 @@
+@using ACA360.Core.Models
+@model EmployerAssignmentHistoryModel
+@{
+    bool showAM = string.IsNullOrEmpty(Model.Section) || Model.Section.Equals("AM", StringComparison.OrdinalIgnoreCase);
+    bool showDA = string.IsNullOrEmpty(Model.Section) || Model.Section.Equals("DA", StringComparison.OrdinalIgnoreCase);
+    string popupTitle = showAM && showDA ? "Assignment History"
+                      : showAM ? "Account Manager History"
+                      : "Data Analyst History";
+}
+<style>
+    .assignment-history-modal .modal-content,
+    .assignment-history-modal .modal-body,
+    .assignment-history-modal .modal-footer {
+        background-color: #fff;
+    }
+
+    .assignment-history-modal .avatar-sm {
+        width: 36px;
+        height: 36px;
+    }
+
+    .assignment-history-modal .table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+
+    .assignment-history-modal .table td {
+        vertical-align: middle;
+    }
+</style>
+<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable assignment-history-modal" style="max-width: 780px;" role="document">
+    <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+                <i class="bx bx-history me-2"></i>@popupTitle : @Model.EmployerName
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+
+            @if (showAM)
+            {
+                <!-- ============ ACCOUNT MANAGER HISTORY ============ -->
+                @* inner heading only when both sections are shown - for a single
+                   section the modal title already says which history this is *@
+                @if (showDA)
+                {
+                    <h6 class="text-muted mb-2">
+                        <i class="bx bx-user me-2"></i>Account Manager History
+                    </h6>
+                }
+                @if (Model.AccountManagerHistory.Any())
+                {
+                    <div class="table-responsive mb-4">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Account Manager</th>
+                                    <th>Assigned By</th>
+                                    <th>Period</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in Model.AccountManagerHistory)
+                                {
+                                    @await Html.PartialAsync("_EmployerAssignmentHistoryRow", row)
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-4"><i class="bx bx-info-circle me-1"></i>No Account Manager has been assigned to this employer yet.</p>
+                }
+            }
+
+            @if (showDA)
+            {
+                <!-- ============ DATA ANALYST HISTORY ============ -->
+                @if (showAM)
+                {
+                    <h6 class="text-muted mb-2">
+                        <i class="bx bx-line-chart me-2"></i>Data Analyst History
+                    </h6>
+                }
+                @if (Model.DataAnalystHistory.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Data Analyst</th>
+                                    <th>Assigned By</th>
+                                    <th>Period</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in Model.DataAnalystHistory)
+                                {
+                                    @await Html.PartialAsync("_EmployerAssignmentHistoryRow", row)
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted"><i class="bx bx-info-circle me-1"></i>No Data Analyst has been assigned to this employer yet.</p>
+                }
+            }
+        </div>
+        <div class="modal-footer py-3">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <i class="bx bx-x me-1"></i>Close
+            </button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,145 @@
+﻿@model List<ACA360.Core.Models.EmployerGenerationStatusDto>
+@if (Model == null || !Model.Any())
+{
+    <div class="text-center py-5 w-100">
+        <i class='bx bx-user-x display-4 text-muted mb-3'></i>
+        <p class="text-muted fw-semibold">No employers found</p>
+    </div>
+}
+else
+{
+    @foreach (var item in Model)
+    {
+        bool isReady = item.EmployeeCount > 0 && item.EmployeeCount == item.EmployeesWithCodes;
+        var pct = item.EmployeeCount > 0 ? (double)item.EmployeesWithCodes / item.EmployeeCount * 100 : 0;
+
+        // Dynamic background and color styles
+        string bgColor = isReady ? "bg-success" : "bg-warning";
+        // NEW: Sneat specific badge colors for dark mode support
+        string badgeColor = isReady ? "bg-label-success" : "bg-label-warning";
+
+        <div class="employer-card-wrapper transition-all w-100">
+
+            <div class="card employer-card p-3 rounded-4 border shadow-sm position-relative overflow-hidden @(isReady ? "border-success border-2" : "border-warning")" style="opacity: @(isReady ? "1" : "0.95");">
+
+                <!-- Right side color accent (Green / Yellow) -->
+                <div class="position-absolute end-0 top-0 h-100 @bgColor" style="width: 4px; opacity: 0.7;"></div>
+
+                <!-- Card Header: Checkbox, Name, EIN & Status Badge -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="d-flex align-items-start gap-2 w-75">
+                        @if (isReady)
+                        {
+                            <!-- Label wraps checkbox and name for easy clicking -->
+                            <label class="d-flex align-items-center w-100 mb-0" style="cursor:pointer;">
+                                <input type="checkbox" class="emp-select form-check-input mt-0 shadow-sm border-secondary me-2" value="@item.EmployerId" />
+                                <div>
+                                    <!-- Replaced text-dark with text-heading -->
+                                    <h6 class="fw-bold mb-0 text-heading" style="font-size: 15px;">@item.EmployerName</h6>
+                                    <small class="text-muted mb-0" style="font-size: 13px;">
+                                        EIN @(string.IsNullOrWhiteSpace(item.TaxId) ? "N/A" : (CanViewSSNorEIN ? item.TaxId : DataMasker.MaskEIN(item.TaxId)))
+                                    </small>
+                                </div>
+                            </label>
+                        }
+                        else
+                        {
+                            <div>
+                                <!-- Replaced text-dark with text-heading -->
+                                <h6 class="fw-bold mb-0 text-heading" style="font-size: 15px;">@item.EmployerName</h6>
+                                <small class="text-muted mb-0" style="font-size: 13px;">
+                                    EIN @(string.IsNullOrWhiteSpace(item.TaxId) ? "N/A" : (CanViewSSNorEIN ? item.TaxId : DataMasker.MaskEIN(item.TaxId)))
+                                </small>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Status Badge (Ready / Needs Action) -->
+                   
+                    <span class="badge rounded-pill px-2 py-1 @badgeColor shadow-sm" style="font-size: 10px;">
+                        <i class='bx @(isReady ? "bx-check-circle" : "bx-error") me-1'></i>
+                        @(isReady ? "Ready" : "Needs Action")
+                    </span>
+                </div>
+
+                <!-- Progress Bar & Ratio -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-muted" style="font-size: 13px;">Filing Progress</span>
+                        @if (item.EmployeesWithCodes > 0)
+                        {
+                            <span class="fw-bold @(item.EmployeesWithCodes == item.EmployeeCount ? "text-success" : "text-warning")" style="font-size: 11px;">
+                                @(Math.Round(pct))% (@item.EmployeesWithCodes / @item.EmployeeCount)
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="text-muted fst-italic" style="font-size: 11px;">Not Calculated</span>
+                        }
+                    </div>
+                   
+                    <div class="progress rounded-pill bg-label-secondary border-0" style="height: 6px;">
+                        <div class="progress-bar @bgColor rounded-pill" role="progressbar" style="width: @pct%" aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+
+                <!-- Last Run Date & Total Employee Count -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                      
+                        <div class="d-flex align-items-center justify-content-center bg-label-secondary rounded-circle border-0" style="width: 24px; height: 24px;">
+                            <i class='bx bx-group text-muted' style="font-size: 12px;"></i>
+                        </div>
+                        <span class="text-muted fw-bold" style="font-size: 12px;">@item.EmployeeCount <span class="fw-normal">Employees</span></span>
+                    </div>
+                    <div class="text-end text-muted" style="font-size: 11px;">
+                        @if (item.LastGeneratedDate.HasValue)
+                        {
+                            <span class="fw-semibold">@item.LastGeneratedDate.Value.ToString("MMM dd, yyyy")</span>
+                        }
+                        else
+                        {
+                            <span class="fst-italic">Never Run</span>
+                        }
+                    </div>
+                </div>
+
+                <!-- Action Buttons & Health Check (Tooltips Maintained) -->
+               
+                <div class="d-flex justify-content-between align-items-center mt-2 pt-3 border-top">
+                    <!-- Left Actions -->
+                    <div class="d-flex gap-2 w-100 me-3">
+                        @if (isReady)
+                        {
+                            <button type="button" class="btn btn-sm btn-outline-primary flex-grow-1 shadow-sm" data-bs-toggle="tooltip" title="Preview PDF" onclick="openPreview(@item.EmployerId, '@item.EmployerName')" style="font-size: 12px; padding: 6px;">
+                                <i class='bx bx-search-alt'></i> Preview
+                            </button>
+                            <a href="javascript:void(0)" class="btn btn-sm btn-outline-secondary flex-grow-1 shadow-sm btn-code-review" data-employer-id="@item.EmployerId" data-bs-toggle="tooltip" title="Review Code Grid" style="font-size: 12px; padding: 6px;">
+                                <i class='bx bx-list-check'></i> Review
+                            </a>
+                        }
+                        else
+                        {
+                            <form asp-controller="ACA" asp-action="GenerateCodes" method="post" class="w-100 m-0">
+                                <input type="hidden" name="employerId" value="@item.EmployerId" />
+                                <input type="hidden" name="year" class="year-hidden" value="" />
+                                <button type="submit" class="btn btn-sm btn-primary w-100 fw-bold shadow-sm" data-bs-toggle="tooltip" title="Calculate Codes" onclick="return confirm('Recalculate codes for this employer?');" style="font-size: 12px; padding: 6px;">
+                                    <i class='bx bx-calculator'></i> Calculate
+                                </button>
+                            </form>
+                        }
+                    </div>
+
+                    <!-- Right Action (Pulse Icon) -->
+                    <button class="btn btn-sm btn-outline-danger shadow-sm px-2"
+                    data-bs-toggle="tooltip"
+                    title="Run Health Check"
+                    onclick="checkEmployerHealth(@item.EmployerId)">
+                        <i class='bx bx-pulse fs-5'></i>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    }
+}

@@ -1,0 +1,208 @@
+﻿@using ACA360.Core.Extensions
+@using ACA360.Web.ViewComponents
+@model ACA360.Web.Models.RulesViewModel
+
+@{
+    ViewData["Title"] = "Validation Rules";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // ✅ CONFIG: Toolbar Buttons including Add, Export, and Import
+    var customButtons = "";
+    customButtons += "<button class='btn btn-outline-info' onclick=\"document.getElementById('importFile').click()\" title='Upload Rules'><i class='bx bx-upload me-1'></i> Import</button>";
+    customButtons += @"
+<div class='dropdown grid-export-wrapper me-2'
+     data-export-url='/Rules/ExportRules'
+     data-file-base-name='ValidationRules'>
+    <button class='btn btn-outline-secondary dropdown-toggle hide-arrow'
+            type='button' data-bs-toggle='dropdown'>
+        <i class='bx bx-export me-1'></i> Export
+    </button>
+    <ul class='dropdown-menu dropdown-menu-end grid-export-menu'>
+        <li><a class='dropdown-item grid-export-action' href='#' data-format='print'><i class='bx bx-printer me-2'></i>Print</a></li>
+        <li><a class='dropdown-item grid-export-action' href='#' data-format='csv'><i class='bx bx-file me-2'></i>CSV</a></li>
+        <li><a class='dropdown-item grid-export-action' href='#' data-format='excel'><i class='bx bxs-file-export me-2'></i>Excel</a></li>
+        <li><a class='dropdown-item grid-export-action' href='#' data-format='pdf'><i class='bx bxs-file-pdf me-2'></i>PDF</a></li>
+    </ul>
+</div>";
+
+    if (User.HasPermission("Menu", "Add"))
+    {
+        customButtons += "<button class='btn btn-primary me-2' type='button' id='add_Rules_controls'><i class='bx bx-plus me-1'></i> Add New Rule</button>";
+    }
+
+    var toolbarConfig = new
+    {
+        IsEmployerPage = false,
+        CustomButtons = customButtons
+    };
+}
+
+<link href="~/css/loaderstyle.css" rel="stylesheet" />
+
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Validation Rules",
+    items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem { Title = "Employer", Url = Url.Action("Index", "Employer"), IsActive = false },
+        new BreadcrumbItem { Title = "Master Settings", Url = "", IsActive = false },
+        new BreadcrumbItem { Title = "Validation Rules", Url = "", IsActive = true }
+    }
+})
+
+<div id="RulesListContainerWrapper" style="position:relative;">
+
+    <div id="loader" class="loader" style="display:none;">
+        <div class="spinner"></div>
+    </div>
+
+    <input type="file" id="importFile" style="display:none;" onchange="uploadRules(this)" accept=".xlsx" />
+
+    <div class="card mb-6">
+        <div class="card-body">
+            @{
+                ViewBag.ShowFilterButton = false;
+                ViewBag.ShowViewModeToggle = false;
+            }
+            @await Html.PartialAsync("_GridToolbarCommon", toolbarConfig)
+
+            <div class="row">
+                <div id="RulesListContainer">
+                    @await Html.PartialAsync("_ValidationRuleListPartial", Model)
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="RulesFormModal" tabindex="-1" aria-labelledby="RulesFormModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="RulesFormModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body Rule-body">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script src="~/js/common-grid.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+
+            // 1. Initialize Common Grid Manager
+            GridManager.init({
+                url: '@Url.Action("ValidationRuleListPartial", "Rules")',
+                container: '#RulesListContainer',
+                loadingContainer: '#loader',
+                state: {
+                    pageIndex: @(Model.Metadata?.CurrentPage ?? 1),
+                    pageSize: @(Model.Metadata?.PageSize ?? 10),
+                    search: '@Html.Raw(Model.Search ?? "")',
+                    sortColumn: '@Html.Raw(Model.SortColumn)',
+                    sortOrder: '@Html.Raw(Model.SortOrder ?? "")',
+                    viewMode: ''// Explicitly disable split view mapping
+                }
+            });
+
+            // 2. Add Rule Modal
+            $("#add_Rules_controls").click(function () {
+                $.ajax({
+                    type: "GET",
+                    url: '/Rules/Add_New',
+                    success: function (data) {
+                        $('#RulesFormModal .Rule-body').html(data);
+                        $('#RulesFormModalLabel').text('Add Rule');
+                        var modal = new bootstrap.Modal(document.getElementById('RulesFormModal'));
+                        modal.show();
+                    }
+                });
+            });
+
+            // 3. Edit Rule Modal
+            $(document).on('click', '.edit-Rules-btn', function () {
+                var id = String($(this).data('id')); // Handled explicitly as string
+                $.ajax({
+                    type: 'GET',
+                    url: '/Rules/GetRuleById',
+                    data: { id: id },
+                    success: function (data) {
+                        $('#RulesFormModal .Rule-body').html(data);
+                        $('#RulesFormModalLabel').text('Edit Rule');
+                        var modal = new bootstrap.Modal(document.getElementById('RulesFormModal'));
+                        modal.show();
+                    }
+                });
+            });
+
+            // 4. Delete Rule with SweetAlert
+            $(document).on('click', '.delete-Rules-btn', function () {
+                const id = String($(this).data('id'));
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#8592a3',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/Rules/Delete',
+                            data: { id: id },
+                            success: function (response) {
+                                if (response.success) {
+                                    Swal.fire('Deleted!', response.message, 'success')
+                                    .then(() => { GridManager.reload(); }); // Dynamically refresh Grid
+                                } else {
+                                    Swal.fire('Error!', response.message, 'error');
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Note: Manual Refresh logic completely removed. GridManager automatically maps the `.btn_refresh` click to GridManager.reload() internally.
+        });
+
+        // Global Import function
+        function uploadRules(input) {
+            if (input.files && input.files[0]) {
+                var formData = new FormData();
+                formData.append("importFile", input.files[0]);
+                $('#loader').show();
+                $.ajax({
+                    url: '/Rules/ImportRules',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        $('#loader').hide();
+                        if (response.success) {
+                            Swal.fire('Imported!', response.message, 'success')
+                            .then(() => GridManager.reload()); // Dynamically refresh Grid
+                        } else {
+                            Swal.fire('Error!', response.message, 'error');
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+}

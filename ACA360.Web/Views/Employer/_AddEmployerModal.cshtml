@@ -1,0 +1,206 @@
+﻿@model ACA360.Web.Models.AddEmployerViewModel
+
+<input type="hidden" id="EmployerIdhdn_main" value="@Model.Employer.Id" />
+
+<div>
+    @await Html.PartialAsync("_AddEmployerCommonFieldsPartial", Model)
+
+    <div class="accordion mt-3">
+        <div class="accordion-item">
+            <div class="accordion-header">
+                <h6>Additional Employer Information</h6>
+            </div>
+            <div class="accordion-body">
+               @*  <ul class="nav nav-pills mb-3" role="tablist" id="employerTabList">
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-erinfo-modal">ER Info</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-service-modal">Service Info</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-1094-modal">1094 Details</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-other-modal">Other Info</button>
+                    </li>
+                </ul> *@
+                <ul class="nav nav-pills mb-3" role="tablist" id="employerTabList">
+                    <li class="nav-item">
+                        <button class="nav-link active"
+                                id="erinfo-tab"
+                                data-bs-toggle="tab"
+                                data-bs-target="#tab-erinfo-modal"
+                                type="button"
+                                role="tab"
+                                aria-selected="true">
+                            ER Info
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link"
+                                id="service-tab"
+                                data-bs-toggle="tab"
+                                data-bs-target="#tab-service-modal"
+                                type="button"
+                                role="tab"
+                                aria-selected="false">
+                            Service Info
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link"
+                                id="1094-tab"
+                                data-bs-toggle="tab"
+                                data-bs-target="#tab-1094-modal"
+                                type="button"
+                                role="tab"
+                                aria-selected="false">
+                            1094 Details
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link"
+                                id="other-tab"
+                                data-bs-toggle="tab"
+                                data-bs-target="#tab-other-modal"
+                                type="button"
+                                role="tab"
+                                aria-selected="false">
+                            Other Info
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="tab-erinfo-modal">
+                        @await Html.PartialAsync("AddEmployerInfo_TrackerPartial", Model)
+                    </div>
+                    <div class="tab-pane fade" id="tab-service-modal">
+                        @await Html.PartialAsync("_AddEmployerServicePartial", Model.EmployerServiceInfo)
+                    </div>
+                    <div class="tab-pane fade" id="tab-1094-modal">
+                        @await Html.PartialAsync("_AddEmployer1094Partial", Model)
+                    </div>
+                    <div class="tab-pane fade" id="tab-other-modal">
+                        @await Html.PartialAsync("_AddOtherImportantInfoPartial", Model)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modals -->
+@await Html.PartialAsync("Components/Modals/_TrackerModalsPartial")
+
+
+<script>
+    $(document).ready(function() {
+
+        // ==============================================================
+        // A. BUTTON LOCKING LOGIC
+        // ==============================================================
+
+        function toggleDependentButtons(enable) {
+            // Ensure your buttons in the partials have class="dependent-save-btn"
+            var $btns = $('.dependent-save-btn');
+
+            if (enable) {
+                $btns.prop('disabled', false).removeClass('disabled');
+            } else {
+                $btns.prop('disabled', true).addClass('disabled');
+            }
+        }
+
+        // Check on Page Load
+        var initialEmpId = $('#EmployerIdhdn_main').val();
+
+        if (initialEmpId && initialEmpId !== "0" && initialEmpId !== "") {
+            toggleDependentButtons(true);
+        } else {
+            toggleDependentButtons(false);
+        }
+
+        // ==============================================================
+        // B. SAVE EMPLOYER (COMMON SECTION)
+        // ==============================================================
+          $('#btnSaveEmployer').on('click', function(e) {
+        e.preventDefault();
+        var token = $('input[name="__RequestVerificationToken"]').val();
+        if (!$('#employerName').val()) {
+            alert("Employer Name is required");
+            return;
+        }
+
+        var employerData = {
+            Employer: {
+                Name: $('#employerName').val(),
+                TaxId: $('#employerTaxId').val(),
+                Type: $('#employerType').val(),
+                FilingYear: $('#employerFilingYear').val(),
+                IsForeignAddress: $('#employerIsForeignAddress').val(),
+                Address1: $('#employerAddress1').val(),
+                Address2: $('#employerAddress2').val(),
+                City: $('#employerCity').val(),
+                StateId: $('#employerState').val(),
+                ZipCode: $('#employerZipCode').val(),
+                CountryId: $('#employerCountry').val(),
+                enableCallCenter: $('#employerEnableCallCenter').val(),
+                IsCorrected: $('#employerIsCorrected').val()
+            }
+        };
+
+        $.ajax({
+            type: "POST",
+            url: "/Employer/AddEmployerCommon",
+            headers: {
+             "RequestVerificationToken": token
+            },
+            data: employerData,
+            success: function(response) {
+                if (response.success) {
+                    alert("Employer saved successfully!");
+
+                    // FIX: Updated ID to match your HTML (#EmployerIdhdn_main)
+                    $('.EmployerIdhdn_main').val(response.employerId);
+
+                    // If you have other hidden fields in partials, update them too:
+                    // $('#EmployerIdhdn').val(response.employerId);
+                    $('.Employer_TrackerIdhdn').val(response.trackerEmployerId);
+
+                    // 2. ENABLE ALL SAVE BUTTONS
+                    toggleDependentButtons(true);
+
+                    // 3. Switch to ER Info tab
+                    var $erTabTrigger = $('button[data-bs-target="#tab-erinfo-modal"]');
+                    $erTabTrigger.tab('show');
+
+                    // 4. Focus logic
+                    $erTabTrigger.one('shown.bs.tab', function (e) {
+                        var $firmSelect = $('#Employer_FirmId');
+                        if ($firmSelect.length) {
+                            $firmSelect.removeAttr('disabled').focus();
+                        }
+                    });
+
+                } else {
+                    alert("Error: " + response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX Error:", status, error);
+                alert("An error occurred while trying to save the employer.");
+            }
+        });
+    });
+
+        window.switchToNextTab = function() {
+            var $activeTab = $('#employerTabList .nav-link.active');
+            var $nextTab = $activeTab.parent().next().find('.nav-link');
+            if ($nextTab.length > 0) {
+                $nextTab.tab('show');
+                document.getElementById('employerTabList').scrollIntoView({ behavior: 'smooth' });
+            }
+        };
+
+    });
+</script>

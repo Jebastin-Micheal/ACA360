@@ -1,0 +1,93 @@
+@using System.Security.Claims
+@using ACA360.Core.Constants
+@{
+    var profilePic = User.FindFirst("ProfilePicture")?.Value;
+
+    if (string.IsNullOrWhiteSpace(profilePic))
+    {
+        profilePic = Url.Content("~/assets/img/avatars/default.png");
+    }
+
+    var isImpersonating = User.HasClaim(c => c.Type == "OriginalUserId");
+}
+
+<li class="nav-item navbar-dropdown dropdown-user dropdown">
+    <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">
+        <div class="avatar @(isImpersonating ? "avatar-warning" : "avatar-online")">
+            <img id="top_profilepic_icon" src="@profilePic" class="rounded-circle @(isImpersonating ? "border border-warning border-2" : "")" alt="Profile Picture" />
+        </div>
+
+    </a>
+    
+    
+    <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+            <a class="dropdown-item" href="">
+                <div class="d-flex">
+                    <div class="flex-shrink-0 me-3">
+                        <div class="avatar @(isImpersonating ? "avatar-warning" : "avatar-online")">
+                            <img id="top_profilepic_drp_icon" src="@profilePic" class="rounded-circle @(isImpersonating ? "border border-warning border-2" : "")" />
+                        </div>
+                    </div>
+
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0">@((User?.FindFirst("Profile_Name")?.Value) ?? "Guest")</h6>
+                        <small class="text-body-secondary text-truncate d-block">
+                            @((User?.FindFirst(ClaimTypes.Role)?.Value) ?? "No Role")
+                        </small>
+                        @if (isImpersonating)
+                        {
+                            <span class="badge bg-warning text-dark p-1 mt-1" style="font-size: 0.65rem;">
+                                <i class="bx bxs-user-detail"></i> IMPERSONATING
+                            </span>
+                        }
+                    </div>
+
+                </div>
+            </a>
+        </li>
+        <li>
+            <div class="dropdown-divider my-1"></div>
+        </li>
+        @if (User.IsInRole(UserRoles.SuperAdmin) || User.IsInRole(UserRoles.Admin) || User.IsInRole(UserRoles.AccountManager))
+        {
+            <li>
+                <a class="dropdown-item" asp-controller="Account" asp-action="MyProfile">
+                    <i class="bx bx-user me-2"></i>
+                    <span class="align-middle">My Profile</span>
+                </a>
+            </li>
+        }
+        <li>
+            <a class="dropdown-item" asp-controller="Settings" asp-action="Index"> <i class="icon-base bx bx-cog icon-md me-3"></i><span>Settings</span> </a>
+        </li>
+        <li>
+            <div class="dropdown-divider my-1"></div>
+        </li>
+        <li>
+            <a class="dropdown-item" asp-controller="faq" asp-action="Index"> <i class="icon-base bx bx-help-circle icon-md me-3"></i><span>FAQ</span> </a>
+        </li>
+        @if (isImpersonating)
+        {
+            <li>
+                <div class="dropdown-divider my-1"></div>
+            </li>
+            <li>
+                <form asp-controller="Impersonation" asp-action="Stop" method="POST" id="stopImpersonationForm">
+                    @Html.AntiForgeryToken()
+                    <a class="dropdown-item text-danger fw-bold" href="javascript:void(0);" onclick="document.getElementById('stopImpersonationForm').submit();">
+                        <i class="bx bx-left-arrow-circle me-2"></i>
+                        <span class="align-middle">Back to Admin</span>
+                    </a>
+                </form>
+            </li>
+        }
+        <li>
+            <div class="dropdown-divider my-1"></div>
+        </li>
+
+        <li>
+            <a class="dropdown-item" href="@Url.Action("Logout", "Account")"> <i class="icon-base bx bx-power-off icon-md me-3"></i><span>Log Out</span> </a>
+        </li>
+    </ul>
+</li>

@@ -1,0 +1,216 @@
+﻿@model dynamic
+
+@{
+    // Prefix lets this same partial render TWICE on one page (e.g. Firm + Broker grids)
+    // without ID collisions. When NOT passed, prefix stays empty and IDs render exactly
+    // as before ("mainGridSearch", "clearSearchBtn") — so Role / SalesRep / Service /
+    // Process pages need ZERO changes.
+    string prefix = "";
+    string rawPrefix = "";
+    try { if (Model.Prefix != null) { rawPrefix = Model.Prefix; prefix = "_" + Model.Prefix; } } catch { }
+}
+
+<style>
+    /* 1. Main Wrapper - Standard Sneat Border */
+    .search-input-wrapper {
+        display: flex;
+        align-items: center;
+        border: 1px solid #d9dee3;
+        border-radius: 0.375rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        width: 320px;
+        overflow: hidden;
+    }
+
+        /* 2. Blue Highlight on Focus */
+        .search-input-wrapper:focus-within {
+            border-color: #696cff !important;
+            box-shadow: 0 0 0 0.25rem rgba(105, 108, 255, 0.1);
+        }
+
+        /* 3. Internal Element Reset - Remove internal borders but keep backgrounds */
+        .search-input-wrapper .form-control {
+            border: none !important;
+            box-shadow: none !important;
+            padding-left: 10px;
+        }
+
+        .search-input-wrapper .btn-search-dropdown {
+            border: none !important;
+            border-right: 1px solid #d9dee3 !important; /* The divider line */
+            border-radius: 0 !important;
+            padding: 0.4375rem 0.75rem;
+        }
+
+        .search-input-wrapper:focus-within .btn-search-dropdown {
+            border-right-color: #696cff !important; /* Line turns blue on focus */
+        }
+
+        /* 4. Fix for Missing Search Icon */
+        .search-input-wrapper .search-icon-static {
+            padding: 0.4375rem 0.75rem;
+            border-right: 1px solid #d9dee3;
+        }
+
+        .search-input-wrapper .dropdown-menu {
+            border: 1px solid #d9dee3 !important; /* Defined border */
+            /* Sneat Deep Shadow for floating elements */
+            box-shadow: 0 0.5rem 1.25rem 0 rgba(161, 172, 184, 0.4) !important;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+        }
+    /* Specifically highlight text and checkbox on hover for Sneat look */
+    .dropdown-item:hover .form-check-label {
+        color: #696cff !important;
+    }
+
+    .dropdown-item:hover .form-check-input {
+        border-color: #696cff;
+    }
+</style>
+
+<div class="row mb-2">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+
+                @* --- FIXED SEARCH BAR --- *@
+                <div class="search-input-wrapper">
+
+                    @if (Model.IsEmployerPage == true)
+                    {
+                        @* Search Icon with Dropdown *@
+                        <button class="btn btn-search-dropdown dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bx bx-search"></i>
+                            <span id="searchActiveDot@(prefix)" class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle d-none" style="margin-top: 8px; margin-left: -8px;"></span>
+                        </button>
+                        <ul class="dropdown-menu shadow border-0 py-2" style="min-width: 200px;">
+                            @* 1. Select All Option *@
+                            <li class="px-2">
+                                <div class="dropdown-item d-flex align-items-center rounded-3 py-2">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input emp-search-opt" type="checkbox" value="all" id="optAll@(prefix)" checked>
+                                        <label class="form-check-label fw-bold cursor-pointer" for="optAll@(prefix)">Select All</label>
+                                    </div>
+                                </div>
+                            </li>
+
+                            <li><hr class="dropdown-divider"></li>
+
+                            @* 2. Repeatable Search Options *@
+                            <li class="px-2">
+                                <div class="dropdown-item d-flex align-items-center rounded-2 py-1">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input emp-search-opt" type="checkbox" value="name" id="optName@(prefix)">
+                                        <label class="form-check-label cursor-pointer w-100" for="optName@(prefix)">Name</label>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="px-2">
+                                <div class="dropdown-item d-flex align-items-center rounded-2 py-1">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input emp-search-opt" type="checkbox" value="taxid" id="optTax@(prefix)">
+                                        <label class="form-check-label cursor-pointer w-100" for="optTax@(prefix)">Tax ID (EIN)</label>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="px-2">
+                                <div class="dropdown-item d-flex align-items-center rounded-2 py-1">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input emp-search-opt" type="checkbox" value="city" id="optCity@(prefix)">
+                                        <label class="form-check-label cursor-pointer w-100" for="optCity@(prefix)">City</label>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="px-2">
+                                <div class="dropdown-item d-flex align-items-center rounded-2 py-1">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input emp-search-opt" type="checkbox" value="state" id="optState@(prefix)">
+                                        <label class="form-check-label cursor-pointer w-100" for="optState@(prefix)">State</label>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="search-icon-static"><i class="bx bx-search"></i></div>
+                    }
+
+                    @* Input Field — id keeps original name + optional prefix suffix.
+                       When Prefix is not passed: id="mainGridSearch" exactly as before. *@
+                    <input type="text" class="form-control grid-search-input" id="mainGridSearch@(prefix)" data-prefix="@rawPrefix" placeholder="Search..." autocomplete="off" autofocus>
+
+                    @* Clear Button (X) *@
+                    <button class="btn btn-icon text-muted border-0 d-none" type="button" id="clearSearchBtn@(prefix)" data-prefix="@rawPrefix" title="Clear Search">
+                        <i class="bx bx-x fs-4"></i>
+                    </button>
+                </div>
+                @* --- END SEARCH BAR --- *@
+
+                @* CONDITIONAL FILTER BUTTON (Shows by default unless explicitly set to false) *@
+              
+                @if (ViewBag.ShowFilterButton != false)
+                {
+                    var filterToggle = ViewBag.FilterToggle as string ?? "collapse";
+                    var filterTarget = ViewBag.FilterTarget as string ?? "#filterCollapse";
+                    <button class="btn btn-icon btn-outline-secondary position-relative" type="button" data-bs-toggle="@filterToggle" data-bs-target="@($"{filterTarget}{prefix}")" title="Filters">
+                        <i class="bx bx-filter-alt"></i>
+                        <span id="filterBadge@(prefix)" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
+                    </button>
+                }
+                <button type="button" class="btn btn-icon btn-outline-secondary grid-refresh-btn" data-prefix="@rawPrefix" title="Refresh">
+                    <i class='bx bx-refresh'></i>
+                </button>
+
+                <select class="form-select grid-pagesize-select" data-prefix="@rawPrefix" style="width:auto;">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+
+            @* Center slot: pages can drop toolbar controls here between the page-size
+               selector and the right-hand view/action icons. Empty (zero-width) for
+               pages that don't use it, so existing layouts are unaffected. *@
+            <div id="gridToolbarCenterSlot" class="d-flex align-items-center gap-2 flex-wrap"></div>
+
+            <div class="d-flex align-items-center gap-2">
+
+                @* Compare-mode controls dock here (diff pill / show-only-differences /
+                   return), replacing the view toggle + action buttons while comparing. *@
+                <div id="gridToolbarCompareRight" class="d-flex align-items-center gap-2 d-none"></div>
+
+                <div id="gridToolbarDefaultRight" class="d-flex align-items-center gap-2">
+                    @* CONDITIONAL VIEW MODE TOGGLE (Shows by default unless explicitly set to false) *@
+                    @if (ViewBag.ShowViewModeToggle != false)
+                    {
+                        <div class="btn-group" role="group">
+                            @{
+                                // Fallback to "Table" if not specified
+                                var currentViewMode = ViewBag.ViewMode as string ?? "Table";
+                            }
+                            <button type="button"
+                                    class="btn grid-view-btn @(currentViewMode == "Table" ? "active btn-primary" : "btn-outline-primary")"
+                                    data-mode="Table" data-prefix="@ViewBag.ModuleKey">
+                                <i class='bx bx-table'></i>
+                            </button>
+
+                            <button type="button"
+                                    class="btn grid-view-btn @(currentViewMode == "Split" ? "active btn-primary" : "btn-outline-primary")"
+                                    data-mode="Split" data-prefix="@ViewBag.ModuleKey">
+                                <i class='bx bx-layout'></i>
+                            </button>
+                        </div>
+                    }
+
+                    @if (Model.CustomButtons != null)
+                    {
+                        @Html.Raw(Model.CustomButtons)
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

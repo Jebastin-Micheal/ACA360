@@ -1,0 +1,170 @@
+/* Employee self-service portal (no sidebar) — layered on the Sneat theme. */
+
+.portal-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #f5f5f9;
+}
+
+/* Sticky footer: body fills the viewport, content grows to push the footer down */
+.portal-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #f5f5f9;
+}
+
+    .portal-body > .footer {
+        margin-top: auto;
+    }
+
+.portal-navbar {
+    background-color: #fff;
+    border-bottom: 1px solid #e4e6e8;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    box-shadow: 0 1px 4px rgba(67, 89, 113, 0.08);
+}
+
+.portal-brand {
+    font-size: 1.35rem;
+    letter-spacing: 0.2px;
+}
+
+.portal-main {
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+    flex-grow: 1;
+}
+
+.portal-footer {
+    border-top: 1px solid #e4e6e8;
+    background-color: #fff;
+    margin-top: auto;
+}
+
+.portal-auth-inner {
+    max-width: 440px;
+    margin: 0 auto;
+}
+
+/* Wider, evenly-padded content — less side gap than container-xxl, more top breathing room */
+.portal-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+.portal-content {
+    padding-top: 1.75rem;
+    padding-bottom: 2.5rem;
+    flex: 1 0 auto;
+}
+
+@media (max-width: 768px) {
+    .portal-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+/* Delivery preference option cards */
+.delivery-option {
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.delivery-option.selected {
+    border-color: var(--bs-primary) !important;
+    box-shadow: 0 0 0 1px var(--bs-primary);
+}
+
+.step-number {
+    width: 28px;
+    height: 28px;
+    font-size: 0.85rem;
+}
+
+/* Soft tinted panel (consent box, status panel, info bar) */
+.portal-panel {
+    background-color: #f3f6ff;
+}
+
+/* Active electronic-delivery status card */
+.portal-panel-success {
+    background-color: #eafaf1;
+}
+
+/* Slim progress meter in the status bar */
+.portal-progress {
+    width: 140px;
+    height: 8px;
+}
+
+/* Year toggle styled as a sliding pill */
+.portal-year-toggle {
+    background-color: #eceef3;
+    border-radius: 0.6rem;
+    padding: 0.25rem;
+    gap: 0.15rem;
+}
+
+    .portal-year-toggle .nav-link {
+        border-radius: 0.45rem;
+        color: #6f6b7d;
+        font-weight: 500;
+        padding: 0.3rem 1.15rem;
+    }
+
+    .portal-year-toggle .nav-link.active {
+        background-color: #fff;
+        color: #696cff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+
+/* Floating "ACA Assistant" help launcher */
+.portal-assistant-launcher {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 1040;
+    border-radius: 2rem;
+    padding: 0.6rem 1.15rem;
+    box-shadow: 0 8px 22px rgba(67, 89, 113, 0.22);
+}
+
+/* Motion polish — only when the user hasn't asked for reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+    .portal-content {
+        animation: portalFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes portalFadeUp {
+        from { opacity: 0; transform: translateY(14px); }
+        to   { opacity: 1; transform: none; }
+    }
+
+    .portal-content .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .portal-content .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+        }
+
+    .portal-year-toggle .nav-link {
+        transition: color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .portal-assistant-launcher {
+        animation: portalBreathe 3s ease-in-out infinite;
+    }
+
+    @keyframes portalBreathe {
+        0%, 100% { transform: scale(1); }
+        50%      { transform: scale(1.04); }
+    }
+}

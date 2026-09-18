@@ -1,0 +1,373 @@
+﻿@using ACA360.Core.Extensions
+@using ACA360.Web.ViewComponents
+@model ACA360.Web.Models.PlanListViewModel
+
+@{
+    ViewData["Title"] = "Plan Settings";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // ✅ 1. CONFIG: Toolbar Buttons
+    var toolbarConfig = new
+    {
+        IsEmployerPage = false,
+        CustomButtons = User.HasPermission("Plan", "Add") ?
+            "<button class='btn btn-primary addPlanBtn' type='button'><i class='bx bx-plus me-1'></i> Add Plan</button>" : ""
+    };
+}
+
+<link href="~/css/loaderstyle.css" rel="stylesheet" />
+<link href="~/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" rel="stylesheet" />
+<link href="~/css/compare-core.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/plan-compare.css" rel="stylesheet" asp-append-version="true" />
+<style>
+    .view-transition {
+        transition: all 0.3s ease-in-out;
+    }
+    /* Ensure sorting arrows look clickable */
+    .grid-sort-header {
+        cursor: pointer;
+    }
+
+    .swal2-container {
+        z-index: 10000 !important;
+    }
+
+    /* If you are using older SweetAlert */
+    .sweet-alert {
+        z-index: 10000 !important;
+    }
+
+    /* If you are using Bootbox or standard Bootstrap modals as alerts */
+    .bootbox, .modal.show {
+        z-index: 10000 !important;
+    }
+
+    /* Ensure the backdrop for the second modal also sits on top of the first modal */
+    .modal-backdrop.show:nth-of-type(2) {
+        z-index: 9999 !important;
+    }
+</style>
+
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Plan List",
+    items = new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Title = "Employer", Url = Url.Action("Index", "Employer"), IsActive = false },
+    new BreadcrumbItem { Title = "List of Plans", Url = "", IsActive = true }
+    }
+})
+
+<div id="planListContainerWrapper" style="position:relative;">
+
+    <div id="loader" class="loader" style="display:none;">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="card mb-6">
+        <div class="card-body">
+
+            @await Html.PartialAsync("_GridToolbarCommon", toolbarConfig)
+            @await Html.PartialAsync("_CompareToolbar")
+            <div class="collapse mb-4" id="filterCollapse">
+                <div class="card card-action border shadow-none bg-lighter">
+                    <div class="card-body py-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0 text-primary"><i class='bx bx-filter-alt me-2'></i>Filters</h5>
+                            <button type="button" class="btn-close" data-bs-toggle="collapse" data-bs-target="#filterCollapse"></button>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-4 col-md-6 mb-3">
+                                <label class="form-label fw-bold">Plan Type</label>
+                                <select class="form-select filter-input text-uppercase" id="flt_planType">
+                                    <option value="" selected>All</option>
+                                    <option value="0">COBRA</option>
+                                    <option value="1">Medical</option>
+                                </select>
+                            </div>
+
+                            <div class="col-lg-4 col-md-6 mb-3">
+                                <label class="form-label fw-bold">Funding Type</label>
+                                <select class="form-select filter-input text-uppercase" id="flt_funding">
+                                    <option value="" selected>All</option>
+                                    <option value="1">Fully-Insured</option>
+                                    <option value="2">Self-Funded</option>
+                                </select>
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row view-transition">
+
+                @* 🔹 Apply dynamic classes based on ViewMode *@
+                <div id="mainListColumn" class="view-transition @(Model.ViewMode == "Split" ? "col-lg-4 col-md-5" : "col-12")">
+                    <div class="emp-list-rail bg-primary" title="Show the plan list">
+                        <div class="vs-tab">
+                            <i class="bx bx-list-ul text-white"></i>
+                            <span class="vs-tab-label">P<br>l<br>a<br>n<br>&nbsp;<br>L<br>i<br>s<br>t</span>
+                        </div>
+                    </div>
+                    <div id="planListContainer">
+                        @* Note: Changed ID to planListContainer *@
+                        @* 🔹 Choose initial partial based on saved ViewMode *@
+                        @if (Model.ViewMode == "Split")
+                        {
+                            @await Html.PartialAsync("_PlanListPartial_am", Model)
+                        }
+                        else
+                        {
+                            @await Html.PartialAsync("_PlanListPartial", Model)
+                        }
+                    </div>
+                </div>
+
+                @* 🔹 Toggle d-none based on ViewMode *@
+                <div id="mainDetailColumn" class="view-transition @(Model.ViewMode == "Split" ? "col-lg-8 col-md-7" : "d-none")">
+                    <div class="card h-100 border bg-lighter">
+                        <div class="card-body" id="commonDetailContainer">
+                            @await Html.PartialAsync("_DefaultPlandetails")
+                        </div>
+                    </div>
+                </div>
+            </div>            
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <button type="button" class="btn btn-primary d-none" id="launch_plan_modal" data-bs-toggle="modal" data-bs-target="#planModal">Launch</button>
+
+    <div class="modal fade" id="planModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Plan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                </div>
+               
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts { 
+
+    <script src="~/js/common-grid.js"></script>
+    <script>window.__cmpPlanYear = '@ViewBag.FilingYear';</script>
+    <script src="~/js/compare/compare-core.js" asp-append-version="true"></script>
+    <script src="~/js/compare/plan-compare.js" asp-append-version="true"></script>
+    <script>
+        $(document).ready(function () {
+            var PlanViewMode = '@Model.ViewMode';
+            // Now this will work because selectFirstPlan is already defined
+            if (String(PlanViewMode).toLowerCase() === 'split') {
+               window.selectFirstPlan();
+            }
+            // 1. Initialize Grid Manager
+            GridManager.init({
+                url: '@Url.Action("PlanListPartial", "Plan")',
+                container: '#planListContainer',
+                loadingContainer: '#loader',
+                cookieName: 'view_mode_plan',
+                layout: {
+                    listColumn: '#mainListColumn',
+                    detailColumn: '#mainDetailColumn',
+                    detailContainer: '#commonDetailContainer'
+                },
+                state: {
+                    pageIndex: @Model.Metadata.PageNumber,
+                    pageSize: 10,
+                    search: '@Model.Search',
+                    sortColumn: '@Model.SortColumn',
+                    sortOrder: '@Model.SortOrder',
+                    viewMode: '@Model.ViewMode' // 🔹 Sync from server model
+                },
+                //  The Filters (Maps inputs to Controller Params)
+                additionalParams: function() {
+                    return {
+
+                        filterPlanType: $('#flt_planType').val(),
+                        filterFundingType: $('#flt_funding').val(),
+                        viewMode: GridManager.getState().viewMode
+
+                    };
+                },
+                // Switching to Split should open the first record, not sit on the // default placeholder. The list reloads async, so wait for its rows.
+                 onViewChange: function (mode) {
+                    if (String(mode).toLowerCase() === 'split') {
+                                window.selectFirstPlan();
+                    }
+                    if (window.PlanCompare) window.PlanCompare.onViewChange(mode);
+                 }
+            });
+            // Automatically trigger a grid reload whenever any filter changes
+            $(document).on('change', '.filter-input', function () {         
+            // This prevents being stuck on page 10 when the filtered results only have 1 page
+            GridManager.init({ state: { pageIndex: 1 } });
+            // 2. Call the reload function
+            GridManager.reload();            });
+
+           // 2. Add Plan Modal
+            $(document).on("click", ".addPlanBtn", function () {
+             var token = $('input[name="__RequestVerificationToken"]').val();
+             var title = "Add Plan";
+             var $modalBody = $("#planModal .modal-body");
+             $("#planModal .modal-title").text(title);
+              $.ajax({
+                 type: "POST",
+                 url: '/Plan/Add_New',
+                 data: {             // 2. Include the token in the data payload
+                     __RequestVerificationToken: token         },
+                 success: function (data) {
+                     $modalBody.empty().html(data);
+                     $modalBody.html(data);
+                     $modalBody.find("#btn_plan_cancel").addClass('d-none');
+                     $("#planModal").modal('show');
+                 }
+              });
+            });
+
+           // 2. EDIT CLICK
+           $(document).on('click', '.edit-plan-btn', function () {
+            var planId = $(this).data('id');
+            var $modalBody = $("#planModal .modal-body");
+             // 1. Basic Setup
+            $modalBody.html('<div class="text-center p-4"><div class="spinner-border" role="status"></div></div>');
+            $("#launch_plan_modal").click();
+            var title = "Edit Plan Details";
+            $("#planModal .modal-title").text(title);
+
+            // 2. Fetch Data
+            $.ajax({
+                url: '/Plan/PlanFetch',
+                type: 'GET',
+                data: { planId: planId },
+                success: function (data) {
+                     $modalBody.empty().html(data);
+                     // Save & Cancel buttons
+                     $("#add_band, .btn-delete-row, .td_delete_row, #btn_plan_save").removeClass('d-none');
+                     $modalBody.find("#plan_banding_details input").removeClass("d-none");
+                     $modalBody.find("#plan_banding_details span ,#btn_plan_edit ,#btn_plan_cancel").addClass("d-none");
+                     // Fields ah Enable pannanum
+                     $modalBody.find('input, select, textarea, #plan_info select').prop('disabled', false);
+                },
+                error: function () {
+                    $modalBody.html('<div class="text-danger text-center">❌ Failed to load plan details.</div>');
+                }
+            });
+           });
+
+           $(document).on('click', '.plan-item', function () {
+            // Highlight Logic
+            $('.plan-active').removeClass('table-active');
+            $(this).closest('.plan-active').addClass('table-active');
+
+            var planId = $(this).data('id');
+            var isSplitMode = !$('#mainDetailColumn').hasClass('d-none');
+
+            if(isSplitMode) {
+                // Load into Side Panel
+                $.get('/Plan/PlanFetch', { planId: planId }, function(data) {
+                    $('#commonDetailContainer').html(data);
+                    if (window.PlanCompare) window.PlanCompare.onDetailLoaded(planId, window.__cmpPlanYear);
+                    $("#btn_plan_edit").removeClass('d-none');
+                    $(".plan-cancel").addClass('d-none');
+                });
+            }
+           });
+
+           // 3. Delete Logic
+           $(document).on('click', '.delete-plan-btn', function (e) {
+                e.stopPropagation();
+                var planId = $(this).data('id');
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Call Delete Action
+                        // On Success: GridManager.reload();
+                    }
+                });
+            });
+        });
+                // 1. Define the functions FIRST
+        window.highlightPlanListRow = function (recordId) {
+            var $planItem = $('.plan-item[data-id="' + String(recordId) + '"]').first();
+            if (!$planItem.length) return false;
+
+            $('.plan-active, tr.plan-item').removeClass('table-active active-row');
+            var $row = $planItem.closest('.plan-active, tr');
+            if (!$row.length) {
+                $row = $planItem;
+            }
+
+            $row.addClass('table-active active-row');
+            if ($row[0]) {
+                $row[0].scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest'
+                });
+            }
+            return true;
+        };
+
+        window.selectFirstPlan = function () {
+            var attempts = 0;
+            var maximumAttempts = 30;
+
+            var timer = setInterval(function () {
+                attempts++;
+                // Stop if the user switched back to table view
+                var currentMode = String(GridManager.getState().viewMode).toLowerCase();
+                if (currentMode !== 'split') {
+                    clearInterval(timer);
+                    return;
+                }
+
+                var $firstPlan = $('#planListContainer .plan-item').first();
+                if ($firstPlan.length) {
+                    clearInterval(timer);
+                    var firstId = $firstPlan.data('id');
+                    highlightPlanListRow(firstId);
+                    $firstPlan.trigger('click');
+                }
+
+                if (attempts >= maximumAttempts) {
+                    clearInterval(timer);
+                }
+            }, 100);
+        };
+    </script>
+    <script>
+        function loadPlanAuditData(recordId) {
+            var containerId = '#auditLogContainer_Plan';
+
+            // Prevent reloading if the data has already been fetched
+            if ($(containerId).find('.audit-log-container').length > 0) return;
+
+            $.ajax({
+                url: '@Url.Action("LoadAuditLogPartial", "DataAuditlog")',
+                type: 'GET',
+                data: {
+                    category: 'Plan',
+                    recordId: recordId
+                },
+                success: function (result) {
+                    $(containerId).html(result);
+                },
+                error: function () {
+                    $(containerId).html('<div class="alert alert-danger m-3">Error loading audit logs. Please try again.</div>');
+                }
+            });
+        }
+    </script>
+}

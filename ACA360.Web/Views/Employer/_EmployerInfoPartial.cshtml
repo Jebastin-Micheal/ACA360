@@ -1,0 +1,561 @@
+﻿@model ACA360.Web.Models.EmployerDetailsViewModel
+@{
+    // Check if the page we are on is a Primary/Main employer
+    bool isMainPage = Model.DropdownData.RawAffiliateData
+               .Any(x => x.AffiliateId.ToString() == Model.ACA_EmployerId.ToString() && x.IsMain);
+
+    var selectedContact = Model.RawContacts?.FirstOrDefault(x => x.Key == Model.Employer.ContactId?.ToString());
+    var selectedBilling = Model.RawBillingContacts?.FirstOrDefault(x => x.Key == Model.Employer.BillingContactId?.ToString());
+
+    // Affiliates inherit their tracker info from the parent company (the read resolves
+    // it via companyId), so this tab is read-only for them — editing here wouldn't stick.
+    bool isAffiliate = ViewBag.IsAffiliate == true;
+}
+<form id="formUpdateTracker" class="p-1" autocomplete="off">
+    <input type="hidden" id="hdnUpdateTrackerId" name="employer_trackerinfo.EmployerId" value="@Model.EmployerId" />
+
+    @if (isAffiliate)
+    {
+        <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+            <i class="bx bx-info-circle fs-5 me-2"></i>
+            <div>
+                <strong>Managed at the parent company.</strong>
+                This is an affiliate — its Corporate &amp; Channel details are shared from the parent
+                employer and are read-only here. To change them, edit the parent employer.
+            </div>
+        </div>
+    }
+
+    <div class="card mb-6 border-0 shadow-sm overflow-hidden">
+        <div class="card-header bg-label-primary d-flex align-items-center py-3">
+            <i class="bx bx-buildings me-2 fs-4"></i>
+            <h6 class="m-0 fw-bold text-uppercase">Corporate & Channel Management</h6>
+        </div>
+        <div class="card-body pt-4">
+            <div class="row g-4">
+
+                <div class="col-md-6 mt-7">
+
+
+
+                    <div class="row g-2">
+
+                        <div class="col-12 mt-5">
+                            <label class="form-label fw-bold small text-uppercase text-muted mb-2">Firm</label>
+                            <div class="input-group input-group-merge border rounded-3">
+                                <span class="input-group-text border-0 bg-transparent"><i class="bx bx-building text-primary"></i></span>
+                                <select asp-for="Employer.FirmId" name="employer_trackerinfo.FirmId" id="ddlFirm" disabled asp-items="Model.FirmList" class="form-select border-0 fw-bold">
+                                    <option value="">-- Select Firm --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-12 mt-4">
+                            <label class="form-label fw-bold small text-uppercase text-muted">Affiliates / Entities</label>
+                            <div class="input-group">
+                                <span class="input-group-text border-primary"><i class="bx bx-network-chart"></i></span>
+
+                                <select asp-for="Employer.AffiliateId" name="employer_trackerinfo.AffiliateId" id="affiliateSelect" class="form-select fw-bold border-primary">
+
+                                    @if (Model.DropdownData?.RawAffiliateData != null)
+                                    {
+                                        foreach (var aff in Model.DropdownData.RawAffiliateData)
+                                        {
+                                            // Logic: Label as [Primary] or [Affiliate]
+                                            string label = aff.IsMain ? "[PRIMARY] " : "[AFFILIATE] ";
+
+                                            <option value="@aff.AffiliateId"
+                                                    data-ein="@aff.EIN"
+                                                    data-is-main="@aff.IsMain.ToString().ToLower()"
+                                                    data-address="@aff.Address"
+                                                    data-city="@aff.City"
+                                                    data-state="@aff.State"
+                                                    data-zip="@aff.Zip"
+                                                    data-number-of-employees="@aff.NumberOfEmployees"
+                                                    selected="@(Model.Employer.AffiliateId == aff.AffiliateId ? "selected" : null)">
+                                                @label @aff.AffiliateName
+                                            </option>
+                                        }
+                                    }
+                                </select>
+
+                                @* ADD — only enabled if current page is the primary employer *@
+                                <button type="button"
+                                        id="btnAddAffiliate"
+                                        class="btn btn-outline-primary px-2"
+                                        onclick="openAffiliateModal()"
+                                        title="Add Affiliate"
+                                        @(isMainPage ? "" : "disabled")>
+                                    <i class="bx bx-plus"></i>
+                                </button>
+
+                                @* EDIT — disabled until a non-primary option is selected *@
+                                <button type="button"
+                                        id="btnEditAffiliate"
+                                        class="btn btn-outline-warning px-2"
+                                        onclick="openEditAffiliateModal()"
+                                        title="Edit Affiliate"
+                                        disabled>
+                                    <i class="bx bx-edit"></i>
+                                </button>
+
+                                @* DELETE — disabled until a non-primary option is selected *@
+                                <button type="button"
+                                        id="btnDeleteAffiliate"
+                                        class="btn btn-outline-danger px-2"
+                                        onclick="deleteAffiliate()"
+                                        title="Delete Affiliate"
+                                        disabled>
+                                    <i class="bx bx-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+
+                <div class="col-md-6">
+                    <div class="card h-100 shadow-none border">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3"> Broker</h6>
+                            <div class="input-group input-group-merge border rounded-3">
+                                <select asp-for="Employer.BrokerId" name="employer_trackerinfo.BrokerId" id="ddlBroker" disabled asp-items="Model.BrokerList" class="form-select border-0">
+                                    <option value="">-- Select Broker --</option>
+                                </select>
+
+                            </div>
+                            <div class="row g-2 mt-2">
+                                @* Pass the value directly here *@
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-uppercase text-muted">Broker Phone</label>
+                                    <input asp-for="Employer.BrokerPhone" id="txtBrokerPhone" class="form-control border-0 bg-secondary-subtle rounded-3 px-3" placeholder="(XXX) XXX-XXXX" readonly value="@(string.IsNullOrEmpty(Model.Employer.BrokerPhone) ? "-------" : Model.Employer.BrokerPhone)" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-uppercase text-muted">Broker Email Address</label>
+                                    <input asp-for="Employer.BrokerEmail" id="txtBrokerEmail" class="form-control border-0 bg-secondary-subtle rounded-3 px-3" readonly value="@(string.IsNullOrEmpty(Model.Employer.BrokerEmail) ? "-------" : Model.Employer.BrokerEmail)" />
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row g-4 mb-6">
+        @* --- Contact Section --- *@
+        <div class="col-md-6">
+            <div class="card h-100 shadow-none border">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bx bx-group me-1 text-info"></i> Contact</h6>
+                    <div class="input-group mb-3">
+                        <select asp-for="Employer.ContactId" name="employer_trackerinfo.ContactId" id="ddlContact" class="form-select border-info">
+                            <option value="">-- Select Contact --</option>
+                            @if (Model.RawContacts != null)
+                            {
+                                foreach (var item in Model.RawContacts)
+                                {
+                                    <option value="@item.Key" data-phone="@item.Phone" data-email="@item.Email" selected="@(Model.Employer.ContactId?.ToString() == item.Key ? "selected" : null)">@item.Value</option>
+                                }
+                            }
+                        </select>
+                        <button type="button" class="btn btn-label-info" onclick="openContactModal()"><i class="bx bx-plus"></i></button>
+                    </div>
+                    <div class="row g-2">
+                        @* Pass the value directly here *@
+                        <div class="col-6"><input asp-for="Employer.ContactPhone" name="employer_trackerinfo.ContactPhone" id="txtContactPhone" class="form-control form-control-sm border-0 bg-secondary-subtle" readonly value="@(selectedContact?.Phone ?? "-------")" /></div>
+                        <div class="col-6"><input asp-for="Employer.ContactEmail" name="employer_trackerinfo.ContactEmail" id="txtContactEmail" class="form-control form-control-sm border-0 bg-secondary-subtle" readonly value="@(selectedContact?.Email ?? "-------")" /></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* --- Billing Contact Section --- *@
+        <div class="col-md-6">
+            <div class="card h-100 shadow-none border">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bx bx-dollar me-1 text-success"></i> Billing Contact</h6>
+                    <div class="input-group mb-3">
+                        <select asp-for="Employer.BillingContactId" name="employer_trackerinfo.BillingContactId" id="ddlBillingContact" class="form-select border-success">
+                            <option value="">-- Select Billing --</option>
+                            @if (Model.RawBillingContacts != null)
+                            {
+                                foreach (var item in Model.RawBillingContacts)
+                                {
+                                    <option value="@item.Key" data-phone="@item.Phone" data-email="@item.Email" selected="@(Model.Employer.BillingContactId?.ToString() == item.Key ? "selected" : null)">@item.Value</option>
+                                }
+                            }
+                        </select>
+                        <button type="button" class="btn btn-label-success" onclick="openBillingModal()"><i class="bx bx-plus"></i></button>
+                    </div>
+                    <div class="row g-2">
+                        @* Pass the value directly here *@
+                        <div class="col-6"><input asp-for="Employer.BillingPhone" name="employer_trackerinfo.BillingPhone" id="txtBillingPhone" class="form-control form-control-sm border-0 bg-secondary-subtle" readonly value="@(selectedBilling?.Phone ?? "-------")" /></div>
+                        <div class="col-6"><input asp-for="Employer.BillingEmail" name="employer_trackerinfo.BillingEmail" id="txtBillingEmail" class="form-control form-control-sm border-0 bg-secondary-subtle" readonly value="@(selectedBilling?.Email ?? "-------")" /></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-6 border shadow-sm">
+        <div class="card-body p-4">
+            <div class="row g-4 mb-4">
+                @* --- Account Manager Dropdown --- *@
+                <div class="col-md-3">
+                    <label class="form-label text-uppercase fw-bold text-muted">
+                        Account Manager
+                        <a href="javascript:void(0)" class="ms-1" title="View Account Manager history" onclick="openEmpInfoAssignmentHistory('AM')"><i class="bx bx-time-five"></i></a>
+                    </label>
+                    <select asp-for="Employer.AccountManagerId" name="employer_trackerinfo.AccountManagerId" disabled class="form-select fw-medium">
+                        <option value="">-- Select Account Manager --</option>
+                        @if (Model.AccountManagerList != null)
+                        {
+                            foreach (var item in Model.AccountManagerList)
+                            {
+                                <option value="@item.Value" selected="@(Model.Employer.AccountManagerId?.ToString() == item.Value ? "selected" : null)">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                @* --- Sales Rep Dropdown --- *@
+                <div class="col-md-3">
+                    <label class="form-label text-uppercase fw-bold text-muted">Sales Representative</label>
+                    <select asp-for="Employer.SalesRepId" name="employer_trackerinfo.SalesRepId" disabled class="form-select fw-medium">
+                        <option value="">-- Select Sales Representative --</option>
+
+                        @if (Model.SalesRepList != null)
+                        {
+                            foreach (var item in Model.SalesRepList)
+                            {
+                                <option value="@item.Value" selected="@(Model.Employer.SalesRepId?.ToString() == item.Value ? "selected" : null)">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                @* --- Data Analyst Dropdown --- *@
+                <div class="col-md-3">
+                    <label class="form-label text-uppercase fw-bold text-muted">
+                        Data Analyst
+                        <a href="javascript:void(0)" class="ms-1" title="View Data Analyst history" onclick="openEmpInfoAssignmentHistory('DA')"><i class="bx bx-time-five"></i></a>
+                    </label>
+                    <select asp-for="Employer.DataAnalyst" name="employer_trackerinfo.DataAnalyst" disabled class="form-select fw-medium">
+                        <option value="">-- Select Data Analyst --</option>
+                        @if (Model.DataAnalystList != null)
+                        {
+                            foreach (var item in Model.DataAnalystList)
+                            {
+                                <option value="@item.Value" selected="@(Model.Employer.DataAnalyst?.ToString() == item.Value ? "selected" : null)">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-uppercase fw-bold text-muted">Vendor</label>
+                    <div class="input-group">
+                       
+                        <input asp-for="Employer.Vendor" name="employer_trackerinfo.Vendor" class="form-control fw-bold" placeholder="Enter vendor name" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                @* --- Waiting Period --- *@
+                <div class="col-md-3">
+                    <div class="border p-4 rounded text-center h-100">
+                        <label class="d-block text-uppercase fw-bold text-muted mb-2" for="WaitingPeriod">Waiting Period</label>
+                        <input type="text"
+                               id="WaitingPeriod"
+                               name="employer_trackerinfo.WaitingPeriod"
+                               class="form-control form-control-lg text-center fw-bold shadow-sm"
+                               value="@Model.Employer.WaitingPeriod"
+                               placeholder="-------">
+                    </div>
+                </div>
+
+                @* --- Banding Type --- *@
+                <div class="col-md-3">
+                    <div class="border p-4 rounded text-center h-100">
+                        <label class="d-block text-uppercase fw-bold text-muted mb-2" for="BandingType">Banding Type</label>
+                        <input type="text"
+                               id="BandingType"
+                               name="employer_trackerinfo.BandingType"
+                               class="form-control form-control-lg text-center fw-bold shadow-sm"
+                               value="@Model.Employer.BandingType"
+                               placeholder="-------">
+                    </div>
+                </div>
+
+                @* --- Over Proposed Section --- *@
+                <div class="col-md-6">
+                    <div class="border border-dashed rounded p-4 h-100 shadow-sm">
+                        <div class="row align-items-center">
+                            @* --- Count --- *@
+                            <div class="col-6 border-end text-center">
+                                <label class="d-block text-uppercase fw-bold text-muted mb-2" for="OverProposedFormCount">Over Proposed Count</label>
+                                <input type="number"
+                                       id="OverProposedFormCount"
+                                       name="employer_trackerinfo.OverProposedFormCount"
+                                       class="form-control form-control-lg text-center fw-bold text-info" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';"
+                                       value="@(Model.Employer.OverProposedFormCount > 0 ? Model.Employer.OverProposedFormCount.ToString() : "0")">
+                            </div>
+                            @* --- Price --- *@
+                            <div class="col-6 text-center">
+                                <label class="d-block text-uppercase fw-bold text-muted mb-2" for="OverProposedFormCountPrice">Over Proposed Price ($)</label>
+                                <div class="input-group input-group-merge">
+                                    <span class="input-group-text bg-transparent text-success fw-bold">$</span>
+                                    <input type="number"
+                                           step="0.01"
+                                           id="OverProposedFormCountPrice"
+                                           name="employer_trackerinfo.OverProposedFormCountPrice"
+                                           class="form-control form-control-lg text-center fw-bold text-success" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';"
+                                           value="@(Model.Employer.OverProposedFormCountPrice > 0 ? Model.Employer.OverProposedFormCountPrice.ToString() : "0.00")">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+       
+    </div>
+
+    <div class="row mt-4 pt-3 border-top">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <button type="button" class="btn btn-outline-secondary rounded-pill btn-tab-back px-4">
+                <i class='bx bx-arrow-back me-1'></i> Back
+            </button>
+
+            @if (!isAffiliate)
+            {
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary rounded-pill px-4" onclick="updateTracker(false)">
+                        <i class='bx bx-save me-1'></i> Save
+                    </button>
+                    <button type="button" class="btn btn-dark rounded-pill px-4" onclick="updateTracker(true)">
+                        <i class='bx bx-skip-next-circle me-1'></i> Save & Continue
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+
+</form>
+
+<script>
+    var canViewFullEIN = @(CanViewSSNorEIN ? "true" : "false");
+    $(document).ready(function () {
+          function syncAffiliateButtons() {
+        var selected = $('#affiliateSelect').find(':selected');
+        var isMain = selected.data('is-main') === true
+                  || selected.data('is-main') === 'true';
+        $('#btnEditAffiliate').prop('disabled', isMain);
+        $('#btnDeleteAffiliate').prop('disabled', isMain);
+    }   
+        // Use $(document).on because the affiliateSelect is likely inside a
+        // partial view loaded via AJAX (Tab content)
+        $(document).on('change', '#affiliateSelect', function () {
+        const selected = $(this).find(':selected');
+
+        // -- Profile fields update --
+        const rawEin = selected.data('ein');
+        $('#hdnEIN').val(rawEin);
+        $('input[placeholder="EIN"]').val(canViewFullEIN ? rawEin : maskTheEIN(rawEin));
+        $('#Address1').val(selected.data('address') || '');
+        $('#Address2').val('');
+        $('#City').val(selected.data('city') || '');
+        $('#ZipCode').val(selected.data('zip') || '');
+        $('#State').val(selected.data('state') || '').trigger('change');
+        $('#hdnACAEmployerId').val($(this).val());
+
+        // -- Enable/disable Edit & Delete --
+        syncAffiliateButtons();
+    });
+
+    // ── Runs ONCE on load, before any change overwrites #hdnACAEmployerId ──
+    (function () {
+        var pageId = $('#hdnACAEmployerId').val();
+        var $own = $('#affiliateSelect option').filter(function () {
+            return $(this).val() === pageId;
+        });
+        var isMain = $own.data('is-main') === true || $own.data('is-main') === 'true';
+        $('#btnAddAffiliate')
+            .attr('data-is-main-page', isMain ? 'true' : 'false')
+            .data('is-main-page', isMain);   // keep jQuery's .data() cache in sync
+    })();
+
+    syncAffiliateButtons();
+
+        // Simple Helper to mask EIN on the fly
+        function maskTheEIN(ein) {
+            if (!ein || ein.length < 2) return ein;
+            const clean = ein.replace(/\D/g, '');
+            return clean.substring(0, 2) + "-XXXXXXX";
+        }
+
+        // Firm Change: Clears everything below it
+        $(document).on('change', '#ddlFirm', function () {
+            var firmId = $(this).val();
+            $('#ddlBroker').empty().append('<option value="">-- Select Broker --</option>');
+            $('#txtBrokerPhone, #txtBrokerEmail').val('-------');
+
+            if (firmId) {
+                $.ajax({
+                    url: '/Employer/GetBrokersByFirm',
+                    type: 'GET',
+                    data: { firmId: firmId },
+                    success: function (data) {
+                        $.each(data, function (i, item) {
+                            $('#ddlBroker').append($('<option>', { value: item.value, text: item.text }));
+                        });
+                    }
+                });
+            }
+        });
+
+        // Broker Change: Clears phone/email then fetches
+        $(document).on('change', '#ddlBroker', function () {
+            var brokerId = $(this).val();
+            $('#txtBrokerPhone, #txtBrokerEmail').val('-------');
+
+            if (brokerId) {
+                $.ajax({
+                    url: '/Employer/GetBrokerContactDetails',
+                    type: 'GET',
+                    data: { brokerId: brokerId },
+                    success: function (data) {
+                        $('#txtBrokerPhone').val(data.found && data.phone ? data.phone : 'N/A');
+                        $('#txtBrokerEmail').val(data.found && data.email ? data.email : 'N/A');
+                    }
+                });
+            }
+        });
+
+        // Contact Attribute Mapping
+        $(document).on('change', '#ddlContact, #ddlBillingContact', function () {
+            var id = $(this).attr('id');
+            var opt = $(this).find(':selected');
+            var targetPrefix = (id === 'ddlContact') ? '#txtContact' : '#txtBilling';
+            $(targetPrefix + 'Phone').val(opt.data('phone') || '-------');
+            $(targetPrefix + 'Email').val(opt.data('email') || '-------');
+        });
+    });
+         /**
+     * Automates the transition from ER Info to Service Info using Bootstrap's Tab API
+     */
+            function switchToNextTab() {
+        // 1. Identify the currently active tab link
+        const $activeTabLink = $('.nav-pills .nav-link.active');
+
+        // 2. Find the next sequential tab link
+        const $nextTabLink = $activeTabLink.closest('.nav-item').next().find('.nav-link');
+
+        if ($nextTabLink.length > 0) {
+            // 3. Use Bootstrap API to switch panes visually
+            var tabTrigger = new bootstrap.Tab($nextTabLink[0]);
+            tabTrigger.show();
+
+            // 4. IMPORTANT: Manually trigger the click to fire your 'Universal Tab Click Handler'
+            // This ensures loadTabContent() is called for the next tab.
+            $nextTabLink.trigger('click');
+
+                        // 5. Smooth scroll to the top of the detail area
+            $('html, body').animate({
+                scrollTop: $("#headingOtherDetails").offset().top - 80
+            }, 400);
+        } else {
+            Swal.fire({
+        icon: 'info',
+        title: 'All Done',
+        text: 'You have reached the final step.',
+        confirmButtonColor: '#696cff'
+    });
+        }
+    }
+
+            function updateTracker(isNext) {
+        var formData = $("#formUpdateTracker").serialize();
+
+        // UI Visual cue: Disable button during save
+        const $btn = event.target;
+        const originalContent = $($btn).html();
+        $($btn).prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin"></i> Saving...');
+        var token = $('input[name="__RequestVerificationToken"]').val();
+        $.ajax({
+            url: '/Employer/SaveEmployerTrackerTab',
+            type: 'POST',
+            headers: {
+            "RequestVerificationToken": token
+            },
+            data: formData,
+            success: function (res) {
+                if (res.success) {
+                    if (isNext) {
+                        switchToNextTab();
+                    } else {
+                       Swal.fire({
+                icon: 'success',
+                title: 'Saved!',
+                text: 'Updated successfully!',
+                confirmButtonColor: '#696cff'
+            });
+                    }
+                } else {
+                    Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: res.message,
+            confirmButtonColor: '#696cff'
+        });
+                }
+            },
+            error: function() {
+                Swal.fire({
+        icon: 'error',
+        title: 'Server Error',
+        text: 'A server error occurred while saving.',
+        confirmButtonColor: '#696cff'
+    });
+            },
+            complete: function() {
+                $($btn).prop('disabled', false).html(originalContent);
+            }
+        });
+    }
+
+      // ── AM / DA assignment history popup ─────────────────────────────
+    function openEmpInfoAssignmentHistory(section) {
+        var id = parseInt($('#hdnUpdateTrackerId').val() || '0', 10);
+        if (!(id > 0)) return;
+        $.get('/Assignment/AssignmentHistory', { employerId: id, section: section || '' }, function (html) {
+            $('#EmpInfoAssignmentHistoryModal').html(html);
+            new bootstrap.Modal(document.getElementById('EmpInfoAssignmentHistoryModal')).show();
+        }).fail(function () {
+            alert('Failed to load assignment history.');
+        });
+    }
+</script>
+
+<!-- AM / DA assignment history popup (content loaded on demand) -->
+<div class="modal fade" id="EmpInfoAssignmentHistoryModal" tabindex="-1" aria-hidden="true" style="z-index: 1090;"></div>
+
+@if (isAffiliate)
+{
+    <text>
+    <script>
+        // Affiliate: this tab is read-only (details are managed at the parent).
+        (function () {
+            var $f = $('#formUpdateTracker');
+            $f.find('input, select, textarea').prop('disabled', true);
+            $f.find('.btn').not('.btn-tab-back').addClass('disabled').prop('disabled', true);
+        })();
+    </script>
+    </text>
+}

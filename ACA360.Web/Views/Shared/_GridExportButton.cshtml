@@ -1,0 +1,46 @@
+﻿@model dynamic
+@{
+    string exportUrl = Model?.ExportUrl ?? "";
+    string buttonLabel = Model?.ButtonLabel ?? "Export";
+    string fileBaseName = Model?.FileBaseName ?? "Export";
+    string containerId = Model?.ContainerId ?? ("gridExport_" + Guid.NewGuid().ToString("N").Substring(0, 8));
+}
+
+<div class="dropdown grid-export-wrapper"
+     id="@containerId"
+     data-export-url="@exportUrl"
+     data-file-base-name="@fileBaseName">
+
+    <button class="btn btn-outline-secondary dropdown-toggle grid-export-toggle-btn"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">
+        <span class="d-flex align-items-center gap-2">
+            <i class="icon-base bx bx-upload icon-sm"></i>
+            <span>@buttonLabel</span>
+        </span>
+    </button>
+
+    <ul class="dropdown-menu grid-export-menu">
+        <li>
+            <a class="dropdown-item grid-export-action" href="#" data-format="print">
+                <i class="bx bx-printer me-2"></i> Print
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item grid-export-action" href="#" data-format="csv">
+                <i class="bx bx-file me-2"></i> CSV
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item grid-export-action" href="#" data-format="excel">
+                <i class="bx bxs-file-export me-2"></i> Excel
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item grid-export-action" href="#" data-format="pdf">
+                <i class="bx bxs-file-pdf me-2"></i> PDF
+            </a>
+        </li>
+    </ul>
+</div>

@@ -1,0 +1,359 @@
+﻿@{
+    ViewData["Title"] = "Mail Fulfillment Report";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css" />
+
+<style>
+    /* Sneat Card & Header Styles */
+    .card {
+        box-shadow: 0 0.25rem 1.125rem rgba(75, 70, 92, 0.1);
+        border: none;
+        border-radius: 0.5rem;
+    }
+
+    .aca-header-blue th {
+        background-color: #5F61E6 !important;
+        color: white !important;
+        font-size: 0.75rem;
+        text-align: center;
+        vertical-align: middle;
+        text-transform: uppercase;
+    }
+
+    /* Tabs (Pills) */
+    .nav-pills .nav-link.active {
+        background-color: #5F61E6;
+        color: white;
+        box-shadow: 0 2px 4px 0 rgba(105, 108, 255, 0.4);
+    }
+
+    .nav-pills .nav-link {
+        font-weight: 500;
+        border-radius: 0.375rem;
+        padding: 0.7rem 1.2rem;
+    }
+
+    /* Compact Table */
+    .table-compact td {
+        font-size: 0.85rem;
+        padding: 5px 8px;
+        white-space: nowrap;
+    }
+
+    .divider-text {
+        font-weight: 600;
+        color: #566a7f;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        margin: 20px 0 10px 0;
+        border-bottom: 1px solid #d9dee3;
+        padding-bottom: 5px;
+    }
+</style>
+
+<section>
+  <div class="row">
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bx bx-envelope me-2"></i>Mail Fulfillment Export</h5>
+        </div>
+        <div class="card-body mt-3">
+            <div class="row align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Filing Year</label>
+                    <select id="Filing_Year" class="form-select">
+                        @foreach (var year in ViewBag.FilingYear as List<ACA360.Core.Models.FilingYearModel> ?? new List<ACA360.Core.Models.FilingYearModel>())
+                        {
+                            <option value="@year.FilingYear">@year.FilingYear</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Employer Tax ID</label>
+                    <input type="text" id="Employer_TaxId" class="form-control" placeholder="XX-XXXXXXX" value="27-4415594">
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-primary w-100" id="btn_filter">
+                        <i class="bx bx-search me-1"></i> Load Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="report_container" style="display:none;">
+
+        <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="pills-employer-tab" data-bs-toggle="pill" data-bs-target="#pills-employer" type="button">
+                    <i class='bx bxs-business me-1'></i> Employer
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="pills-employee-tab" data-bs-toggle="pill" data-bs-target="#pills-employee" type="button">
+                    <i class='bx bxs-user-detail me-1'></i> Employees
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content p-0 bg-transparent shadow-none">
+
+            <div class="tab-pane fade show active" id="pills-employer">
+                <div class="card">
+                    <div class="card-body" id="employer_content">
+                        <div class="divider-text">Basic Information</div>
+                        <div class="table-responsive text-nowrap">
+                            <table class="table table-bordered table-sm" id="tbl_EmployerBasic">
+                                <thead class="aca-header-blue">
+                                    <tr>
+                                        <th>EIN</th>
+                                        <th>Business Name</th>
+                                        <th>Address</th>
+                                        <th>ALE Member</th>
+                                        <th>Contact</th>
+                                        <th>Phone</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
+                        <div class="divider-text mt-4">Monthly Breakdown</div>
+                        <div class="table-responsive text-nowrap">
+                            <table class="table table-bordered table-sm table-compact text-center w-100" id="tbl_EmployerMonthly">
+                                <thead class="aca-header-blue">
+                                    <tr>
+                                        <th>Month</th>
+                                        <th>Min Cov</th>
+                                        <th>FT Count</th>
+                                        <th>Total Count</th>
+                                        <th>Agg Group</th>
+                                        <th>Relief</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                     <div id="employer_no_data" class="card-body text-center p-5" style="display:none;">
+                        <i class='bx bx-data display-4 text-muted mb-3'></i>
+                        <h5 class="text-muted">No Employer Data Available</h5>
+                    </div>                   
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="pills-employee">
+                <div class="card">
+                    <div class="card-body">
+                        <table class="table table-bordered table-striped table-compact w-100" id="tbl_ExportReport">
+                            <thead class="aca-header-blue">
+                                <tr>
+                                    <th rowspan="2">SSN</th>
+                                    <th rowspan="2">First Name</th>
+                                    <th rowspan="2">Last Name</th>
+                                    <th rowspan="2">Mail Memo</th>
+                                    <th rowspan="2">Address</th>
+                                    <th rowspan="2">City</th>
+                                    <th rowspan="2">State</th>
+                                    <th rowspan="2">Zip</th>
+                                    <th rowspan="2">Plan Start</th>
+                                    <th rowspan="2">Corrected</th>
+                                    <th colspan="13">Line 14 - Offer</th>
+                                    <th colspan="13">Line 15 - Amount</th>
+                                    <th colspan="13">Line 16 - Safe Harbor</th>
+                                    <th colspan="13">Covered Individuals</th>
+                                </tr>
+                                <tr>
+                                    <th>All</th>
+                                    <th>Jan</th>
+                                    <th>Feb</th>
+                                    <th>Mar</th>
+                                    <th>Apr</th>
+                                    <th>May</th>
+                                    <th>Jun</th>
+                                    <th>Jul</th>
+                                    <th>Aug</th>
+                                    <th>Sep</th>
+                                    <th>Oct</th>
+                                    <th>Nov</th>
+                                    <th>Dec</th>
+                                    <th>All</th>
+                                    <th>Jan</th>
+                                    <th>Feb</th>
+                                    <th>Mar</th>
+                                    <th>Apr</th>
+                                    <th>May</th>
+                                    <th>Jun</th>
+                                    <th>Jul</th>
+                                    <th>Aug</th>
+                                    <th>Sep</th>
+                                    <th>Oct</th>
+                                    <th>Nov</th>
+                                    <th>Dec</th>
+                                    <th>All</th>
+                                    <th>Jan</th>
+                                    <th>Feb</th>
+                                    <th>Mar</th>
+                                    <th>Apr</th>
+                                    <th>May</th>
+                                    <th>Jun</th>
+                                    <th>Jul</th>
+                                    <th>Aug</th>
+                                    <th>Sep</th>
+                                    <th>Oct</th>
+                                    <th>Nov</th>
+                                    <th>Dec</th>
+                                    <th>All</th>
+                                    <th>Jan</th>
+                                    <th>Feb</th>
+                                    <th>Mar</th>
+                                    <th>Apr</th>
+                                    <th>May</th>
+                                    <th>Jun</th>
+                                    <th>Jul</th>
+                                    <th>Aug</th>
+                                    <th>Sep</th>
+                                    <th>Oct</th>
+                                    <th>Nov</th>
+                                    <th>Dec</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+ </section>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.colVis.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        var currentEmployerInfo = null;
+
+        var table = $('#tbl_ExportReport').DataTable({
+            serverSide: false, // Client-side for full export
+            processing: true,
+            scrollX: true,
+            deferLoading: 0,
+            pageLength: 25,
+            dom: '<"card-header d-flex border-bottom justify-content-between py-3"<"head-label"><"dt-action-buttons text-end"B>><"d-flex justify-content-between align-items-center mx-0 row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>t<"d-flex justify-content-between mx-0 row"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"p>>',
+            buttons: [
+                {
+                    extend: 'collection',
+                    className: 'btn btn-label-secondary dropdown-toggle me-2',
+                    text: '<i class="bx bx-export me-1"></i>Export',
+                    buttons: [
+                        { extend: 'excelHtml5', text: 'Excel', className: 'dropdown-item', exportOptions: { columns: ':all' }, messageTop: function() { return getHeaderInfo(); } },
+                        { extend: 'csvHtml5', text: 'CSV', className: 'dropdown-item', exportOptions: { columns: ':all' } }
+                    ]
+                },
+                { extend: 'colvis', text: '<i class="bx bx-show me-1"></i>Columns', className: 'btn btn-label-primary' }
+            ],
+            ajax: {
+                url: '@Url.Action("ExportMailFulfillment_GETDATA", "Report")',
+                type: 'POST',
+                data: function (d) {
+                    d.FilingYear = $("#Filing_Year").val();
+                    d.EmployerTaxId = $("#Employer_TaxId").val();
+                    d.length = -1;
+                },
+                dataSrc: function (json) {
+                    $('#report_container').fadeIn();
+                    var empData = json.employerInfo;
+                    currentEmployerInfo = empData;
+
+                    if (empData) {
+                        $('#employer_content').show();
+                        $('#employer_no_data').hide();
+                        RenderEmployerData(empData);
+                    } else {
+                        $('#employer_content').hide();
+                        $('#employer_no_data').show();
+                    }
+                    return json.data;
+                }
+            },
+            columns: [
+                { data: "employee_SSN", defaultContent: "" },
+                { data: "first_Name", defaultContent: "" },
+                { data: "last_Name", defaultContent: "" },
+                { data: "mail_Memo", defaultContent: "" }, // New Column for Mail Fulfillment
+                { data: null, defaultContent: "", render: function(d) { return (d.addressLine1Txt||'') + ' ' + (d.addressLine2Txt||''); } },
+                { data: "cityNm", defaultContent: "" },
+                { data: "usStateCd", defaultContent: "" },
+                { data: "uszipCd", defaultContent: "" },
+                { data: "planStartMonth", defaultContent: "" },
+                { data: "correctedInd", defaultContent: "" },
+                // Line 14
+                { data: "annualOfferOfCoverageCd", defaultContent: "" },
+                { data: "janOfferCd", defaultContent: "" }, { data: "febOfferCd", defaultContent: "" }, { data: "marOfferCd", defaultContent: "" }, { data: "aprOfferCd", defaultContent: "" }, { data: "mayOfferCd", defaultContent: "" }, { data: "junOfferCd", defaultContent: "" }, { data: "julOfferCd", defaultContent: "" }, { data: "augOfferCd", defaultContent: "" }, { data: "sepOfferCd", defaultContent: "" }, { data: "octOfferCd", defaultContent: "" }, { data: "novOfferCd", defaultContent: "" }, { data: "decOfferCd", defaultContent: "" },
+                // Line 15
+                { data: "annualShrLowestCostMthlyPremAmt", defaultContent: "" },
+                { data: "januaryAmt", defaultContent: "" }, { data: "februaryAmt", defaultContent: "" }, { data: "marchAmt", defaultContent: "" }, { data: "aprilAmt", defaultContent: "" }, { data: "mayAmt", defaultContent: "" }, { data: "juneAmt", defaultContent: "" }, { data: "julyAmt", defaultContent: "" }, { data: "augustAmt", defaultContent: "" }, { data: "septemberAmt", defaultContent: "" }, { data: "octoberAmt", defaultContent: "" }, { data: "novemberAmt", defaultContent: "" }, { data: "decemberAmt", defaultContent: "" },
+                // Line 16
+                { data: "annualSafeHarborCd", defaultContent: "" },
+                { data: "janSafeHarborCd", defaultContent: "" }, { data: "febSafeHarborCd", defaultContent: "" }, { data: "marSafeHarborCd", defaultContent: "" }, { data: "aprSafeHarborCd", defaultContent: "" }, { data: "maySafeHarborCd", defaultContent: "" }, { data: "juneSafeHarborCd", defaultContent: "" }, { data: "julSafeHarborCd", defaultContent: "" }, { data: "augSafeHarborCd", defaultContent: "" }, { data: "sepSafeHarborCd", defaultContent: "" }, { data: "octSafeHarborCd", defaultContent: "" }, { data: "novSafeHarborCd", defaultContent: "" }, { data: "decSafeHarborCd", defaultContent: "" },
+                // Covered
+                { data: "dependent_CoveredIndividualAnnualInd", defaultContent: "" },
+                { data: "dependent_JanuaryInd", defaultContent: "" }, { data: "dependent_FebruaryInd", defaultContent: "" }, { data: "dependent_MarchInd", defaultContent: "" }, { data: "dependent_AprilInd", defaultContent: "" }, { data: "dependent_MayInd", defaultContent: "" }, { data: "dependent_JuneInd", defaultContent: "" }, { data: "dependent_JulyInd", defaultContent: "" }, { data: "dependent_AugustInd", defaultContent: "" }, { data: "dependent_SeptemberInd", defaultContent: "" }, { data: "dependent_OctoberInd", defaultContent: "" }, { data: "dependent_NovemberInd", defaultContent: "" }, { data: "dependent_DecemberInd", defaultContent: "" }
+            ]
+        });
+
+        $('#btn_filter').click(function () {
+            if ($("#Employer_TaxId").val() == "") { alert("Enter Tax ID"); return; }
+            table.ajax.reload();
+        });
+
+        function getHeaderInfo() {
+            if(currentEmployerInfo) return 'Employer: ' + currentEmployerInfo.businessNameLine1Txt + ' (' + currentEmployerInfo.employerEIN + ')';
+            return '';
+        }
+
+        function getVal(obj, key1, key2) { return obj[key1] || obj[key2] || ""; }
+
+        function RenderEmployerData(emp) {
+            // Mapping Logic (CamelCase or PascalCase)
+            var ein = getVal(emp, 'employerEIN', 'EmployerEIN');
+            var name = getVal(emp, 'businessNameLine1Txt', 'BusinessNameLine1Txt');
+            var contact = getVal(emp, 'personFirstNm', 'PersonFirstNm') + ' ' + getVal(emp, 'personLastNm', 'PersonLastNm');
+            var phone = getVal(emp, 'contactPhoneNum', 'ContactPhoneNum');
+            var address = getVal(emp, 'addressLine1Txt', 'AddressLine1Txt') + ' ' + getVal(emp, 'cityNm', 'CityNm');
+            var dge = getVal(emp, 'aggregatedGroupMemberInd', 'AggregatedGroupMemberInd');
+
+            var basicHtml = `<tr><td>${ein}</td><td>${name}</td><td>${address}</td><td>${dge==='1'?'Yes':'No'}</td><td>${contact}</td><td>${phone}</td></tr>`;
+            $('#tbl_EmployerBasic tbody').html(basicHtml);
+
+            var months = ["All", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            var prefixes = ["yearly", "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+            var PascalPrefixes = ["Yearly", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+            var monthlyHtml = "";
+            for (var i = 0; i < months.length; i++) {
+                var p = prefixes[i]; var P = PascalPrefixes[i];
+                var minCov = emp[p + "_MinEssentialCvrOffrInd"] || emp[P + "_MinEssentialCvrOffrInd"] || '-';
+                var fte = emp[p + "_ALEMemberFTECnt"] || emp[P + "_ALEMemberFTECnt"] || '';
+                var total = emp[p + "_TotalEmployeeCnt"] || emp[P + "_TotalEmployeeCnt"] || '';
+                var agg = emp[p + "_AggregatedGroupInd"] || emp[P + "_AggregatedGroupInd"] || '';
+                var relief = emp[p + "_ALESect4980HTrnstReliefCd"] || emp[P + "_ALESect4980HTrnstReliefCd"] || '';
+
+                monthlyHtml += `<tr><td class="fw-bold">${months[i]}</td><td>${minCov}</td><td>${fte}</td><td>${total}</td><td>${agg}</td><td>${relief}</td></tr>`;
+            }
+            $('#tbl_EmployerMonthly tbody').html(monthlyHtml);
+        }
+    });
+</script>

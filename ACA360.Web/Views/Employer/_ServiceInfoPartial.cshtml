@@ -1,0 +1,244 @@
+﻿@model ACA360.Web.Models.EmployerServiceInfoViewModel
+@{
+    // Affiliates inherit services from the parent company — read-only here.
+    bool isAffiliateSvc = ViewBag.IsAffiliate == true;
+}
+
+@if (isAffiliateSvc)
+{
+    <div class="alert alert-info d-flex align-items-center mb-3" role="alert">
+        <i class="bx bx-info-circle fs-5 me-2"></i>
+        <div>
+            <strong>Managed at the parent company.</strong>
+            This is an affiliate — its services are shared from the parent employer and are
+            read-only here. To change them, edit the parent employer.
+        </div>
+    </div>
+}
+
+<div class="d-flex shadow-sm rounded-3 overflow-hidden border" id="main-workspace" @* style="height: 80vh;" *@>
+
+    <div id="left-navigator" class="border-end d-flex flex-column transition-all" style="width: 320px; min-width: 320px;">
+
+        <div class="p-3 border-bottom">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="d-flex align-items-center gap-2 nav-text">
+                    <h6 class="fw-bold mb-0">Services</h6>
+                    <span class="badge-service rounded-pill-service bg-primary">@Model.ServiceList.Count</span>
+                </div>
+
+                <span class="btn-sm btn-icon bg-label-secondary shadow-sm" id="btn-toggle-rail">
+                    <i class="bx bx-chevron-left fs-4" id="toggle-icon"></i>
+                </span>
+            </div>
+
+            <div class="nav-text">
+                <div class="input-group input-group-merge input-group-sm">
+                    <span class="input-group-text"><i class="bx bx-search"></i></span>
+                    <input type="text" id="serviceSearch" class="form-control" placeholder="Search service name...">
+                </div>
+            </div>
+        </div>
+
+        <div class="service-list-container flex-grow-1 overflow-auto">
+            @foreach (var item in Model.ServiceList)
+            {
+                <div class="service-card p-3 border-bottom service-item cursor-pointer transition-all"
+                     data-service-id="@item.ServiceId"
+                     data-employer-id="@Model.EmployerId"
+                     data-plan-year="@Model.PlanYear">
+
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar flex-shrink-0">
+                            <span class="avatar-initial rounded bg-label-secondary">
+                                <i class="bx bx-layer"></i>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1 overflow-hidden nav-text">
+                           
+                            <h6 class="mb-1 text-truncate3 fw-bold" title="@item.ServiceName">@item.ServiceName</h6>
+                            <div class="d-flex align-items-center">
+                                <span class="badge badge-dot bg-@(item.Status == "Sold" ? "success" : item.Status == "Lost" ? "danger" : "warning") me-2"></span>
+                                <small class="text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">@item.Status</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="flex-grow-1 position-relative overflow-hidden d-flex flex-column">
+        <div id="serviceDetailContainer" class="h-100 overflow-auto">
+            <div class="d-flex flex-column align-items-center justify-content-center h-100 opacity-50">
+                <i class="bx bx-mouse-alt fs-1 mb-2"></i>
+                <h5>Select a service to view details</h5>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    /* The Number Bubble Tweak */
+    .badge-service.rounded-pill-service {
+        padding: 0.45em 0.85em;
+        font-size: 0.75rem;
+        font-weight: 700;
+        border-radius:15px;
+    }
+
+    /* List Item Polish */
+    .service-card {
+        border-left: 3px solid transparent;
+        background-color: transparent;
+    }
+
+        .service-card:hover {
+            background-color: rgba(105, 108, 255, 0.04);
+        }
+
+        /* When Selected */
+        .service-card.active {
+            background-color: #fff;
+            border-left-color: #696cff !important;
+        }
+
+            .service-card.active .avatar-initial {
+                background-color: #696cff !important;
+                color: #fff !important;
+            }
+
+            .service-card.active h6 {
+                color: #696cff;
+            }
+
+    /* Small Status Dot */
+    .badge-dot {
+        width: 7px;
+        height: 7px;
+    }
+    /* Transition for smooth shrinking */
+    .transition-all {
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    /* 1. When the rail has the .collapsed class, shrink it */
+    #left-navigator.collapsed {
+        width: 80px !important;
+        min-width: 80px !important;
+    }
+
+        /* 2. Hide the text and search bar when collapsed */
+        #left-navigator.collapsed .nav-text {
+            display: none !important;
+        }
+
+        /* 3. Center the icons when collapsed */
+        #left-navigator.collapsed .service-card {
+            justify-content: center;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        #left-navigator.collapsed .avatar {
+            margin: 0 auto;
+        }
+
+    /* 4. Rotate the toggle arrow */
+    .rotate-180 {
+        transform: rotate(180deg);
+    }
+
+</style>
+<script>
+        $(document).ready(function () {
+        // 1. Handle Toggle Click
+        $("#btn-toggle-rail").on("click", function () {
+            const $nav = $("#left-navigator");
+            const $icon = $("#toggle-icon");
+
+            $nav.toggleClass("collapsed");
+            $icon.toggleClass("rotate-180");
+
+            // Save state to local storage
+            localStorage.setItem("rail-collapsed", $nav.hasClass("collapsed"));
+        });
+
+        // 2. Load Persisted State
+        if (localStorage.getItem("rail-collapsed") === "true") {
+            $("#left-navigator").addClass("collapsed");
+            $("#toggle-icon").addClass("rotate-180");
+        }
+
+        // 3. Service Click Handler (Fixed 404 Logic)
+        $(document).on("click", ".service-item", function () {
+            const $item = $(this);
+            const sId = $item.data("service-id");
+            const eId = $item.data("employer-id");
+            const pYear = $item.data("plan-year");
+
+            // Scope selection + detail to THIS workspace only. In the split-screen
+            // comparison the partial is cloned into the read-only compare pane with
+            // ids prefixed "cmp__", so a hardcoded "#serviceDetailContainer" would
+            // always resolve to the left pane. Resolve both by ends-with selector
+            // relative to the clicked item's own #main-workspace.
+            var $ws = $item.closest('[id$="main-workspace"]');
+            if (!$ws.length) $ws = $item.closest('.cmp-pane');
+            // Read-only when in the compare pane OR when this is an affiliate (services
+            // are managed at the parent company).
+            var readOnly = $item.closest('.cmp-right').length > 0 || @(isAffiliateSvc ? "true" : "false");
+
+            $ws.find(".service-item").removeClass("active");
+            $item.addClass("active");
+
+            var $container = $ws.find('[id$="serviceDetailContainer"]').first();
+            if (!$container.length) $container = $('#serviceDetailContainer').first();
+
+            $container.html(`
+    <div class="d-flex justify-content-center align-items-center h-100">
+        <div class="spinner-grow text-primary" role="status"></div>
+    </div>
+            `);
+
+            // AJAX GET with explicit parameter keys
+            $.get('/Employer/LoadServiceDetail', {
+                employerId: eId,
+                planYear: pYear,
+                serviceId: sId
+            })
+                .done(function (res) {
+        $container.hide().html(res).fadeIn(300);
+
+        // Compare pane is view-only: lock inputs and hide Save/action buttons.
+        if (readOnly) {
+            $container.find('input, select, textarea').prop('disabled', true);
+            $container.find('.btn').not('.nav-link, [data-bs-toggle="tab"]').hide();
+        }
+    })
+            .fail(function () {
+                $container.html('<div class="alert alert-danger m-4">Error loading data.</div>');
+            });
+        });
+        // 5. DEFAULT LOAD LOGIC — auto-open the first service so its details show
+        // immediately (scoped to THIS workspace so the compare panes stay independent).
+        var $svcWs = $("#main-workspace").last();
+        var $firstService = $svcWs.find(".service-item").first();
+        if ($firstService.length > 0) {
+            $firstService.trigger("click");
+        } else {
+            $svcWs.find("#serviceDetailContainer").html(`
+                <div class="d-flex flex-column align-items-center justify-content-center h-100 opacity-50">
+                    <i class="bx bx-info-circle fs-1 mb-2"></i>
+                    <h5>No services available for this employer.</h5>
+                </div>
+            `);
+        }
+        // 4. Client-side Search Filter (Extra UX Bonus)
+        $("#serviceSearch").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $(".service-item").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+    });
+</script>
+
+       

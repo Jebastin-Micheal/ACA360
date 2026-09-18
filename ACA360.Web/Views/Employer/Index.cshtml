@@ -1,0 +1,709 @@
+﻿@using ACA360.Core.Extensions
+@using ACA360.Web.ViewComponents
+@model ACA360.Web.Models.EmployerListViewModel
+
+@{
+    ViewData["Title"] = "List of Employers";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // ✅ CONFIG: Add Button for the Common Toolbar
+    var toolbarConfig = new
+    {
+        IsEmployerPage = true,
+        CustomButtons = User.HasPermission("Employer", "Add") ?
+            "<button class='btn btn-primary addEmployerBtn' type='button'><i class='bx bx-plus me-1'></i> Add Employer</button>" : ""
+    };
+}
+
+<link href="~/css/loaderstyle.css" rel="stylesheet" />
+<link href="~/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" rel="stylesheet" />
+<link href="~/css/employer-compare.css" rel="stylesheet" asp-append-version="true" />
+<style>
+    .view-transition {
+        transition: all 0.3s ease;
+    }
+    /* Highlight for split view row */
+    .active-row {
+        background-color: #e7f1ff !important;
+        border-left: 4px solid #061387 !important;
+    }
+    /* 🔹 Force the red dot to stay visible regardless of hover states */
+    #searchActiveDot:not(.d-none) {
+        display: block !important;
+        position: absolute;
+        z-index: 10;
+        /* This ensures the dot is visible even if the button changes color on hover */
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+
+
+
+</style>
+
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Employer List",
+    items = new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Title = "Employer", Url = Url.Action("Index", "Employer"), IsActive = false },
+    new BreadcrumbItem { Title = "List of Employers", Url = "", IsActive = true }
+    }
+})
+
+<div id="employerListContainerWrapper" style="position:relative;">
+
+    <div id="loader" class="loader" style="display:none;">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="card mb-6">
+        <div class="card-body">
+
+            @await Html.PartialAsync("_GridToolbarCommon", toolbarConfig)
+            @* Compare controls in the command bar (docked into the center slot by
+    employer-compare.js): list toggle + record nav + filing-year picker.
+    Hidden until a record is opened in split view. *@
+            <div id="employerDetailToolbar" class="cmp-toolbar d-none">
+                <div class="cmp-nav" role="group" aria-label="Record navigation">
+                    <button type="button" id="empNavPrev" title="Previous record (Up arrow)">
+                        <i class="bx bx-chevron-left"></i> Prev
+                    </button>
+                    <span id="empNavCounter" class="cmp-nav-count"></span>
+                    <button type="button" id="empNavNext" title="Next record (Down arrow)">
+                        Next <i class="bx bx-chevron-right"></i>
+                    </button>
+                </div>
+                <span class="cmp-toolbar-label"><i class="bx bx-git-compare me-1"></i>Compare Filing</span>
+                <select class="form-select form-select-sm cmp-year-select"></select>
+            </div>
+
+            @* Compare-mode controls that replace the view toggle + Add button on the
+    right of the command bar while comparing (docked there by JS). *@
+            <div id="compareRightControls" class="cmp-right-controls d-none">
+                <span class="cmp-summary"></span>
+                <label class="cmp-onlydiff d-none" title="Show only fields that differ">
+                    <input type="checkbox" id="cmpOnlyDiff"><span class="cmp-switch"></span>
+                    <span class="cmp-onlydiff-text">Differences Only</span>
+                </label>
+                <button type="button" id="cmpReturnBtn" class="btn btn-sm btn-primary">
+                    <i class="bx bx-arrow-back me-1"></i> Return
+                </button>
+            </div>
+
+
+            <div class="collapse mb-4" id="filterCollapse">
+                <div class="card card-action border shadow-none bg-lighter">
+                    <div class="card-body py-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0 text-primary"><i class='bx bx-filter-alt me-2'></i>Filters</h5>
+                            <button type="button" class="btn-close" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-label="Close"></button>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+                                <label class="form-label fw-bold">Employer Type</label>
+                                <select class="form-select filter-input" id="flt_type">
+                                    <option value="">  All </option>
+                                    <option value="Main">  Main </option>
+                                    <option value="Affiliate">  Affiliate </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row view-transition">
+
+                <div id="mainListColumn" class="view-transition @(Model.ViewMode == "Split" ? "col-lg-4 col-md-5" : "col-12")">
+                    @* Collapsed rail — click to re-open the list (styled like the Tracker notes tab). *@
+                    <div class="emp-list-rail bg-primary" title="Show the employer list">
+                        <div class="vs-tab">
+                            <i class="bx bx-list-ul text-white"></i>
+                            <span class="vs-tab-label">E<br>m<br>p<br>l<br>o<br>y<br>e<br>r<br>&nbsp;<br>L<br>i<br>s<br>t</span>
+                        </div>
+                    </div>
+
+                    <div id="employerListContainer">
+                        @* ✅ FIX: Choose the partial based on the ViewMode from the cookie/model *@
+                        @if (Model.ViewMode == "Split")
+                        {
+                            @await Html.PartialAsync("_EmployerListPartial_am", Model)
+                        }
+                        else
+                        {
+                            @await Html.PartialAsync("_EmployerListPartial", Model)
+                        }
+                    </div>
+                </div>
+
+                <div id="mainDetailColumn" class="view-transition @(Model.ViewMode == "Split" ? "col-lg-8 col-md-7" : "d-none")">
+                    <div class="card h-100 border bg-lighter">
+                        <div class="card-body" id="commonDetailContainer">
+                            @await Html.PartialAsync("_DefaultEmployerdetails")
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addEmployerModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" id="addEmployerModalBody">
+            <div class="text-center p-5">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="employerDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Employer Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="employerDetailsModalBody">
+                <div class="text-center"><div class="spinner-border text-primary"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+@await Html.PartialAsync("~/Views/Shared/_ReceiptIdModal.cshtml")
+<!-- Employer Form Preview Modal -->
+<div class="modal fade" id="employerPdfPreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content h-100">
+            <!-- Header -->
+            <div class="modal-header bg-lighter py-2 align-items-center">
+                <h5 class="modal-title text-primary me-3">
+                    <i class='bx bxs-file-pdf me-2'></i> Form Preview
+                </h5>
+                <div class="d-flex align-items-center flex-grow-1">
+                    <span id="employerPreviewLabel" class="badge bg-label-secondary ms-2 fw-normal"></span>
+
+                    <!-- Fullscreen Toggle Button -->
+                    <button type="button" class="btn btn-sm btn-icon btn-outline-secondary ms-3 toggle-fullscreen" data-target-modal="employerPdfPreviewModal" title="Toggle Fullscreen">
+                        <i class='bx bx-fullscreen'></i>
+                    </button>
+                </div>
+                <!-- Close Button -->
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Body with Iframe and Loader -->
+            <div class="modal-body p-0 bg-dark text-center position-relative">
+                <div id="employerPreviewLoader" class="position-absolute top-50 start-50 translate-middle">
+                    <div class="spinner-border text-light" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="text-light mt-2">Rendering PDF...</div>
+                </div>
+                <iframe id="employerPdfFrame" src="" class="w-100 h-100 border-0" style="min-height: 85vh; display: none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+   
+    <script src="~/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script src="@(Url.Content("~/assets/vendor/libs/blockui/extended-ui-blockui.js"))"></script>
+    <script src="~/js/vscript/dashboard-receipt-id.js" asp-append-version="true"></script>
+
+    <script src="~/js/common-grid.js"></script>
+    <script src="~/js/PVScript/Employer/employer-compare.js" asp-append-version="true"></script>
+    <script>
+        $(document).ready(function () {
+            const $searchInput = $('#mainGridSearch');
+            const $clearBtn = $('#clearSearchBtn');
+            const $dot = $('#searchActiveDot');
+
+            // 1. INITIAL STATE & FOCUS
+            if ($('#optAll').is(':checked')) {
+                $('.emp-search-opt').not('#optAll').prop('checked', true);
+            }
+            updateSearchIndicator();
+            $searchInput.focus();
+
+            // 2. SEARCH INPUT MONITORING
+            $(document).on('input', '#mainGridSearch', function () {
+                const $clearBtn = $('#clearSearchBtn');
+                if ($(this).val().length > 0) {
+                    $clearBtn.removeClass('d-none');
+                } else {
+                    $clearBtn.addClass('d-none');
+                    $('#searchBadgeContainer').addClass('d-none');
+                    GridManager.reload({ pageIndex: 1 });
+                }
+            });
+
+            // 3. CLEAR SEARCH LOGIC
+            $(document).on('click', '#clearSearchBtn', function () {
+                $searchInput.val('').focus();
+                $(this).addClass('d-none');
+
+                if (typeof GridManager !== 'undefined') {
+                    GridManager.reload({
+                        search: '',
+                        pageIndex: 1
+                    });
+                }
+
+                if ($('.emp-search-opt').length > 0) {
+                    $('.emp-search-opt').prop('checked', true);
+                    updateSearchIndicator();
+                    $('#searchBadgeContainer').addClass('d-none');
+                }
+            });
+
+            // 4. KEYBOARD SHORTCUTS
+            $(document).on('keydown', '#mainGridSearch', function (e) {
+                if (e.key === "Escape") {
+                    $('#clearSearchBtn').click();
+                }
+            });
+
+            // 5. CHECKBOX SYNC & INDICATOR
+            $(document).on('change', '.emp-search-opt', function () {
+                const $this = $(this);
+                const isAllCheckbox = $this.attr('id') === 'optAll';
+                const isChecked = $this.is(':checked');
+
+                if (isAllCheckbox) {
+                    $('.emp-search-opt').not('#optAll').prop('checked', isChecked);
+                } else {
+                    if (!isChecked) {
+                        $('#optAll').prop('checked', false);
+                    } else {
+                        const total = $('.emp-search-opt').not('#optAll').length;
+                        const checked = $('.emp-search-opt:checked').not('#optAll').length;
+                        if (total === checked) $('#optAll').prop('checked', true);
+                    }
+                }
+
+                updateSearchIndicator();
+                if (typeof GridManager !== 'undefined') {
+                    GridManager.reload({ pageIndex: 1 });
+                }
+            });
+
+            // 6. RED DOT & BADGE HELPER
+            function updateSearchIndicator(isFocused = false) {
+                const isAllSelected = $('#optAll').is(':checked');
+                const hasSearchText = $('#mainGridSearch').val().length > 0;
+                const $dot = $('#searchActiveDot');
+                const $badgeContainer = $('#searchBadgeContainer');
+                const $btn = $('.btn-search-dropdown');
+
+                if (isFocused || !isAllSelected) {
+                    $dot.removeClass('d-none');
+                    if(!isAllSelected) $btn.addClass('border-danger');
+                } else {
+                    $dot.addClass('d-none');
+                    $btn.removeClass('border-danger');
+                }
+
+                if (hasSearchText && !isAllSelected) {
+                    $badgeContainer.removeClass('d-none');
+                } else {
+                    $badgeContainer.addClass('d-none');
+                }
+            }
+
+            // 7. GRID MANAGER INITIALIZATION
+            GridManager.init({
+                url: '@Url.Action("EmployerListPartial", "Employer")',
+                container: '#employerListContainer',
+                cookieName: 'view_mode_employer',
+                loadingContainer: '#loader',
+                layout: {
+                    listColumn: '#mainListColumn',
+                    detailColumn: '#mainDetailColumn',
+                    detailContainer: '#commonDetailContainer'
+                },
+                state: {
+                    pageIndex: @Model.Metadata.PageNumber,
+                    pageSize: 10,
+                    search: '@Model.Search',
+                    sortColumn: '@Model.SortColumn',
+                    sortOrder: '@Model.SortOrder',
+                    viewMode: '@Model.ViewMode'
+                },
+                additionalParams: function() {
+                    let selectedFields = [];
+                    $('.emp-search-opt:checked').not('#optAll').each(function() {
+                    selectedFields.push($(this).val());
+                    });
+
+                    return {
+                        TypeFilter: $('#flt_type').val(),
+                        SearchFields: selectedFields.length > 0 ? selectedFields.join(',') : 'name',
+                        Search: $('#mainGridSearch').val(),
+                      viewMode: GridManager.getState().viewMode
+                    };
+                },
+                        // Switching to Split should open the first record, not sit on the
+        // default placeholder. The list reloads async, so wait for its rows.
+        onViewChange: function (mode) {
+            if (!window.EmployerCompare) return;
+            window.EmployerCompare.onViewChange(mode);
+            if (mode === 'Split') window.EmployerCompare.selectFirst();
+        }
+            });
+            // 8. ROW CLICK & MODAL LOGIC (Original Part Restored)
+            // $(document).on('click', '.addEmployerBtn', function () {
+            //     $.get('@Url.Action("AddEmployerCommon", "Employer")', function (data) {
+            //         $('#addEmployerModalBody').html(data);
+            //         $('#addEmployerModal').modal('show');
+            //     });
+            // });
+            // 8. ROW CLICK & MODAL LOGIC
+            $(document).on('click', '.addEmployerBtn', function () {
+                
+              $.get('/TrackerEmployer/Form/' + 0).done(data => {
+                 $('#addEmployerModalBody').html(data);
+                 // $('.frmMain-header').hide();
+                 $('#addEmployerModal').modal('show');
+              });
+            });
+
+            // ==========================================
+            // VIEW BUTTON CODE (THE FIX IS HERE)
+            // ==========================================
+            $(document).on('click', '.employer-link', function (e) {
+                e.preventDefault();
+                var employer_id = $(this).data('employer-id');
+                var filingYear = $(this).data('filingyear');
+                var $modalBody = $('#employerDetailsModalBody');
+
+                $modalBody.html('<div class="text-center"><div class="spinner-border text-primary"></div></div>');
+                $('#employerDetailsModal').modal('show');
+
+                // Flag the modal body so our scripts know we are strictly in "View" mode
+                $modalBody.addClass('is-view-mode');
+
+                $.get('/Employer/GetCommonDetails', { EmployerId: employer_id, filingYear: filingYear })
+                    .done(function (html) {
+                        $modalBody.html(html);
+
+                        // 1. Hide Edit & Save UI
+                        $modalBody.find('#toggleEditBtn').attr('style', 'display: none !important');
+                        $modalBody.find('#employer_common_SaveBtn').hide();
+                        $modalBody.find('#bottomCancelBtn').hide();
+
+                        // 2. The Universal Lock Function
+                        function lockFields() {
+                            // Only run if the modal is still in View Mode
+                            if ($modalBody.hasClass('is-view-mode')) {
+                                $modalBody.find('input, select, textarea').prop('disabled', true);
+                                $modalBody.find('.btn').hide();
+                                $modalBody.find('.nav-link, .nav-item').prop('disabled', false).removeClass('disabled');
+                            }
+                        }
+
+                        // Lock initially on load
+                        lockFields();
+
+                        // 3. Tab Switch Event (with setTimeout bypass)
+                        // By pushing this 50ms into the future, we let your other application scripts
+                        // finish rendering their active inputs BEFORE we sweep in and disable them.
+                        $modalBody.off('shown.bs.tab.lock').on('shown.bs.tab.lock', 'a[data-toggle="tab"], button[data-bs-toggle="tab"], a[data-bs-toggle="tab"]', function () {
+                            setTimeout(lockFields, 50);
+                        });
+
+                        // 4. AJAX Complete Event
+                        // If your tabs load data from the server, this catches them the exact millisecond the data arrives.
+                        $(document).off('ajaxComplete.lock').on('ajaxComplete.lock', function() {
+                            lockFields();
+                        });
+                    });
+            });
+
+                  // Active Row Details Logic
+        $(document).on('click', '.employer-link-am', function (e) {
+           e.preventDefault();
+           var employer_id = $(this).data('employer-id');
+           var filingYear = $(this).data('filingyear');
+           if (window.EmployerCompare) { window.EmployerCompare.highlightRow(employer_id); }
+           $('#commonDetailContainer').html('<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>');
+           $.get('/Employer/GetCommonDetails', { EmployerId: employer_id, filingYear: filingYear })
+              .done(function (html) {
+                  $('#commonDetailContainer').html(html);
+                  if (window.EmployerCompare) {
+                      window.EmployerCompare.onDetailLoaded(employer_id, filingYear);
+                  }
+              });
+        });
+
+            // ==========================================
+            // EDIT BUTTON CODE
+            // ==========================================
+            $(document).on('click', '.edit-emp-btn', function (e) {
+                e.preventDefault();
+
+                var employer_id = $(this).data('employer-id');
+                var filingYear = $(this).data('filingyear');
+                var $modalBody = $('#employerDetailsModalBody');
+
+                // Remove the "View Mode" flag and disable the automatic lockers immediately
+                $modalBody.removeClass('is-view-mode');
+                $(document).off('ajaxComplete.lock');
+                $modalBody.off('shown.bs.tab.lock');
+
+                // Show spinner and open modal
+                $modalBody.html('<div class="text-center"><div class="spinner-border text-primary"></div></div>');
+                $('#employerDetailsModal').modal('show');
+
+                $.get('/Employer/GetCommonDetails', { EmployerId: employer_id, filingYear: filingYear })
+                    .done(function (html) {
+                        $modalBody.html(html);
+
+                        $modalBody.find('fieldset.tracker-fieldset, fieldset.independent-fieldset, #employerFieldset')
+                          .prop('disabled', false);
+
+                        $modalBody.find('#toggleEditBtn').attr('style', 'display: none !important');
+                        $modalBody.find('#editActionsFooter').attr('style', 'display: flex !important');
+
+                        // ENABLE all input fields so they can be edited
+                        $modalBody.find('input, select, textarea').prop('disabled', false);
+
+                        // Ensure tabs still work
+                        $modalBody.find('.nav-link').prop('disabled', false).removeClass('disabled');
+                    })
+                    .fail(function() {
+                        $('#employerDetailsModalBody').html('<div class="alert alert-danger">Error loading data.</div>');
+                    });
+            });
+
+            // CLEAN UP WHEN MODAL CLOSES
+            $(document).on('hidden.bs.modal', '#employerDetailsModal', function () {
+                $('.edit-emp-btn').removeClass('d-none');
+                $('#employerDetailsModalBody').removeClass('is-view-mode');
+                // Turn off the global AJAX listener so it doesn't run elsewhere in your app
+                $(document).off('ajaxComplete.lock');
+            });
+
+            // 9. DELETE LOGIC
+            $(document).on('click', '.delete-emp-btn', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var id = $(this).data('id');
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.post('@Url.Action("DeleteEmployer", "Employer")', { id: id }, function (res) {
+                            if (res.success) {
+                                Swal.fire('Deleted!', 'Record deleted.', 'success');
+                                GridManager.reload();
+                            } else {
+                                Swal.fire('Error!', res.message, 'error');
+                            }
+                        });
+                    }
+                });
+            });
+
+            $(document).on('change', '.filter-input', function () {
+                GridManager.reload({ pageIndex: 1 });
+            });
+
+
+
+                  // 1. Form Generate Button Click -> Open Preview Modal
+        $(document).on('click', '.form-gen-btn', function(e) {
+            e.preventDefault();
+
+            var $btn = $(this);
+            var employerId = $btn.data('employer-id');
+            var year = $btn.data('year');
+            var formType = $btn.data('form-type');
+
+            if (!employerId || !year) {
+                toastr.error("Unable to get Employer ID or Filing Year.", "Error");
+                return;
+            }
+
+            // Close the dropdown menu
+            var $dropdownMenu = $btn.closest('.dropdown-menu');
+            if ($dropdownMenu.length) {
+                $dropdownMenu.removeClass('show');
+            }
+
+            // Set Label Info
+            $('#employerPreviewLabel').text(formType + " Preview");
+
+            // Show Modal and Loader, Hide Iframe temporarily
+            $('#employerPdfPreviewModal').modal('show');
+            $('#employerPreviewLoader').show();
+            $('#employerPdfFrame').attr('src', 'about:blank').hide();
+
+            // Build the Preview URL using GET
+            // 1094 forms don't need selectedEmployeeId and suppressSSN is naturally false
+            var url = '/FormGeneration/GeneratePreview?' +
+                'employerId=' + employerId +
+                '&year=' + year +
+                '&formType=' + encodeURIComponent(formType) +
+                '&selectedEmployeeId=' +
+                '&suppressSSN=false';
+
+            // Set the Iframe source to trigger PDF generation
+            $('#employerPdfFrame').attr('src', url);
+        });
+
+        // 2. Hide Loader when PDF finishes loading in the Iframe
+        $('#employerPdfFrame').on('load', function() {
+            var src = $(this).attr('src');
+            if (src && src !== 'about:blank') {
+                $('#employerPreviewLoader').hide();
+                $(this).show();
+            }
+        });
+
+        // 3. Clear Iframe on Modal Close (Free memory)
+        $('#employerPdfPreviewModal').on('hidden.bs.modal', function() {
+            $('#employerPdfFrame').attr('src', 'about:blank').hide();
+            $('#employerPreviewLoader').show();
+        });
+
+        // 4. FULLSCREEN TOGGLE LOGIC
+        $(document).on('click', '.toggle-fullscreen', function() {
+            let targetModalId = $(this).data('target-modal');
+            let $dialog = $('#' + targetModalId + ' .modal-dialog');
+            let $icon = $(this).find('i');
+
+            // Toggle Bootstrap fullscreen classes
+            $dialog.toggleClass('modal-fullscreen modal-xl');
+
+            // Toggle Fullscreen Icon
+            if ($dialog.hasClass('modal-fullscreen')) {
+                $icon.removeClass('bx-fullscreen').addClass('bx-exit-fullscreen');
+            } else {
+                $icon.removeClass('bx-exit-fullscreen').addClass('bx-fullscreen');
+            }
+        });
+
+        // 5. Reset Fullscreen state when modal closes
+        $('.modal').on('hidden.bs.modal', function() {
+            let $dialog = $(this).find('.modal-dialog');
+            let $icon = $(this).find('.toggle-fullscreen i');
+
+            if ($dialog.hasClass('modal-fullscreen')) {
+                $dialog.removeClass('modal-fullscreen').addClass('modal-xl');
+                $icon.removeClass('bx-exit-fullscreen').addClass('bx-fullscreen');
+            }
+        });
+
+              });
+
+               function saveMain() {
+             var form = $('#frmMain');
+             var token = $('input[name="__RequestVerificationToken"]').val();
+             $.validator.unobtrusive.parse(form);
+
+             if (!form.valid()) {
+                 var firstErr = form.find('.input-validation-error').addClass('border-danger').first();
+                 if (firstErr.length) {
+                     $('.modal-body').animate({ scrollTop: firstErr.offset().top - 200 }, 300);
+                     firstErr.focus();
+                 }
+                 return;
+             }
+
+             $.ajax({
+                 url: '/TrackerEmployer/Save',
+                 type: 'POST',
+                 data: form.serialize(),
+                  headers: {
+                     "RequestVerificationToken": token
+                 },
+                 success: function (res) {
+                     if (res.success) {
+                         var empId    = res.employerId;
+                         var noteText = ($('#noteAddText').val() || '').trim();
+
+                         function finalize() {
+                             var _em = bootstrap.Modal.getInstance(document.getElementById('addEmployerModal'));
+                             if (_em) _em.hide();
+                             Swal.fire({ icon: 'success', title: 'Saved!', text: 'Employer saved successfully.', showConfirmButton: true, confirmButtonText: 'OK' })
+                                 .then(function (result) { if (result.isConfirmed) { window.location.href = '/TrackerEmployer'; } });
+                         }
+
+                         if (noteText && empId > 0) {
+                             $.post('/TrackerEmployer/SaveNote', {
+                                 __RequestVerificationToken: $('[name="__RequestVerificationToken"]').first().val(),
+                                 EmployerId: empId,
+                                 Category: 'Employer Creation',
+                                 NoteText: noteText,
+                                 NoteYear: new Date().getFullYear()
+                             }).done(function (r) {
+                                 if (!r || !r.success) {
+                                     Swal.fire('Note Warning', 'Employer saved but note could not be saved: ' + (r && r.message || 'Unknown error'), 'warning');
+                                 }
+                                 finalize();
+                             }).fail(function (xhr) {
+                                 Swal.fire('Note Warning', 'Employer saved but note failed (HTTP ' + xhr.status + '): ' + (xhr.responseJSON && xhr.responseJSON.message || xhr.statusText), 'warning');
+                                 finalize();
+                             });
+                         } else {
+                             finalize();
+                         }
+                     } else {
+                         Swal.fire('Validation Error', res.message || 'Please check the form.', 'error');
+                     }
+                 },
+                 error: function (xhr) {
+                     Swal.fire('Server Error', 'Status: ' + xhr.status, 'error');
+                 }
+             });
+        }
+
+
+        $(document).ready(function () {
+            $('.recalculateForm').on('submit', function (e) {
+                var $form = $(this);
+
+                // 1. If the SweetAlert was just confirmed, let the form submit normally!
+                if ($form.data('is-confirmed')) {
+                    // Reset the flag immediately so the next click requires confirmation again
+                    $form.data('is-confirmed', false);
+                    return true;
+                }
+                // 2. Stop the form from submitting immediately
+                e.preventDefault();
+                // 3. Show the SweetAlert
+                Swal.fire({
+                    title: 'Recalculate codes?',
+                    text: 'This overwrites non-locked data.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#696cff', // Sneat Primary Blue
+                    cancelButtonColor: '#ff3e1d',  // Sneat Danger Red
+                    confirmButtonText: 'Yes, recalculate!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // 4. Mark as confirmed, and safely re-trigger the submit event
+                        $form.data('is-confirmed', true);
+                        $form.trigger('submit');
+                    }
+                });
+            });
+        });
+    </script>
+}
