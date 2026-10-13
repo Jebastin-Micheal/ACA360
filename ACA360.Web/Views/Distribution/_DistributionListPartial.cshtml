@@ -1,0 +1,111 @@
+﻿@model ACA360.Core.Models.DistributionDashboardViewModel
+
+@{
+    var metadata = Model.Metadata;
+}
+
+<div class="table-responsive text-nowrap ui-table-responsive">
+    <table class="table table-hover table-bordered ui-table mb-0" id="distTable">
+        <thead>
+            <tr class="align-middle">
+                <th style="width: 40px;"><input type="checkbox" id="selectAll" class="form-check-input"></th>
+
+                <th>
+                    @await Html.PartialAsync("_SortableHeader", new
+                    {
+                        Title = "Employee", Column = 0, SortColumn = Model.SortColumn, SortOrder = Model.SortOrder
+                                        })
+                </th>
+
+                <th>
+                    @await Html.PartialAsync("_SortableHeader", new
+                                        {
+                        Title = "Email Address", Column = 1, SortColumn = Model.SortColumn, SortOrder = Model.SortOrder
+                                        })
+                </th>
+
+                <th class="text-center">
+                    Consent
+                </th>
+
+                <th class="text-center">Status</th>
+                <th class="text-center">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Employees != null && Model.Employees.Count > 0)
+            {
+                @foreach (var emp in Model.Employees)
+                {
+                    <tr>
+                        <td>
+                            @if (emp.HasConsent && !string.IsNullOrEmpty(emp.Email))
+                            {
+                                <input type="checkbox" class="form-check-input emp-select" value="@emp.EmployeeId">
+                            }
+                            else
+                            {
+                                <input type="checkbox" class="form-check-input" disabled>
+                            }
+                        </td>
+                        <td><span class="fw-bold">@emp.Name</span></td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(emp.Email))
+                            {
+                                <span class="text-body">@emp.Email</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted fst-italic">Missing</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @if (emp.HasConsent)
+                            {
+                                <span class="badge bg-label-success">Electronic</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-label-warning">Paper</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @if (emp.EmailSentDate.HasValue)
+                            {
+                                <span class="badge bg-success" data-bs-toggle="tooltip" title="Sent: @emp.EmailSentDate">Sent</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-label-secondary">Pending</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @if (emp.HasConsent && !string.IsNullOrEmpty(emp.Email))
+                            {
+                                <button class="btn btn-sm btn-icon btn-outline-primary"
+                                        onclick="sendSingleEmail('@emp.EmployeeId', @(emp.EmailSentDate.HasValue ? "true" : "false"))"
+                                        title="@(emp.EmailSentDate.HasValue ? "Resend Secure Link" : "Send Secure Link")">
+                                    <i class='bx @(emp.EmailSentDate.HasValue ? "bx-refresh" : "bx-send")'></i>
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-sm btn-icon btn-outline-secondary" onclick="downloadPdf('@emp.EmployeeId')" title="Download PDF">
+                                    <i class='bx bx-download'></i>
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">No employees found matching the filter.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@await Html.PartialAsync("_GridPagination", Model.Metadata)

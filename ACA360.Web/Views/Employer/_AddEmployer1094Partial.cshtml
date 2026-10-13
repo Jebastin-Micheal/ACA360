@@ -1,0 +1,455 @@
+﻿@model ACA360.Web.Models.AddEmployerViewModel
+
+<form id="form1094Save" autocomplete="off">
+    <input type="hidden" id="EmployerIdhdn_main" class="EmployerIdhdn_main" name="_1094View.EmployerId" value="@Model._1094View.EmployerId" />
+   
+      
+    <!-- 🔹 Form Type & Origin Code -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label">Form Type</label>
+            @* <select class="form-select">
+                <option selected>@Model._1094View.FormType</option> *@
+                <select asp-for="_1094View.FormType" asp-items="Model._1094View.FormTypeOptions" class="form-select"></select>
+            @* </select> *@
+        </div>
+        <div class="col-md-6">
+            <label asp-for="_1094View.OriginCode" class="form-label">Origin Code</label>
+            <select asp-for="_1094View.OriginCode" asp-items="Model._1094View.OriginCodeOptions" class="form-select"></select>
+        </div>
+    </div>
+
+    <!-- 🔹 Certification of Eligibility -->
+  @*   <div class="mb-3">
+        <label class="form-label">Certification of Eligibility</label>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="CertA" value="true" @(Model._1094View.CertA ? "checked" : "") />
+                    <label class="form-label">A. Qualifying Offer Method</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="CertC" value="true" @(Model._1094View.CertC ? "checked" : "") disabled/>
+                    <label class="form-label">C. Reserved</label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="CertB" value="true" @(Model._1094View.CertB ? "checked" : "") disabled/>
+                    <label class="form-label">B. Reserved</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="CertD" value="true" @(Model._1094View.CertD ? "checked" : "") />
+                    <label class="form-label">D. 98% Offer Method</label>
+                </div>
+            </div> *@
+            <div class="mb-3">
+                <label class="form-label">Certification of Eligibility</label>
+
+                <div class="row">
+                    <div class="col-md-6">
+
+                        <!-- Cert A -->
+                        <div class="form-check">
+                    
+                            <input class="form-check-input"
+                                   type="checkbox"
+                           name="_1094View.CertA"
+                                   value="true"
+                            @(Model._1094View.CertA ? "checked" : "") />
+                            <label class="form-label">A. Qualifying Offer Method</label>
+                        </div>
+
+                        <!-- Cert C (disabled) -->
+                        <div class="form-check">
+                   
+                            <input class="form-check-input"
+                                   type="checkbox"
+                           name="_1094View.CertC"
+                                   value="true"
+                            @(Model._1094View.CertC ? "checked" : "")
+                                   disabled />
+                            <label class="form-label">C. Reserved</label>
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <!-- Cert B (disabled) -->
+                        <div class="form-check">
+                   
+                            <input class="form-check-input"
+                                   type="checkbox"
+                           name="_1094View.CertB"
+                                   value="true"
+                            @(Model._1094View.CertB ? "checked" : "")
+                                   disabled />
+                            <label class="form-label">B. Reserved</label>
+                        </div>
+
+                        <!-- Cert D -->
+                        <div class="form-check">
+                    
+                            <input class="form-check-input"
+                                   type="checkbox"
+                           name="_1094View.CertD"
+                                   value="true"
+                            @(Model._1094View.CertD ? "checked" : "") />
+                            <label class="form-label">D. 98% Offer Method</label>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+       @*  </div>
+    </div> *@
+
+    <!-- 🔹 ALE Information Table -->
+    <label class="form-label mb-2">ALE Information</label>
+    <div class="table-responsive">
+        <table class="table table-bordered text-center">
+            <thead class="table-light">
+                <tr>
+                    <th>Month</th>
+                    <th style="min-width: 160px;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Minimum Coverage</span>
+                           
+                            @* <button type="button" class="btn btn-sm btn-outline-primary border-0 ms-2"
+                                    data-toggle="modal" data-target="#matrixModal" 
+                                    title="Open Manual Update Matrix">
+                                <i class="bi bi-grid-3x3-gap-fill"></i>
+                            </button> *@
+                            <button type="button" class="btn btn-sm btn-outline-primary border-0 ms-2" onclick="openMatrixModal()">
+                                <i class="bx bx-grid-horizontal"></i>
+                            </button>
+                        </div>
+                    </th>
+                    <th>Full-Time</th>
+                    <th>Total</th>
+                    <th style="min-width: 140px;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Aggregate</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary border-0 ms-2" onclick="openMatrixModal()">
+                                <i class="bx bx-grid-horizontal"></i>
+                            </button>
+                        </div>
+                    </th>
+                    <th>Sec4980H</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    string[] months = { "All", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+                    for (int i = 0; i < 13; i++)
+                    {
+                        <tr>
+                            <td>@months[i]</td>
+
+                            <td>
+                                <input type="checkbox"
+                                       id="main_MinCov_@i"
+                                       name="_1094View.MinimumCoverage[@i]"
+                                       value="true"
+                                       class="form-check-input"
+                                       @(Model._1094View.MinimumCoverage[i] == 1 ? "checked" : "") />
+                            </td>
+
+                            <td>
+                                <input type="number"
+                                       id="main_FullTime_@i"
+                                       name="_1094View.FullTime[@i]"
+                                       class="form-control text-center"
+                                       value="@(Model._1094View.FullTime[i] == 0 ? "" : Model._1094View.FullTime[i].ToString())" />
+                            </td>
+
+                            <td>
+                                <input type="number"
+                                       id="main_Total_@i"
+                                       name="_1094View.Total[@i]"
+                                       class="form-control text-center"
+                                       value="@(Model._1094View.Total[i] == 0 ? "" : Model._1094View.Total[i].ToString())" />
+                            </td>
+
+                            <td>
+                                <input type="checkbox"
+                                       id="main_Agg_@i"
+                                       name="_1094View.AggregateGroup[@i]"
+                                       value="true"
+                                       class="form-check-input"
+                                       @(Model._1094View.AggregateGroup[i] == 1 ? "checked" : "") />
+                            </td>
+
+                            <td>
+                                <input type="number"
+                                       id="Sec_@i"
+                                       name="_1094View.Sec4980H[@i]"
+                                       class="form-control text-center"
+                                       value="@(Model._1094View.Sec4980H[i] == 0 ? "" : Model._1094View.Sec4980H[i].ToString())" />
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+           @*  <tbody>
+                @{
+                    string[] months = { "All", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+                    for (int i = 0; i < 13; i++)
+                    {
+                        <tr>
+                            <td>@months[i]</td>
+                            <td>
+                                <input type="hidden" name="_1094View.MinimumCoverage[@i]" value="0" />
+                                <input type="checkbox" id="main_MinCov_@i" name="_1094View.MinimumCoverage[@i]" value="true" @(Model._1094View.MinimumCoverage[i] ? "checked" : "") />
+                            </td>
+                            <td>
+                                <input type="hidden" name="_1094View.FullTime[@i]" value="0" />
+                                <input type="number" id="main_FullTime_@i" name="_1094View.FullTime[@i]" class="form-control form-control-sm" value="@(Model._1094View.FullTime[i] == 0 ? "" : Model._1094View.FullTime[i].ToString())" />
+                            </td>
+                            <td>
+                                <input type="hidden" name="_1094View.Total[@i]" value="0" />
+                                <input type="number" id="main_Total_@i" name="_1094View.Total[@i]" class="form-control form-control-sm" value="@(Model._1094View.Total[i] == 0 ? "" : Model._1094View.Total[i].ToString())" />
+                            </td>
+                            <td>
+                                <input type="hidden" name="_1094View.AggregateGroup[@i]" value="0" />
+                                <input type="checkbox" id="main_Agg_@i" name="_1094View.AggregateGroup[@i]" value="true" @(Model._1094View.AggregateGroup[i] ? "checked" : "") />
+                            </td>
+                            <td>
+                                <input type="hidden" name="_1094View.Sec4980H[@i]" value="0" />
+                                <input type="number" id="Sec_@i" name="_1094View.Sec4980H[@i]" class="form-control form-control-sm" value="@(Model._1094View.Sec4980H[i] == 0 ? "" : Model._1094View.Sec4980H[i].ToString())" />
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody> *@
+        </table>
+    </div>
+    <div class="text-end mt-3">
+        <button type="button" class="btn btn-success dependent-save-btn me-2" onclick="save1094(false)">Save</button>
+        <button type="button" class="btn btn-primary dependent-save-btn" onclick="save1094(true)">Save & Continue</button>
+    </div>
+    @* <!-- 🔹 Save Button -->
+    <div class="text-end">
+        <button type="submit" class="btn btn-primary mt-3" id="add_1094">Save 1094 Details</button>
+    </div> *@
+</form>
+@* <button type="button" class="btn btn-outline-primary mb-3" data-bs-toggle="modal" data-bs-target="#matrixModal">
+    Open Manual Update Matrix
+</button> *@
+
+<!-- Modal -->
+
+
+<div class="modal fade" id="matrixModal" tabindex="-1">
+    <div class="modal-dialog modal-xl matrixcode-modal">
+        <div class="modal-content p-3 p-md-5">
+            <div class="modal-header d-block">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Manual Update Employer Detail</h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <p class="text-muted mb-0">Update monthly coverage information manually</p>
+            </div>
+            <div class="modal-body">
+
+                <div class="table-responsive">
+                    @{
+                        string[] modalMonths = { "All", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+                    }
+                    <table class="table table-bordered text-center table-sm align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 150px;">Details</th>
+                                @for (int i = 1; i <= 12; i++)
+                                {
+                                    <th>@modalMonths[i]</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold text-start">Min Coverage</td>
+                                @for (int i = 1; i <= 12; i++)
+                                {
+                                    <td>
+                                        <div class="d-flex justify-content-center">
+                                            <input type="checkbox" class="form-check-input" id="modal_MinCov_@i"
+                                                   @(Model._1094View.MinimumCoverage[i] == 1 ? "checked" : "") />
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+
+                            <tr>
+                                <td class="fw-bold text-start">Full-Time</td>
+                                @for (int i = 1; i <= 12; i++)
+                                {
+                                    <td>
+                                        <input type="text" class="form-control form-control-md text-center px-1 w-px-50" id="modal_FullTime_@i"
+                                               value="@(Model._1094View.FullTime[i] == 0 ? "" : Model._1094View.FullTime[i].ToString())" />
+                                    </td>
+                                }
+                            </tr>
+
+                            <tr>
+                                <td class="fw-bold text-start">Total</td>
+                                @for (int i = 1; i <= 12; i++)
+                                {
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm text-center px-1 w-px-50" id="modal_Total_@i"
+                                               value="@(Model._1094View.Total[i] == 0 ? "" : Model._1094View.Total[i].ToString())" />
+                                    </td>
+                                }
+                            </tr>
+
+                            <tr>
+                                <td class="fw-bold text-start">Aggregate</td>
+                                @for (int i = 1; i <= 12; i++)
+                                {
+                                    <td>
+                                        <div class="d-flex justify-content-center">
+                                            <input type="checkbox" class="form-check-input" id="modal_Agg_@i"
+                                                   @(Model._1094View.AggregateGroup[i] == 1 ? "checked" : "") />
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="reset" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="syncMatrixToTable()">Update Table</button>
+            </div>
+               
+
+        </div>
+    </div>
+</div>
+<!-- Scripts -->
+
+<script>
+            function openMatrixModal() {
+        // Check if Bootstrap 5 is loaded
+        if (typeof bootstrap !== 'undefined') {
+            var myModal = new bootstrap.Modal(document.getElementById('matrixModal'));
+            myModal.show();
+        } else {
+            alert("Bootstrap JS is not loaded!");
+        }
+    }
+        function syncMatrixToTable() {
+        for (let i = 1; i <= 12; i++) {
+            // Sync Min Coverage
+            $(`#main_MinCov_${i}`).prop('checked', $(`#modal_MinCov_${i}`).is(':checked'));
+            // Sync Full Time
+            $(`#main_FullTime_${i}`).val($(`#modal_FullTime_${i}`).val());
+            // Sync Total
+            $(`#main_Total_${i}`).val($(`#modal_Total_${i}`).val());
+            // Sync Aggregate
+            $(`#main_Agg_${i}`).prop('checked', $(`#modal_Agg_${i}`).is(':checked'));
+        }
+
+        // Safer way to close modal in BS5
+        var modalEl = document.getElementById('matrixModal');
+        var modal = bootstrap.Modal.getInstance(modalEl);
+
+        if (modal) {
+            modal.hide();
+        } else {
+            // Fallback if instance not found (creates new instance just to hide it)
+            new bootstrap.Modal(modalEl).hide();
+        }
+    }
+
+                function save1094(isNext) {
+        var form = $("#form1094Save");
+
+        // ---------------------------------------------------------
+        // FIX 1: Numbers (Already working)
+        // Fill empty number fields with '0' to avoid gaps
+        // ---------------------------------------------------------
+        form.find("input[type=number]").each(function() {
+            if ($(this).val() === "") {
+                $(this).val(0);
+            }
+        });
+
+        // ---------------------------------------------------------
+        // FIX 2: Checkboxes (The new fix)
+        // If a checkbox is UNCHECKED, it sends nothing.
+        // We must manually add a hidden "false" input for it so the
+        // Controller gets a complete list of 13 items (True/False).
+        // ---------------------------------------------------------
+
+        // First, remove any old temporary hidden inputs from previous clicks to avoid duplicates
+        form.find(".checkbox-fallback").remove();
+
+        form.find("input[type=checkbox]").each(function() {
+            // If this checkbox is NOT checked...
+            if (!$(this).is(':checked')) {
+                // Create a hidden input with the SAME NAME but value="false"
+                var fallback = $('<input>')
+                    .attr('type', 'hidden')
+                    .attr('class', 'checkbox-fallback') // Mark it so we can remove it later
+                    .attr('name', $(this).attr('name'))
+                    .attr('value', 'false');
+
+                // Append it right after the checkbox
+                $(this).after(fallback);
+            }
+        });
+
+        // ---------------------------------------------------------
+        // 3. Save
+        // ---------------------------------------------------------
+        var formData = form.serialize();
+        var token = $('input[name="__RequestVerificationToken"]').val();
+        $.ajax({
+            url: '/Employer/SaveEmployer1094Tab',
+            type: 'POST',
+            headers: {
+             "RequestVerificationToken": token
+            },
+            data: formData,
+            success: function (response) {
+                                // Cleanup: Remove the temporary hidden inputs so the form stays clean
+                form.find(".checkbox-fallback").remove();
+
+                if (response.success) {
+                    if (isNext) {
+                        if (typeof window.switchToNextTab === "function") {
+                            window.switchToNextTab();
+                        }
+                        Swal.fire({ icon: 'success', title: 'Saved!', text: response.message || 'Form 1094 details saved successfully.', timer: 1000, showConfirmButton: false });
+                    } else {
+                        Swal.fire({
+                icon: 'success',
+                title: 'Saved!',
+                text: response.message || 'Form 1094 details saved successfully.',
+                confirmButtonColor: '#696cff'
+            });
+                    }
+                } else {
+                    Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: response.message || 'Error saving Form 1094 details.'
+        });
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("AJAX Error:", status, error);
+                Swal.fire({
+        icon: 'error',
+        title: 'Unexpected Error',
+        text: 'An unexpected error occurred while saving Form 1094 details.'
+    });
+            }
+        });
+    }
+</script>
+ 

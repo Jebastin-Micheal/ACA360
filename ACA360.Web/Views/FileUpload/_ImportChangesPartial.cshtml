@@ -1,0 +1,83 @@
+@model ACA360.Core.Models.ImportChanges
+@{
+    // "What changed" (script 057): the file compared with what the system holds now for its
+    // employer and filing year. Only rows that will be imported are compared.
+    var labels = Model.Kinds.ToDictionary(k => k.Kind, k => k.Label);
+    int total = Model.Kinds.Sum(k => k.Changes);
+    var missing = Model.Kinds.FirstOrDefault(k => k.Kind == "MISSING")?.Changes ?? 0;
+}
+
+<div class="ia-changes" data-total="@total">
+    @if (missing > 0)
+    {
+        <div class="alert alert-warning small d-flex gap-2 align-items-start" role="status">
+            <i class="bx bx-error mt-1" aria-hidden="true"></i>
+            <div>
+                <strong>@missing employee@(missing == 1 ? "" : "s") in the system @(missing == 1 ? "is" : "are") not in this file.</strong>
+                The import leaves them as they are. If they have left, the file should give their termination date; if the file is
+                only part of the workforce, check that this is expected.
+            </div>
+        </div>
+    }
+
+    <div class="d-flex flex-wrap gap-2 mb-3" role="group" aria-label="Kinds of change">
+        <button type="button" class="btn btn-sm @(Model.Kind == null ? "btn-primary" : "btn-outline-primary") ia-change-kind" data-kind="">
+            Everything <span class="badge bg-white text-primary ms-1">@total.ToString("N0")</span>
+        </button>
+        @foreach (var k in Model.Kinds.Where(k => k.Changes > 0))
+        {
+            <button type="button" class="btn btn-sm @(Model.Kind == k.Kind ? "btn-primary" : k.Kind == "MISSING" ? "btn-outline-warning" : "btn-outline-primary") ia-change-kind" data-kind="@k.Kind">
+                @k.Label <span class="badge @(Model.Kind == k.Kind ? "bg-white text-primary" : "bg-label-secondary") ms-1">@k.Changes.ToString("N0")</span>
+            </button>
+        }
+        <input type="search" class="form-control form-control-sm ms-auto ia-change-search" style="max-width:240px"
+               placeholder="Search names, fields, values…" value="@Model.Search" aria-label="Search changes" />
+    </div>
+
+    @if (total == 0)
+    {
+        <div class="text-center text-muted py-5">
+            <i class="bx bx-check-circle fs-1 d-block mb-2" aria-hidden="true"></i>
+            Importing this file would change nothing: it matches what the system holds.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive position-relative">
+            <table class="table table-sm table-hover align-middle">
+                <caption class="visually-hidden">Changes an import of this file would make</caption>
+                <thead class="table-light">
+                    <tr><th>What</th><th>Row</th><th>Name</th><th>Field</th><th>Now</th><th>After import</th><th>Note</th></tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-4">No changes match.</td></tr>
+                    }
+                    @foreach (var c in Model.Items)
+                    {
+                        <tr>
+                            <td class="small text-nowrap">@labels.GetValueOrDefault(c.Kind, c.Kind)</td>
+                            <td class="small">@(c.RowNumber?.ToString() ?? "—")</td>
+                            <td class="small fw-semibold">@c.Name</td>
+                            <td class="small">@c.Field</td>
+                            <td class="small">@if (string.IsNullOrEmpty(c.OldValue)) { <span class="text-muted">—</span> } else { <span class="text-danger">@c.OldValue</span> }</td>
+                            <td class="small">@if (string.IsNullOrEmpty(c.NewValue)) { <span class="text-muted">(blank)</span> } else { <span class="text-success">@c.NewValue</span> }</td>
+                            <td class="small text-muted">@c.Note</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.TotalPages > 1)
+        {
+            <div class="d-flex justify-content-between align-items-center small">
+                <span class="text-muted">@Model.TotalCount.ToString("N0") changes · page @Model.PageIndex of @Model.TotalPages.ToString("N0")</span>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-secondary ia-change-page" data-page="@(Model.PageIndex - 1)" @(Model.PageIndex <= 1 ? "disabled" : "")>Previous</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary ia-change-page" data-page="@(Model.PageIndex + 1)" @(Model.PageIndex >= Model.TotalPages ? "disabled" : "")>Next</button>
+                </div>
+            </div>
+        }
+    }
+</div>

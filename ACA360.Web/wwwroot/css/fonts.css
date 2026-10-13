@@ -1,0 +1,33 @@
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('/fonts/roboto/roboto-regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('/fonts/roboto/roboto-bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Open Sans';
+    src: url('/fonts/open-sans/open-sans-regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Open Sans';
+    src: url('/fonts/open-sans/open-sans-bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+}
+
+/* Global font stack usage */
+body {
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}

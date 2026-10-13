@@ -1,0 +1,85 @@
+@model List<ACA360.Core.Models.EmployerTimelineEvent>
+@{
+    var upcoming = Model.Where(e => e.IsUpcoming).OrderBy(e => e.EventAt).ToList();
+    var past = Model.Where(e => !e.IsUpcoming).ToList();
+    var kinds = past.Select(e => e.Kind).Distinct().OrderBy(k => k).ToList();
+    (string Icon, string Color) Look(string kind) => kind switch
+    {
+        "File" => ("bx-file", "primary"),
+        "Codes" => ("bx-barcode", "info"),
+        "Forms" => ("bx-printer", "success"),
+        "Filing" => ("bx-send", "success"),
+        "Note" => ("bx-notepad", "secondary"),
+        "Edit" => ("bx-edit", "warning"),
+        "Assignment" => ("bx-user-check", "secondary"),
+        _ => ("bx-calendar-exclamation", "danger"),
+    };
+}
+
+<div class="employer-timeline" data-employer-timeline>
+    @if (upcoming.Count > 0)
+    {
+        <h6 class="mt-3 mb-2">Coming up</h6>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            @foreach (var d in upcoming)
+            {
+                var days = (d.EventAt.Date - DateTime.Today).Days;
+                <div class="border rounded px-3 py-2 small" data-timeline-deadline>
+                    <div class="fw-semibold">@d.EventAt.ToString("MMM d, yyyy") <span class="badge bg-label-@(days <= 14 ? "danger" : days <= 45 ? "warning" : "secondary") ms-1">@(days == 0 ? "today" : $"in {days} days")</span></div>
+                    <div>@d.Title</div>
+                    <div class="text-body opacity-75">@d.Detail</div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (past.Count == 0)
+    {
+        <p class="text-body opacity-75 my-4 text-center">Nothing has happened for this employer's tax year yet.</p>
+    }
+    else
+    {
+        <div class="d-flex flex-wrap gap-1 mb-2" role="group" aria-label="Show">
+            <button type="button" class="btn btn-sm btn-primary" data-timeline-filter="">All</button>
+            @foreach (var k in kinds)
+            {
+                <button type="button" class="btn btn-sm btn-outline-primary" data-timeline-filter="@k">@k</button>
+            }
+        </div>
+        <ul class="mb-0 ps-0" style="list-style:none">
+            @foreach (var e in past)
+            {
+                var look = Look(e.Kind);
+                <li class="d-flex gap-3 py-2 border-bottom" data-timeline-kind="@e.Kind">
+                    <span class="avatar avatar-sm flex-shrink-0"><span class="avatar-initial rounded-circle bg-label-@look.Color"><i class="bx @look.Icon"></i></span></span>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="d-flex flex-wrap justify-content-between gap-1">
+                            <strong>@e.Title</strong>
+                            <small class="text-body opacity-75 text-nowrap">@e.EventAt.ToString("MM/dd/yyyy h:mm tt")</small>
+                        </div>
+                        @if (!string.IsNullOrEmpty(e.Detail)) { <div class="small text-break">@e.Detail</div> }
+                        @if (!string.IsNullOrEmpty(e.Who)) { <div class="small text-body opacity-75">By @e.Who</div> }
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</div>
+<script>
+    (function () {
+        var root = document.querySelector('[data-employer-timeline]');
+        if (!root) return;
+        root.querySelectorAll('[data-timeline-filter]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var kind = btn.getAttribute('data-timeline-filter');
+                root.querySelectorAll('[data-timeline-filter]').forEach(function (b) {
+                    b.classList.toggle('btn-primary', b === btn);
+                    b.classList.toggle('btn-outline-primary', b !== btn);
+                });
+                root.querySelectorAll('[data-timeline-kind]').forEach(function (li) {
+                    li.classList.toggle('d-none', !!kind && li.getAttribute('data-timeline-kind') !== kind);
+                });
+            });
+        });
+    })();
+</script>

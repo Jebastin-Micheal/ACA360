@@ -1,0 +1,35 @@
+@using ACA360.Core.Models
+@model EmployerDashboardPageViewModel
+@{
+    var alerts = Model.Role.Alerts;
+    var span = ViewData["AlertsSpan"] as string ?? "c6";
+}
+@* Critical alerts built from the same numbers the tiles show (Director, Admin). *@
+<div class="tile @span @(alerts.Any(a => a.Severity == "crit") ? "ac-danger" : alerts.Any() ? "ac-warn" : "ac-cyan")" data-w="critical-alerts">
+    <div class="tile-head">
+        <h4><i class="bx bx-error"></i> Critical alerts</h4>
+        <div class="th-spacer"></div>
+        <span class="pill @(alerts.Any() ? "pill-crit" : "pill-good")"><span class="dot"></span>@alerts.Count</span>
+        <div class="tile-tools"></div>
+    </div>
+    @if (alerts.Any())
+    {
+        <ul class="alert-list">
+            @foreach (var a in alerts)
+            {
+                <li>
+                    <span class="pill pill-@a.Severity"><span class="dot"></span>@(a.Severity == "crit" ? "Critical" : a.Severity == "warn" ? "Warning" : "Info")</span>
+                    <span class="alert-text">@a.Text</span>
+                    @if (!string.IsNullOrEmpty(a.LinkUrl))
+                    {
+                        <a class="alert-link" href="@a.LinkUrl">@a.LinkText</a>
+                    }
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <div class="sub"><span class="pill pill-good"><span class="dot"></span>Nothing needs attention</span></div>
+    }
+</div>

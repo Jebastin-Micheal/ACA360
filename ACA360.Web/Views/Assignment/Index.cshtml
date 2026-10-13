@@ -1,0 +1,53 @@
+﻿@* @model ACA360.Core.Models.AssignmentViewModel
+
+@{
+    ViewData["Title"] = "Employer Assignment Management";
+}
+
+<h2>@ViewData["Title"]</h2>
+<p>Use this page to assign an Account Manager to each employer.</p>
+<hr />
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<table class="table">
+    <thead class="thead-light">
+        <tr>
+            <th>Employer Name</th>
+            <th>Employer EIN</th>
+            <th>Currently Assigned Account Manager</th>
+            <th style="width: 300px;"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.EmployerAssignments)
+        {
+            <tr>
+                <td>@item.EmployerName</td>
+                <td>@item.EmployerEIN</td>
+                <td>
+                    <form asp-action="Update" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="employerEIN" value="@item.EmployerEIN" />
+
+                        <div class="input-group">
+                            <select name="accountManagerUserId" asp-for="@item.CurrentAccountManagerId" asp-items="@Model.AvailableAccountManagers" class="form-select">
+                                <option value="0">-- Unassigned --</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </form>
+                </td>
+                <td>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table> *@

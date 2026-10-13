@@ -1,0 +1,20 @@
+﻿@using ACA360.Core.Constants
+
+<ul class="navbar-nav flex-row align-items-center ms-md-auto">
+    @* @await Html.PartialAsync("Components/Partials/_EmployerFilingPartial") *@
+    @* @if (!User.IsInRole(UserRoles.SuperAdmin))
+    {
+        @await Component.InvokeAsync("EmployerFiling")
+    } *@
+    @await Component.InvokeAsync("EmployerFiling")
+    <li class="nav-item me-1">
+        <button type="button" class="nav-link btn btn-icon rounded-pill" id="globalSearchButton"
+                onclick="window.AcaSearch && window.AcaSearch.open()" title="Search (Ctrl+K)" aria-label="Search (Ctrl+K)">
+            <i class="icon-base bx bx-search icon-md"></i>
+        </button>
+    </li>
+    @await Component.InvokeAsync("StyleSwitcher")
+    @await Component.InvokeAsync("QuickLinks")
+    @await Component.InvokeAsync("Notifications")
+    @await Component.InvokeAsync("UserProf")
+</ul>

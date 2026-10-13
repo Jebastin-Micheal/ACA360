@@ -1,0 +1,209 @@
+@model ACA360.Web.Controllers.SystemHealthController.HealthViewModel
+@using ACA360.Core.Helpers
+@{
+    ViewData["Title"] = "System Health";
+    var db = Model.Database;
+    var backupAge = db?.LastBackup == null ? (double?)null : (DateTime.Now - db.LastBackup.Value).TotalDays;
+    var jobs = Model.Jobs;
+    string Status(bool good, bool warn) => good ? "success" : warn ? "warning" : "danger";
+    string Ago(DateTime? when) => when == null ? "never" : (DateTime.Now - when.Value) switch
+    {
+        var t when t.TotalMinutes < 1 => "just now",
+        var t when t.TotalHours < 1 => $"{(int)t.TotalMinutes} min ago",
+        var t when t.TotalDays < 1 => $"{(int)t.TotalHours} h ago",
+        var t => $"{(int)t.TotalDays} days ago",
+    };
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+        <h4 class="mb-1">System Health</h4>
+        <small class="text-body opacity-75">Checked @Model.CheckedAt.ToString("MMM d, h:mm tt"). The last 7 days unless stated.</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary btn-sm" href="@Url.Action("Logs", "System")"><i class="bx bx-list-ul me-1"></i>Error log</a>
+        <a class="btn btn-outline-secondary btn-sm" href="/hangfire"><i class="bx bx-task me-1"></i>Background jobs</a>
+        <a class="btn btn-primary btn-sm" href="@Url.Action("Index")"><i class="bx bx-refresh me-1"></i>Check again</a>
+    </div>
+</div>
+
+@if (ViewBag.DatabaseError is string dbError)
+{
+    <div class="alert alert-danger" role="alert">@dbError</div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card h-100 border-start border-4 border-@Status(backupAge is < 2, backupAge is < 8)">
+            <div class="card-body">
+                <h6 class="mb-2"><i class="bx bx-data me-1"></i>Database</h6>
+                <div class="fs-5 fw-semibold">@(db == null ? "—" : $"{db.DataMb:N0} MB")</div>
+                <div class="small">Log @(db?.LogMb?.ToString("N0") ?? "—") MB</div>
+                <div class="small mt-1">Last full backup: <strong>@Ago(db?.LastBackup)</strong>@(db?.BackupSource is { } src ? $" ({src})" : "")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card h-100 border-start border-4 border-@Status(Model.Errors.LastDay is null or 0, Model.Errors.LastDay < 20)">
+            <div class="card-body">
+                <h6 class="mb-2"><i class="bx bx-error-circle me-1"></i>Errors</h6>
+                <div class="fs-5 fw-semibold">@(Model.Errors.LastDay ?? 0) <small class="fw-normal">in the last day</small></div>
+                <div class="small">@Model.Errors.LastWeek in the last 7 days</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card h-100 border-start border-4 border-@Status(Model.SlowRequests == 0, Model.SlowRequests < 50)">
+            <div class="card-body">
+                <h6 class="mb-2"><i class="bx bx-timer me-1"></i>Slow pages</h6>
+                <div class="fs-5 fw-semibold">@Model.SlowRequests <small class="fw-normal">requests over 3 s</small></div>
+                <div class="small">@Model.SlowPages.Count different pages</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card h-100 border-start border-4 border-@(jobs is { Available: true } ? Status(jobs.Failed == 0 && jobs.Servers > 0, jobs.Servers > 0) : "secondary")">
+            <div class="card-body">
+                <h6 class="mb-2"><i class="bx bx-task me-1"></i>Background jobs</h6>
+                @if (jobs is { Available: true })
+                {
+                    <div class="fs-5 fw-semibold">@jobs.Failed <small class="fw-normal">failed</small></div>
+                    <div class="small">@jobs.Processing running · @jobs.Enqueued waiting · @jobs.Scheduled scheduled</div>
+                    <div class="small">@(jobs.Servers == 0 ? "No job server is running." : $"{jobs.Servers} job server(s) running")</div>
+                }
+                else
+                {
+                    <div class="small">Not available here.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.MaintenanceMode)
+{
+    <div class="alert alert-warning" role="status"><i class="bx bx-wrench me-1"></i>Maintenance mode is <strong>on</strong>: users other than administrators see the maintenance page.</div>
+}
+
+@if (Model.StuckFiles.Any())
+{
+    <div class="card mb-4">
+        <div class="card-header"><h6 class="mb-0 text-danger"><i class="bx bx-error me-1"></i>Files stuck part-way (no progress for over an hour)</h6></div>
+        <div class="table-responsive position-relative">
+            <table class="table table-sm mb-0">
+                <thead class="table-light"><tr><th>File</th><th>Employer</th><th>Stage</th><th>Since</th></tr></thead>
+                <tbody>
+                    @foreach (var f in Model.StuckFiles)
+                    {
+                        <tr>
+                            <td class="small">#@f.FileLogId · @f.OriginalFileName</td>
+                            <td class="small">@f.EmployerName</td>
+                            <td class="small">@(f.WorkflowStatusId == WS.Importing ? "Importing" : f.WorkflowStatusId == WS.PreProcessing ? "Pre-processing" : "Validating")</td>
+                            <td class="small">@Ago(f.Since)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-xl-7">
+        <div class="card h-100">
+            <div class="card-header"><h6 class="mb-0">Slowest pages</h6></div>
+            <div class="table-responsive position-relative">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light"><tr><th>Page</th><th class="text-end">Times</th><th class="text-end">Average</th><th class="text-end">Slowest</th><th class="text-end">Users</th><th>Last</th></tr></thead>
+                    <tbody>
+                        @if (!Model.SlowPages.Any())
+                        {
+                            <tr><td colspan="6" class="text-center py-4">No request took over 3 seconds.</td></tr>
+                        }
+                        @foreach (var p in Model.SlowPages)
+                        {
+                            <tr>
+                                <td class="small text-break">@p.Page</td>
+                                <td class="text-end small">@p.Times</td>
+                                <td class="text-end small">@((p.AverageMs / 1000.0).ToString("0.0")) s</td>
+                                <td class="text-end small">@((p.SlowestMs / 1000.0).ToString("0.0")) s</td>
+                                <td class="text-end small">@p.Users</td>
+                                <td class="small text-nowrap">@Ago(p.Last)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-5">
+        <div class="card mb-3">
+            <div class="card-header"><h6 class="mb-0">E-mail</h6></div>
+            <div class="table-responsive position-relative">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light"><tr><th>Status</th><th class="text-end">E-mails</th><th>Last</th></tr></thead>
+                    <tbody>
+                        @if (!Model.Emails.Any())
+                        {
+                            <tr><td colspan="3" class="text-center py-3">No e-mail sent.</td></tr>
+                        }
+                        @foreach (var e in Model.Emails)
+                        {
+                            <tr class="@(e.Status.Contains("fail", StringComparison.OrdinalIgnoreCase) || e.Status.Contains("error", StringComparison.OrdinalIgnoreCase) ? "table-danger" : "")">
+                                <td class="small">@e.Status</td>
+                                <td class="text-end small">@e.Emails</td>
+                                <td class="small">@Ago(e.Last)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @if (jobs is { Available: true } && jobs.Recurring.Any())
+        {
+            <div class="card">
+                <div class="card-header"><h6 class="mb-0">Scheduled jobs</h6></div>
+                <div class="table-responsive position-relative">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light"><tr><th>Job</th><th>Last run</th><th>Result</th><th>Next</th></tr></thead>
+                        <tbody>
+                            @foreach (var r in jobs.Recurring)
+                            {
+                                <tr class="@(string.Equals(r.LastState, "Failed", StringComparison.OrdinalIgnoreCase) ? "table-danger" : "")">
+                                    <td class="small text-break">@r.Id</td>
+                                    <td class="small text-nowrap">@(r.LastRun == null ? "never" : Html.LocalTime(r.LastRun.Value))</td>
+                                    <td class="small">@(r.LastState ?? "—")</td>
+                                    <td class="small text-nowrap">@(r.NextRun == null ? "—" : Html.LocalTime(r.NextRun.Value))</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-header"><h6 class="mb-0">Most frequent errors</h6></div>
+    <div class="table-responsive position-relative">
+        <table class="table table-sm mb-0">
+            <thead class="table-light"><tr><th>Where</th><th>Message</th><th class="text-end">Times</th><th>Last</th></tr></thead>
+            <tbody>
+                @if (!Model.FrequentErrors.Any())
+                {
+                    <tr><td colspan="4" class="text-center py-4">No errors in the last 7 days.</td></tr>
+                }
+                @foreach (var e in Model.FrequentErrors)
+                {
+                    <tr>
+                        <td class="small">@e.CallSite</td>
+                        <td class="small text-break">@e.Message</td>
+                        <td class="text-end small">@e.Times</td>
+                        <td class="small text-nowrap">@Ago(e.Last)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

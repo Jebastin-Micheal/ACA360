@@ -1,0 +1,222 @@
+﻿@model ACA360.Core.Models.Tracker.EmployerServiceItem
+@{
+    var _months = System.Globalization.DateTimeFormatInfo.CurrentInfo.MonthNames.Take(12).ToList();
+    int _mn = 0;
+    if (!string.IsNullOrEmpty(Model.MonthInitialData))
+    {
+        if (int.TryParse(Model.MonthInitialData, out int parsedInt))
+        {
+            _mn = parsedInt;
+        }
+        else if (DateTime.TryParse(Model.MonthInitialData, out DateTime parsedDate))
+        {
+            _mn = parsedDate.Month;
+        }
+    }
+    string monthDisplay = _mn >= 1 && _mn <= 12 ? _months[_mn - 1] : "—";
+}
+<form id="frmSvc">
+    <input type="hidden" asp-for="EmployerServiceId" />
+    <input type="hidden" asp-for="EmployerId" />
+
+    <div class="modal-header border-bottom pb-3">
+        <div class="d-flex align-items-center">
+            <div class="avatar flex-shrink-0 me-3">
+                <span class="avatar-initial rounded bg-label-primary shadow-sm"><i class="bx bx-check-double fs-3"></i></span>
+            </div>
+            <div>
+                <h5 class="modal-title fw-bold mb-0">Service Configuration</h5>
+                <small class="text-muted">Workflow & Financial Management</small>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+
+    <div class="modal-body py-4">
+
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <label class="form-label fw-bold text-uppercase small text-primary">Service Name<span class="text-danger">*</span></label>
+                        <select id="ddlService" asp-for="ServiceId" asp-items="ViewBag.Services" class="form-select shadow-none fw-bold" required>
+                            <option value="">-- Select a Service --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+
+        <div class="row mb-4 g-1 align-items-end">
+            <div class="card">
+                <div class="card-body row">
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold text-uppercase small">Current Status<span class="text-danger">*</span></label>
+                        <select asp-for="Status" asp-items="ViewBag.Statuses" class="form-select fw-bold" required>
+                            <option value="">-- Select Status --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold text-uppercase small">Plan Year<span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-lighter"><i class="bx bx-calendar"></i></span>
+                            <input type="text" class="form-select fw-bold bg-lighter" readonly
+                                   value="@(Model.PlanYear > 0 ? Model.PlanYear.ToString() : "—")" />
+                        </div>
+                        <input type="hidden" asp-for="PlanYear" />
+                    </div>
+                    <div class="col-md-4 mt-8">
+                        <div class="form-check form-switch d-inline-block custom-switch-lg">
+                            <input class="form-check-input" type="checkbox" asp-for="MedcomCOBRA">
+                            <label class="form-check-label fw-bold ms-2" asp-for="MedcomCOBRA">Cobra Active</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-1">
+            <div class="col-md-6">
+                <div class="card shadow-none border h-100">
+                    <div class="card-header d-flex align-items-center py-2 px-3 bg-lighter">
+                        <i class="bx bx-time-five me-2 text-info"></i>
+                        <h6 class="mb-0 fw-bold text-uppercase small">Timeline & Milestones</h6>
+                    </div>
+                    <div class="card-body pt-3">
+                        <div class="row g-2">
+                            <div class="col-6"><label class="form-label x-small">Proposal Sent</label><input type="date" asp-for="ProposalSentDate" class="form-control" /></div>
+                            <div class="col-6"><label class="form-label x-small">Proposal Signed</label><input type="date" asp-for="ProposalSignedDate" class="form-control" /></div>
+                            <div class="col-6"><label class="form-label x-small">Contract Sent</label><input type="date" asp-for="ContractSentDate" class="form-control" /></div>
+                            <div class="col-6"><label class="form-label x-small">Contract Signed</label><input type="date" asp-for="ContractSignedDate" class="form-control" /></div>
+                            <div class="bg-label-info p-2 rounded">
+                                <label class="form-label x-small fw-bold text-info">Month Initial Data</label>
+                                <select class="form-select form-select-sm shadow-none" name="MonthInitialData">
+                                    <option value="">— Select —</option>
+                                    @for (int i = 1; i <= 12; i++)
+                                    {
+                                        <option value="@i" selected="@(i == _mn ? "selected" : null)">@_months[i - 1]</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-6"><label class="form-label x-small">Renewal Date</label><input type="date" asp-for="RenewalDate" class="form-control" /></div>
+                            <div class="col-6"><label class="form-label x-small text-danger">Follow-up Date</label><input type="date" asp-for="FollowUpDate" class="form-control border-danger-subtle" /></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow-none border mb-4">
+                    <div class="card-header d-flex align-items-center py-2 px-3 bg-lighter">
+                        <i class="bx bx-dollar-circle me-2 text-success"></i>
+                        <h6 class="mb-0 fw-bold text-uppercase small">Financials & Billing</h6>
+                    </div>
+                    <div class="card-body pt-3">
+                        <div class="row g-2">
+                            <div class="col-12"><label class="form-label x-small">Payer</label><select asp-for="Payer" asp-items="ViewBag.Payers" class="form-select form-select-sm"></select></div>
+                            <div class="col-4">
+                                <label class="form-label x-small">Pricing</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light">$</span>
+                                    <input type="number" asp-for="Pricing" class="form-control" placeholder="0.00" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                                </div>
+                            </div>
+
+                            <div class="col-4">
+                                <label class="form-label x-small">Initial Bill</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light">$</span>
+                                    <input asp-for="InitialBill" class="form-control" />
+                                </div>
+                            </div>
+
+                            <div class="col-4">
+                                <label class="form-label x-small">Final Bill</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light">$</span>
+                                    <input asp-for="FinalBill" class="form-control" />
+                                </div>
+                            </div>
+
+                            <div class="col-6"><label class="form-label x-small text-primary">First 50% Invoice Date</label><input type="date" asp-for="FirstInvoiceDate" class="form-control form-control-sm border-primary-subtle" /></div>
+                            <div class="col-6">
+                                <label class="form-label x-small">SOS Amount</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light">$</span>
+                                    <input type="number" asp-for="SOSAmount" class="form-control" min="0" onkeydown="return event.key !== '-' && event.key !== '+' && event.key !== 'e';" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-none border">
+                    <div class="card-header d-flex align-items-center py-2 px-3 bg-lighter">
+                        <i class="bx bx-shield-alt-2 me-2 text-warning"></i>
+                        <h6 class="mb-0 fw-bold text-uppercase small">Audit & Compliance</h6>
+                    </div>
+                    <div class="card-body pt-3">
+                        <div class="row g-2">
+                            <div class="col-12 mb-1"><label class="form-label x-small">Extension Filed</label><input type="date" asp-for="ExtensionFiled" class="form-control form-control-sm" /></div>
+                            <div class="col-md-7">
+                                <label class="form-label x-small">Audit By</label>
+                                <select asp-for="AuditBy" asp-items="ViewBag.AuditUsers" class="form-select form-select-sm fw-medium">
+                                    <option value="">Select Auditor...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-5"><label class="form-label x-small">Audit Date</label><input type="date" asp-for="AuditDate" class="form-control form-control-sm" /></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 px-1">
+            <div class="card">
+                <div class="card-body">
+                    <label class="form-label fw-bold small text-muted text-uppercase mb-2"><i class="bx bx-note me-1"></i> Internal Notes</label>
+                    <textarea asp-for="Notes" class="form-control shadow-none" rows="2" placeholder="Add comments here..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer border-top bg-light p-3">
+        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary px-5 shadow" onclick="saveSvc()">
+            <i class="bx bx-save me-2"></i> Save Changes
+        </button>
+    </div>
+</form>
+
+<style>
+    .x-small {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--dash-text-muted);
+        margin-bottom: 3px;
+        display: block;
+        text-transform: uppercase;
+    }
+
+    .bg-lighter {
+        background-color: var(--bs-tertiary-bg) !important;
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+
+    .custom-switch-lg .form-check-input {
+        width: 2.4rem;
+        height: 1.2rem;
+        cursor: pointer;
+    }
+
+    select.input-validation-error + .select2-container .select2-selection {
+        border-color: var(--bs-danger) !important;
+    }
+</style>
+<script>
+     $(function () {
+        makeSearchable('#ddlService', { placeholder: '-- Select a Service --' });
+    });
+</script>

@@ -1,0 +1,49 @@
+@using ACA360.Core.Constants
+@using ACA360.Core.Models
+@using ACA360.Core.Models.Dashboard
+@model EmployerDashboardPageViewModel
+@* Page head: title, View As, report actions and layout controls. *@
+@{
+    // The SuperAdmin / Admin home dashboard is their admin cards (which they can still
+    // customize): no View As picker and no employer report buttons there - both stay on the
+    // Employer dashboard page. While viewing as someone the picker still renders, because it
+    // holds the "Return to my view" button.
+    var adminHome = Model.PageController == "Dashboard" &&
+        (string.Equals(Model.Context.ActorRole, UserRoles.SuperAdmin, StringComparison.OrdinalIgnoreCase) ||
+         string.Equals(Model.Context.ActorRole, UserRoles.Admin, StringComparison.OrdinalIgnoreCase));
+
+    // The same display name the user menu shows (set at sign-in); sign-in stores "Unknown"
+    // when the login has no profile, and then the greeting goes without a name.
+    var greetName = User.FindFirst("Profile_Name")?.Value?.Trim();
+    if (string.IsNullOrEmpty(greetName) || greetName.Equals("Unknown", StringComparison.OrdinalIgnoreCase)) greetName = null;
+}
+    <div class="row">
+        <div class="col-12 col-lg-2">
+            <h4 class="fw-bold mb-1">
+                Welcome back@(greetName == null ? "" : ",")
+                @if (greetName != null)
+                {
+                    <span class="text-primary">@greetName</span>
+                }
+            </h4>
+            <p class="text-muted mb-0 small">
+                @DateTime.Now.ToString("D")
+                @* Role: <span class="fw-semibold text-primary">@Model.Context.ActorRole</span> *@
+            </p>
+        </div>
+
+        <div class="pagehead-actions col-12 col-lg-10 mt-3 mt-lg-0">
+            @if (!adminHome || Model.Context.IsImpersonating)
+            {
+                @await Html.PartialAsync("_ViewAsPicker", Model)
+            }
+            @if (!adminHome)
+            {
+                @await Html.PartialAsync("_DashboardActions", Model)
+            }
+            <button class="btn btn-facebook" id="btnEdit" type="button"><i class="bx bx-grid me-1"></i> Customize layout</button>
+            <button class="btn btn-primary" id="btnSave" type="button" hidden>Save layout</button>
+            <button class="btn btn-ghost" id="btnCancel" type="button" hidden>Cancel</button>
+            <button class="btn btn-ghost" id="btnReset" type="button" hidden>Reset to default</button>
+        </div>
+    </div>

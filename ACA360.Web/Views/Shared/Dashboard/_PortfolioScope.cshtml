@@ -1,0 +1,166 @@
+@using ACA360.Core.Models
+@using ACA360.Core.Models.Dashboard
+@model EmployerDashboardPageViewModel
+@{ var p = Model.Portfolio; }
+    @* ============================================================
+       SCOPE 1 — PORTFOLIO. Hidden for the Employer role: one client.
+       ============================================================ *@
+    @if (Model.ShowPortfolioBand)
+    {
+        <section class="scope" data-section="portfolio">
+            <div class="scope-bar">
+                <h2>My book of business</h2>
+                <span class="pill pill-info"><span class="dot"></span>@p.TotalClientsMainEins clients assigned</span>
+                <div class="sb-spacer"></div>
+                <span class="hint">Every EIN you have access to, filing year @Model.FilingYear</span>
+            </div>
+
+            <div class="grid" id="gridPortfolio">
+
+                <div class="tile stat c2 ac-navy" data-w="clients-all">
+                    <div class="tile-head"><h4>Total clients (all EINs)</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                    <div class="kpi-row">
+                        <span class="kpi-ico ic-navy"><i class="bx bx-buildings"></i></span>
+                        <div>
+                            <div class="val num">@p.TotalClientsAllEins.ToString("N0")</div>
+                            <div class="sub">Includes affiliate EINs</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tile stat c2 ac-blue" data-w="clients-main">
+                    <div class="tile-head"><h4>Total clients (main EINs)</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                    <div class="kpi-row">
+                        <span class="kpi-ico ic-blue"><i class="bx bx-building-house"></i></span>
+                        <div>
+                            <div class="val num">@p.TotalClientsMainEins.ToString("N0")</div>
+                            <div class="sub">Excludes affiliates</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tile stat c2 ac-sky" data-w="clients-mailed">
+                    <div class="tile-head"><h4>1095 forms mailed</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                    <div class="kpi-row">
+                        <span class="kpi-ico ic-sky"><i class="bx bx-envelope"></i></span>
+                        <div>
+                            <div class="val num">@p.ClientsFormsMailed.ToString("N0")</div>
+                            <div class="sub">of @p.TotalClientsMainEins clients@(p.TotalClientsMainEins > 0 ? $" · {p.ClientsFormsMailed * 100 / p.TotalClientsMainEins}%" : "")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tile stat c2 ac-cyan" data-w="clients-efiled">
+                    <div class="tile-head"><h4>1094/1095 eFiled with IRS</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                    <div class="kpi-row">
+                        <span class="kpi-ico ic-cyan"><i class="bx bx-cloud-upload"></i></span>
+                        <div>
+                            <div class="val num">@p.ClientsEfiled.ToString("N0")</div>
+                            <div class="sub">of @p.TotalClientsMainEins clients@(p.TotalClientsMainEins > 0 ? $" · {p.ClientsEfiled * 100 / p.TotalClientsMainEins}%" : "")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tile stat c2 @(p.ClientsWithPenalties > 0 ? "ac-warn" : "ac-indigo")" data-w="clients-penalty">
+                    <div class="tile-head"><h4>Clients with penalties</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                    <div class="kpi-row">
+                        <span class="kpi-ico @(p.ClientsWithPenalties > 0 ? "ic-warn" : "ic-indigo")"><i class="bx bx-dollar-circle"></i></span>
+                        <div>
+                            <div class="val num">@p.ClientsWithPenalties.ToString("N0")</div>
+                            <div class="sub">
+                                @if (p.TotalPenaltyExposure > 0)
+                                {
+                                    <span class="pill pill-warn"><span class="dot"></span>@p.TotalPenaltyExposure.ToString("C0") exposure</span>
+                                }
+                                else
+                                {
+                                    <span class="pill pill-good"><span class="dot"></span>No exposure</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tile stat c2 @(p.PastDueClients > 0 ? "ac-danger" : "ac-cyan")" data-w="clients-pastdue">
+                    <div class="tile-head"><h4>Past due clients</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+                    <div class="kpi-row">
+                        <span class="kpi-ico @(p.PastDueClients > 0 ? "ic-danger" : "ic-cyan")"><i class="bx bx-time-five"></i></span>
+                        <div>
+                            <div class="val num">@p.PastDueClients.ToString("N0")</div>
+                            <div class="sub">
+                                @if (p.PastDueClients > 0)
+                                {
+                                    <span class="pill pill-crit"><span class="dot"></span>Oldest @p.OldestPastDueDays days</span>
+                                }
+                                else
+                                {
+                                    <span class="pill pill-good"><span class="dot"></span>All on track</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tile c12 hb @(Model.ProcessRows.Any(r => r.DaysOverdue > 0) ? "hb-warn" : "hb-9")" data-w="process-table">
+                    <div class="tile-head">
+                        <h4><i class="bx bx-list-check"></i> Current Process Step</h4>
+                        <div class="th-spacer"></div>
+                        <div class="tbl-tools">
+                            <select class="tbl-filter" data-filter-col="5" aria-label="Filter by status">
+                                <option value="">All statuses</option>
+                                <option value="Past due">Past due</option>
+                                <option value="On track">On track</option>
+                            </select>
+                            <input type="search" class="tbl-search" placeholder="Search employer, EIN or step…" aria-label="Search table" />
+                        </div>
+                        <div class="tile-tools"></div>
+                    </div>
+                    <div class="tile-body">
+                        <div class="table-wrap has-foot">
+                        <table class="tbl-interactive">
+                            <thead>
+                                <tr>
+                                    <th data-sort="text">Employer</th>
+                                    <th data-sort="text">EIN</th>
+                                    <th data-sort="text">Process step</th>
+                                    <th data-sort="num">Due date</th>
+                                    <th class="n" data-sort="num">Days</th>
+                                    <th data-sort="text">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var r in Model.ProcessRows)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a class="emp-link" href="@Url.Action(Model.PageAction, Model.PageController, new { id = r.EmployerId, year = Model.FilingYear })">
+                                                @r.EmployerName
+                                            </a>
+                                        </td>
+                                        <td class="mono">@r.Ein</td>
+                                        <td>@r.ProcessStep</td>
+                                        @* Sort keys are explicit: "20 Jul 2026" and "15 overdue" do not
+                                           sort correctly as text. *@
+                                        <td class="num" data-sort="@(r.DueDate?.ToString("yyyyMMdd") ?? "99999999")">@(r.DueDate?.ToString("dd MMM yyyy") ?? "—")</td>
+                                        <td class="n" data-sort="@r.DaysOverdue">@(r.DaysOverdue > 0 ? $"{r.DaysOverdue} overdue" : $"{Math.Abs(r.DaysOverdue)} left")</td>
+                                        <td>
+                                            <span class="pill pill-@(r.Severity == "crit" ? "crit" : r.Severity == "warn" ? "warn" : "good")">
+                                                <span class="dot"></span>@(r.DaysOverdue > 0 ? "Past due" : "On track")
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="tbl-foot"></div>
+                </div>
+
+            </div>
+
+            <div class="tray" id="trayPortfolio">
+                <h4>Hidden tiles &mdash; click to restore</h4>
+                <div class="tray-items"></div>
+            </div>
+        </section>
+    }

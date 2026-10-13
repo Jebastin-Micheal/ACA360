@@ -1,0 +1,291 @@
+﻿@model ACA360.Web.Models.EmployerServiceInfoViewModel
+@* <input type="hidden" id="Employer_TrackerIdhdn" name="SelectedService.EmployerId" value="@Model.SelectedService.EmployerId" /> *@
+
+<div class="row">
+    <div class="col-md-3 border-end">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">Services</h6>
+            <button type="button" class="btn btn-sm btn-primary" onclick="createNewService()">
+                <i class="bx bx-plus"></i> Add
+            </button>
+        </div>
+        <div class="list-group" id="serviceListGroup" style="max-height: 600px; overflow-y: auto;">
+            <div id="emptyServicePlaceholder" class="text-center text-muted mt-4">
+                <small>No services added yet.</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        <div id="serviceFormOverlay" class="position-relative">
+
+            <form id="formServiceTracker" autocomplete="off">
+                <input type="hidden" id="Employer_TrackerIdhdn" class="Employer_TrackerIdhdn" name="SelectedService.EmployerId" value="@Model.SelectedService.EmployerId" />
+                <input type="hidden" id="Employer_TrackerPlanyear" class="Employer_TrackerPlanyear" name="SelectedService.PlanYear" value="@Model.SelectedService.PlanYear" />
+
+                <input type="hidden" id="hdnServiceId" name="SelectedService.ServiceId" value="0" />
+                <div id="formDisabledMask" class="position-absolute w-100 h-100 bg-white opacity-50" style="z-index: 10; cursor: not-allowed;"></div>
+
+                <div class="modal-body p-0">
+
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Service Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bx bx-wrench"></i></span>
+                            <select asp-for="SelectedService.ServiceListId" asp-items="Model.ServiceNames" class="form-select">
+                                <option value="">-- Select Service Name --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Status</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bx bx-bar-chart"></i></span>
+                            <select asp-for="SelectedService.Status" class="form-select">
+                                <option value="">-- Select Status --</option>
+                                <option value="Opportunity">Opportunity</option>
+                                <option value="Sold">Sold</option>
+                                <option value="Lost">Lost</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr class="my-3" />
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Proposal Sent</label>
+                            <input asp-for="SelectedService.ProposalSent" class="form-control" type="date" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Contract Sent</label>
+                            <input asp-for="SelectedService.ContractSent" class="form-control" type="date" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Proposal Signed</label>
+                            <input asp-for="SelectedService.ProposalSigned" class="form-control" type="date" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Contract Signed</label>
+                            <input asp-for="SelectedService.ContractSigned" class="form-control" type="date" />
+                        </div>
+                    </div>
+
+                    <hr class="my-3" />
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">1095 Process Step</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bx bx-list-check"></i></span>
+                                <select class="form-select" asp-for="SelectedService.ImplementationProcess" asp-items="@(new SelectList(Model.ImplementationProcesses, "Value", "Text"))">
+                                    <option value="">-- Select Step --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">FTE Tracking Step</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bx bx-table"></i></span>
+                                <select class="form-select" asp-for="SelectedService.ProcessStep1094" asp-items="@(new SelectList(Model.FTEProcess, "Value", "Text"))">
+                                    <option value="">-- Select Step --</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Last Updated</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bx bx-calendar-edit"></i></span>
+                                <input id="imp_last_updated" asp-for="SelectedService.LastUpdated" class="form-control" type="date" />
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Last Updated</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bx bx-calendar-edit"></i></span>
+                                <input id="fte_last_updated" asp-for="SelectedService.FTETrackingStep_lastupdated" class="form-control" type="date" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Next Follow-Up</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bx bx-calendar-plus"></i></span>
+                                <input id="imp_follow_up" asp-for="SelectedService.FollowUpDate" class="form-control" type="date" />
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Next Follow-Up</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bx bx-calendar-plus"></i></span>
+                                <input id="fte_follow_up" asp-for="SelectedService.FTETrackingStep_nextfollowup" class="form-control" type="date" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-3" />
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">State Filing Process Step</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bx bx-table"></i></span>
+                                <select class="form-select" asp-for="SelectedService.StateFilingProcessStep" asp-items="@(new SelectList(Model.StateFilingProcess, "Value", "Text"))">
+                                    <option value="">-- Select Step --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Extension Filed</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bx bx-calendar"></i></span>
+                                <input asp-for="SelectedService.ExtensionFiled" class="form-control" type="date" />
+                            </div>
+                        </div>
+                    </div>
+                    
+
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">Last Updated</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bx bx-calendar-edit"></i></span>
+                                <input id="state_last_updated" asp-for="SelectedService.StateFilingProcessStepUpdated" class="form-control" type="date" />
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Audit By</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bx bx-zoom-in"></i></span>
+                                <select class="form-select" asp-for="SelectedService.AuditBy" asp-items="@(new SelectList(Model.AuditUsers, "Value", "Text"))">
+                                    <option value="">-- Select Auditor --</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Next Follow-Up</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bx bx-calendar-plus"></i></span>
+                                <input id="state_follow_up" asp-for="SelectedService.StateFiling_FollowUpDate" class="form-control" type="date" />
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Receipt ID</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bx bx-receipt"></i></span>
+                                <input asp-for="SelectedService.ReceiptId" class="form-control" placeholder="Enter Receipt ID" />
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer border-top-0 px-0 mt-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success dependent-save-btn me-2" onclick="saveServiceInfo(false)">Save</button>
+                    <button type="button" class="btn btn-primary dependent-save-btn" onclick="saveServiceInfo(true)">Save & Continue</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    // 1. ENABLE FORM (Triggered by "Add Service" button)
+    function createNewService() {
+        // Hide the gray mask so user can edit
+        $("#formDisabledMask").addClass("d-none").removeClass("d-flex");
+
+        // Clear the form for new entry
+        $("#formServiceTracker")[0].reset();
+        $("#hdnServiceId").val(0);
+
+        // Focus user on the first field
+        $("select[name='SelectedService.ServiceListId']").focus();
+    }
+
+        function saveServiceInfo(isNext) {
+        var empId = $("#Employer_TrackerIdhdn").val();
+
+        if (!empId || empId === "0") {
+            alert("Please save the Employer Information (Tab 1) first.");
+            return;
+        }
+
+        var formData = $("#formServiceTracker").serializeArray();
+
+        // Inject Employer ID
+        var found = false;
+        for (var i = 0; i < formData.length; i++) {
+            if (formData[i].name === "SelectedService.EmployerId") {
+                formData[i].value = empId;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            formData.push({ name: "SelectedService.EmployerId", value: empId });
+        }
+        var token = $('input[name="__RequestVerificationToken"]').val();
+        $.ajax({
+            url: '/Employer/AddEmployerService',
+            type: 'POST',
+            headers: {
+             "RequestVerificationToken": token
+            },
+            data: $.param(formData),
+            success: function (res) {
+                if (res.success || res === true) {
+
+                    // 1. GET SERVICE NAME
+                    var $svcDropdown = $("select[name='SelectedService.ServiceListId']");
+                    var serviceName = $svcDropdown.find("option:selected").text();
+
+                    // 2. GET STATUS TEXT (New Addition)
+                    var $statusDropdown = $("select[name='SelectedService.Status']");
+                    var statusText = $statusDropdown.find("option:selected").text();
+
+                    // Optional: Dynamic Color based on status
+                    var badgeColor = "bg-secondary"; // Default gray
+                    if (statusText === "Active") badgeColor = "bg-success"; // Green
+                    if (statusText === "Inactive") badgeColor = "bg-danger"; // Red
+                    if (statusText === "Pending") badgeColor = "bg-warning text-dark"; // Yellow
+
+                    var newItemHtml = `
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">${serviceName}</h6>
+                                <small class="badge ${badgeColor}">${statusText}</small>
+                            </div>
+                        </a>`;
+
+                    $("#emptyServicePlaceholder").hide();
+                    $("#serviceListGroup").append(newItemHtml);
+
+                    if (isNext) {
+                        window.switchToNextTab();
+                    } else {
+                        alert('Service Info saved successfully!');
+                    }
+                } else {
+                    alert('Failed to save Service Info.');
+                }
+            },
+            error: function () {
+                alert('Error occurred while saving service info.');
+            }
+        });
+    }
+</script>

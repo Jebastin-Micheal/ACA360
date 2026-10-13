@@ -1,0 +1,8 @@
+﻿@using ACA360.Web
+@using ACA360.Web.Models
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@using ACA360.Web.Helpers
+@* Encryption *@
+@using ACA360.Security.Interfaces
+@inject IEncryptionService EncryptionService
+@inherits ACA360.Web.Infrastructure.ACA360RazorPage<TModel>

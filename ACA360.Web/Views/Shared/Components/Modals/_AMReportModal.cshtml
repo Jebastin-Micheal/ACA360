@@ -1,0 +1,27 @@
+﻿<div class="modal fade" id="amReportModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0" style="background-color: #2b2b77; padding: 0.75rem 1.25rem;">
+                <h5 class="modal-title fw-bold text-white mb-0" style="font-size: 1rem;">Account Manager Report</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-4 pb-4 px-4">
+                <div class="row g-4 align-items-end">
+                    <div class="col-md-6">
+                        <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">Please select AM</label>
+                        <select id="ddlAcctManager" class="form-select" style="font-size: 0.85rem;"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">Filing Year</label>
+                        <select id="ddlAmFilingYear" class="form-select" style="font-size: 0.85rem;"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-primary w-100" id="getAmReportBtn" style="font-size: 0.85rem;">
+                            Get Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

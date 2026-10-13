@@ -1,0 +1,44 @@
+@using ACA360.Core.Models
+@model EmployerDashboardPageViewModel
+@{
+    var irs = Model.Role.Irs ?? new IrsFilingOverview();
+    var irsUrl = Url.Action("Index", "Irs", new { year = Model.FilingYear });
+}
+@* IRS AIR results for the employers in scope: latest submission per employer. *@
+<div class="tile c6 @(irs.Rejected > 0 ? "ac-danger" : "ac-indigo")" data-w="irs-overview">
+    <div class="tile-head">
+        <h4><i class="bx bx-cloud-upload"></i> IRS filing overview</h4>
+        <div class="th-spacer"></div>
+        <a class="pill pill-info" href="@irsUrl"><span class="dot"></span>Open IRS AIR</a>
+        <div class="tile-tools"></div>
+    </div>
+    <div class="comms irs-comms">
+        <div class="c">
+            <div class="n num" style="color:var(--good)">@irs.Accepted</div>
+            <div class="eyebrow">Accepted</div>
+        </div>
+        <div class="c">
+            <div class="n num" style="color:var(--crit)">@irs.Rejected</div>
+            <div class="eyebrow">Rejected</div>
+        </div>
+        <div class="c">
+            <div class="n num" style="color:var(--brand)">@irs.Transmitted</div>
+            <div class="eyebrow">Processing</div>
+        </div>
+        <div class="c">
+            <div class="n num" style="color:var(--warn)">@irs.AcceptedWithErrors</div>
+            <div class="eyebrow">With errors</div>
+        </div>
+        <div class="c">
+            <div class="n num" style="color:var(--ink-3)">@irs.ReadyToTransmit</div>
+            <div class="eyebrow">Ready to send</div>
+        </div>
+        <div class="c">
+            <div class="n num" style="color:var(--ink-3)">@irs.NotGenerated</div>
+            <div class="eyebrow">Not generated</div>
+        </div>
+    </div>
+    <div class="sub mt-2">
+        @irs.Total employer@(irs.Total == 1 ? "" : "s") for plan year @Model.FilingYear &middot; "Processing" means transmitted and awaiting the IRS response.
+    </div>
+</div>

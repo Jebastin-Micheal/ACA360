@@ -1,0 +1,72 @@
+@using ACA360.Core.Models.Tracker
+@model IEnumerable<EmployerServiceItem>
+
+@if (Model != null && Model.Any())
+{
+    foreach (var item in Model)
+    {
+        string statusPill = item.Status switch
+        {
+            "Active"    => "pill pill-active",
+            "Pending"   => "pill pill-pending",
+            "Sold"      => "pill pill-sold",
+            "Cancelled" => "pill pill-cancelled",
+            _           => "pill pill-opp"
+        };
+
+        <div class="svc-card">
+
+            <div class="svc-card-head">
+                <div style="flex:1; min-width:0;">
+                    <div class="svc-name"><i class="bx bx-receipt"></i>@item.ServiceName</div>
+                    <div class="d-flex flex-wrap gap-1 mt-2">
+                        @if (item.PlanYear > 0)
+                        {
+                            <span class="pill pill-year">@item.PlanYear</span>
+                        }
+                        @if (!string.IsNullOrEmpty(item.Status))
+                        {
+                            <span class="@statusPill">@item.Status</span>
+                        }
+                        
+                    </div>
+                </div>
+                <button class="btn-edit-svc" onclick="window.location.href='/TrackerEmployer/Dashboard/@item.EmployerId?serviceId=@item.EmployerServiceId'">
+                    <i class="bx bx-edit-alt"></i> Edit
+                </button>
+
+            </div>
+
+            <div class="svc-card-body">
+                <div class="row g-2">
+                    <div class="col-7">
+                        <div class="stat-label">1095 Process Step</div>
+                        <div class="stat-val">@(string.IsNullOrEmpty(item.ProcessStep1095) ? "—" : item.ProcessStep1095)</div>
+                    </div>
+                    <div class="col-5">
+                        <div class="stat-label">Follow-up Date</div>
+                        @{
+                            bool hasFollowUp = !string.IsNullOrEmpty(item.ProcessStep1095) && !string.IsNullOrEmpty(item.FollowUpDate);
+                            bool isOverdue = hasFollowUp && DateTime.TryParse(item.FollowUpDate, out var followUpDate) && followUpDate.Date < DateTime.Today;
+                        }
+                        <div class="stat-val @(isOverdue ? "text-danger" : "")">
+                            @(hasFollowUp? item.FollowUpDate: "—")
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    }
+}
+else
+{
+    <div class="empty-state">
+        <i class="bx bx-layer text-muted"></i>
+        <p>No services assigned yet.</p>
+        <button class="btn btn-sm btn-outline-primary mt-3" onclick="openSvcForm(0)">
+            <i class="bx bx-plus me-1"></i> Add Service
+        </button>
+    </div>
+}

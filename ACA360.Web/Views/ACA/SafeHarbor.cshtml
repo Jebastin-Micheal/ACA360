@@ -1,0 +1,143 @@
+@model ACA360.Core.Models.SafeHarborAdvice
+@{
+    ViewData["Title"] = "Safe Harbor Advice";
+    var best = Model.Best;
+    var tested = Model.Options.FirstOrDefault()?.MonthsTested ?? 0;
+    var current = Model.Options.FirstOrDefault()?.CurrentMonthsCovered ?? 0;
+    var helped = Model.Employees.Where(e => e.MonthsGained > 0).ToList();
+    var uncovered = Model.Employees.Where(e => e.BestMonths < e.MonthsTested).ToList();
+    string Name(string code) => code switch { "2F" => "W-2", "2G" => "Federal poverty line", "2H" => "Rate of pay", _ => code };
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h4 class="mb-1">Safe Harbor Advice</h4>
+        <small class="text-body opacity-75">@Model.EmployerName · Tax year @Model.Year · Advice only: the codes are not changed.</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary btn-sm" href="@Url.Action("PenaltyRisk", new { employerId = Model.EmployerId, year = Model.Year })"><i class="bx bx-shield-quarter me-1"></i>Penalty Risk</a>
+        <a class="btn btn-outline-secondary btn-sm" href="@Url.Action("CodeReview", new { employerId = Model.EmployerId, year = Model.Year })"><i class="bx bx-list-check me-1"></i>Code Review</a>
+    </div>
+</div>
+
+@if (tested == 0)
+{
+    <div class="card"><div class="card-body text-center py-5">
+        <i class="bx bx-check-shield fs-1 text-success"></i>
+        <p class="mb-1 mt-2">No month needs an affordability safe harbor for @Model.Year.</p>
+        <p class="small text-body opacity-75 mb-0">Either everyone offered coverage enrolled, another line 16 code applies, or the codes have not been generated yet.</p>
+    </div></div>
+}
+else
+{
+    <div class="alert @(current >= (best?.MonthsCovered ?? 0) ? "alert-success" : "alert-warning")" role="status" data-safe-harbor-summary>
+        @if (best != null && best.MonthsCovered > current)
+        {
+            <text><strong>@best.Name (@best.Code)</strong> would cover <strong>@best.MonthsCovered.ToString("N0")</strong> of the
+            @tested.ToString("N0") months that need a safe harbor. The codes in use now cover @current.ToString("N0").</text>
+        }
+        else
+        {
+            <text>The line 16 codes in use now already cover @current.ToString("N0") of the @tested.ToString("N0") months that need a
+            safe harbor, as many as any single safe harbor would.</text>
+        }
+        @if (uncovered.Count > 0)
+        {
+            <text> @uncovered.Count employee@(uncovered.Count == 1 ? " has" : "s have") months that no safe harbor covers: the offer is not affordable for them.</text>
+        }
+    </div>
+
+    <div class="row g-3 mb-4">
+        @foreach (var o in Model.Options)
+        {
+            var pct = o.MonthsTested == 0 ? 0 : Math.Round(100.0 * o.MonthsCovered / o.MonthsTested);
+            <div class="col-md-4">
+                <div class="card h-100 @(best != null && o.Code == best.Code ? "border-primary" : "")" data-safe-harbor="@o.Code">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <h6 class="mb-1">@o.Name</h6>
+                            <span class="badge bg-label-primary">@o.Code</span>
+                        </div>
+                        <div class="fs-4 fw-semibold">@pct%</div>
+                        <div class="small text-body opacity-75">@o.MonthsCovered.ToString("N0") of @o.MonthsTested.ToString("N0") months · @o.EmployeesFullyCovered of @o.EmployeesTested employees in full</div>
+                        <div class="progress mt-2" style="height:6px" role="progressbar" aria-label="@o.Name coverage" aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar" style="width:@pct%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h6 class="mb-0">By employee</h6>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Show">
+                <button type="button" class="btn btn-primary" data-sh-filter="gain">Would gain (@helped.Count)</button>
+                <button type="button" class="btn btn-outline-primary" data-sh-filter="uncovered">Not affordable (@uncovered.Count)</button>
+                <button type="button" class="btn btn-outline-primary" data-sh-filter="all">All (@Model.Employees.Count)</button>
+            </div>
+        </div>
+        <div class="table-responsive position-relative">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Employee</th><th class="text-end">Months</th><th class="text-end">Now</th>
+                        <th class="text-end">Rate of pay</th><th class="text-end">W-2</th><th class="text-end">FPL</th>
+                        <th>Best</th><th class="text-end">Premium</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in Model.Employees)
+                    {
+                        var kind = e.MonthsGained > 0 ? "gain" : e.BestMonths < e.MonthsTested ? "uncovered" : "ok";
+                        <tr data-sh-row="@kind" class="@(kind == "gain" ? "" : "d-none")">
+                            <td>@e.EmployeeName</td>
+                            <td class="text-end">@e.MonthsTested</td>
+                            <td class="text-end" title="Line 16 now: @e.CurrentCodes">@e.CurrentMonths</td>
+                            <td class="text-end @(e.BestCode == "2H" ? "fw-semibold" : "")">@e.RopMonths</td>
+                            <td class="text-end @(e.BestCode == "2F" ? "fw-semibold" : "")">@e.W2Months</td>
+                            <td class="text-end @(e.BestCode == "2G" ? "fw-semibold" : "")">@e.FplMonths</td>
+                            <td>
+                                @if (e.BestMonths == 0) { <span class="badge bg-label-danger">None</span> }
+                                else
+                                {
+                                    <span class="badge bg-label-primary">@e.BestCode</span> <small>@Name(e.BestCode)</small>
+                                    @if (e.MonthsGained > 0) { <small class="text-success ms-1">+@e.MonthsGained</small> }
+                                }
+                            </td>
+                            <td class="text-end text-nowrap">@(e.MinPremium == e.MaxPremium ? e.MinPremium?.ToString("C") : $"{e.MinPremium:C}–{e.MaxPremium:C}")</td>
+                        </tr>
+                    }
+                    <tr data-sh-empty class="@(helped.Count == 0 ? "" : "d-none")"><td colspan="8" class="text-center text-body opacity-75 py-3">Nobody here.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <p class="small text-body opacity-75 mt-2">
+        Tested against @Model.Year's affordability percentage and poverty line amount, using the premium, pay and hours the code generator
+        used for each month. The upload carries one pay figure (W-2 income or annual salary), so the W-2 and salaried rate-of-pay tests use the same number.
+        A safe harbor is chosen per reasonable category of employees, so use this to decide, then change line 16 on Code Review.
+    </p>
+}
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('[data-sh-filter]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var f = btn.getAttribute('data-sh-filter'), shown = 0;
+                document.querySelectorAll('[data-sh-filter]').forEach(function (b) {
+                    b.classList.toggle('btn-primary', b === btn);
+                    b.classList.toggle('btn-outline-primary', b !== btn);
+                });
+                document.querySelectorAll('[data-sh-row]').forEach(function (tr) {
+                    var show = f === 'all' || tr.getAttribute('data-sh-row') === f;
+                    tr.classList.toggle('d-none', !show);
+                    if (show) shown++;
+                });
+                var empty = document.querySelector('[data-sh-empty]');
+                if (empty) empty.classList.toggle('d-none', shown > 0);
+            });
+        });
+    </script>
+}

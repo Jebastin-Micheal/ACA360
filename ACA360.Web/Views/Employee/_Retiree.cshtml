@@ -1,0 +1,45 @@
+﻿@model ACA360.Web.Models.EmployeeListViewModel
+<div id="section_retiree">
+    <div class="section-header border-bottom">
+        <h6 class="fw-bold mb-0">Retiree Info</h6>
+        <div class="card-header-actions">
+            <button type="button" class="btn btn-sm btn-outline-primary btn-edit" onclick="toggleSection('section_retiree', true)">Edit Retiree</button>
+            <div class="action-buttons d-none">
+                <button type="button" class="btn btn-sm btn-primary" onclick="addDynamicRow('retiree')"><i class="bx bx-plus"></i> Add</button>
+                <button type="button" class="btn btn-sm btn-label-secondary" onclick="toggleSection('section_retiree', false)">Cancel</button>
+                <button type="button" class="btn btn-sm btn-success" onclick="saveGeneric('section_retiree', '/Employee/EmployeeRetireeSave', 'EmployeeEnrollment', event)">Save</button>
+
+            </div>
+        </div>
+    </div>
+    <div id="container_retiree">
+        @if (Model.SelectedEmployeeDetails?.EmployeeEnrollment != null)
+        {
+            foreach (var item in Model.SelectedEmployeeDetails.EmployeeEnrollment)
+            {
+                <div class="row g-3 mt-1 p-1 bg-label-secondary rounded dynamic-row">
+                    <div class="text-end mb-n3 mt-0 ms-2">
+                        <button onclick="removeRow(this)" class="btn btn-sm bg-danger delete-btn float-end d-none" type="button">
+                            <i class="bx bx-trash fs-6 text-white"></i>
+                        </button>
+                    </div>
+                    <input type="hidden" class="data-field" data-key="Id" value="@item.Id" />
+                    <input type="hidden" class="data-field" data-key="EmployeeCodeId" value="@item.EmployeeCodeId" />
+                    <div class="col-12">
+                        <label class="form-label small">Plan Name</label>
+                        <!-- We moved your data attributes here so your JS still finds the planId -->
+                        <select class="form-select data-field text-uppercase" data-key="planId"
+                                asp-items="@(new SelectList(ViewBag.PlanDropdown.Items, "Value", "Text", item.planId))" disabled>
+                            <option value="">-- Select Plan --</option>
+                        </select>
+                    </div>
+                    <div class="col-4"><label class="form-label small">Start Date</label><input type="date" class="form-control text-uppercase data-field start-date" data-key="Retiree_StartDate" onchange="var end=this.closest('.dynamic-row').querySelector('.end-date');end.min=this.value;if(end.value&&end.value<this.value)end.value='';" value="@(item.Retiree_StartDate?.ToString("yyyy-MM-dd"))" disabled></div>
+                    <div class="col-4"><label class="form-label small">End Date</label><input type="date" class="form-control text-uppercase data-field end-date" data-key="Retiree_EndDate" value="@(item.Retiree_EndDate?.ToString("yyyy-MM-dd"))" disabled></div>
+                    <div class="col-4 d-flex align-items-center justify-content-between">
+                        <div class="form-check mx-3 mt-7"><input class="form-check-input data-field" type="checkbox" data-key="IsRetireeEnrolled" @(item.IsRetireeEnrolled == 1 ? "checked" : "") disabled><label class="form-check-label">Retiree</label></div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>

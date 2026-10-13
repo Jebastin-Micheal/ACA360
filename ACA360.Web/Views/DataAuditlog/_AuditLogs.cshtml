@@ -1,0 +1,254 @@
+﻿@model IEnumerable<ACA360.Core.Models.AuditLogModel>
+
+<div class="audit-log-container p-3 bg-white rounded shadow-sm">
+    <!-- Filter Controls (Unchanged) -->
+    <div class="row mb-3 g-2">
+        <div class="col-md-4">
+            <input type="text" class="form-control" id="auditSearch" placeholder="Search by keyword...">
+        </div>
+        <div class="col-md-4 d-flex align-items-center gap-2">
+            <input type="date" class="form-control" id="auditStartDate">
+            <span>to</span>
+            <input type="date" class="form-control" id="auditEndDate">
+        </div>    
+        <div class="col-md-3 text-end">
+            <div class="dropdown grid-export-wrapper">
+                <button class="btn btn-outline-secondary dropdown-toggle hide-arrow" title="Export" type="button" data-bs-toggle="dropdown">
+                    <i class="bx bx-export me-1"></i> 
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end grid-export-menu shadow-sm">
+                    <li><a class="dropdown-item grid-export-action" href="#" data-format="csv"><i class="bx bx-file me-2 text-secondary"></i>CSV</a></li>
+                    <li><a class="dropdown-item grid-export-action" href="#" data-format="excel"><i class="bx bxs-file-export me-2 text-success"></i>Excel</a></li>
+                    <li><a class="dropdown-item grid-export-action" href="#" data-format="pdf"><i class="bx bxs-file-pdf me-2 text-danger"></i>PDF</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-1 text-end">
+            <button class="btn btn-outline-secondary" title="Clear" id="clearAuditFilters">
+                <i class="bx bx-reset"></i> 
+            </button>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <table class="table table-hover border align-middle text-sm ui-table" id="auditTable">
+        <thead class="text-white">
+            <tr>
+                <th>DATE</th>
+                <th>OLD VALUE</th>
+                <th>NEW VALUE</th>
+                <th>BY</th>
+                <th>ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                    <tr>
+                        <td data-order="@item.Created_at.ToString("yyyy-MM-ddTHH:mm:ss")">
+                            @item.Created_at.ToString("MM/dd/yyyy")<br />
+                            <small class="text-muted">@item.Created_at.ToString("hh:mm tt")</small>
+                        </td>
+                        <td class="text-truncate2" title="@item.FormattedOldValues">@item.FormattedOldValues</td>
+                        <td class="text-success text-truncate2" title="@item.FormattedNewValues">@item.FormattedNewValues</td>
+                        <td>@item.User_Name</td>
+                        <td>
+                            <div class="d-flex gap-1 dropdown">
+                                <!-- View Button -->
+                                <button type="button" class="btn btn-sm btn-light border btn-view-audit"
+                                        data-id="@item.Id"
+                                        data-table="@item.Table_Name"
+                                        data-action="@item.Action_Type"
+                                        data-user="@item.User_Name"
+                                        data-role="@item.User_Role"
+                                        data-date="@item.Created_at.ToString("MM/dd/yyyy hh:mm tt")"
+                                        title="View Details">
+                                    <i class="bx bx-show"></i>
+                                    <!-- Store values in hidden elements to prevent HTML quote breaking in data-attributes -->
+                                    <div class="d-none raw-old-val">@item.FormattedOldValues</div>
+                                    <div class="d-none raw-new-val">@item.FormattedNewValues</div>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+        
+
+</div>
+
+<!-- Audit Log Detail Modal -->
+<div class="modal fade" id="auditLogDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold"><i class="bx bx-history me-2"></i>Audit Log Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-sm-6">
+                                    <small class="text-muted fw-bold d-block">Table / Entity</small>
+                                    <span id="modalAuditTable" class="badge bg-primary"></span>
+                                </div>
+                                <div class="col-sm-6 text-sm-end mt-2 mt-sm-0">
+                                    <small class="text-muted fw-bold d-block">Action Type</small>
+                                    <span id="modalAuditAction" class="badge bg-secondary"></span>
+                                </div>
+                            </div>
+
+                            <div class="row mb-4 bg-light p-3 rounded">
+                                <div class="col-md-4">
+                                    <small class="text-muted fw-bold d-block">Modified By</small>
+                                    <span id="modalAuditUser"></span> (<span id="modalAuditRole" class="text-muted"></span>)
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted fw-bold d-block">Date & Time</small>
+                                    <span id="modalAuditDate"></span>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted fw-bold d-block">Record ID</small>
+                                    <small id="modalAuditId" class="text-break"></small>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="fw-bold text-danger border-bottom pb-2">Old Values</h6>
+                                    <div id="modalAuditOld" class="p-2 border rounded bg-light text-wrap text-break" style="min-height: 100px; font-family: monospace; font-size: 0.9em;"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="fw-bold text-success border-bottom pb-2">New Values</h6>
+                                    <div id="modalAuditNew" class="p-2 border rounded bg-light text-wrap text-break" style="min-height: 100px; font-family: monospace; font-size: 0.9em;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>            
+            <div class="modal-footer p-3">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- DataTables Initialization & Filtering Logic -->
+<script>
+    $(document).ready(function () {
+        // 1. Initialize DataTable
+        var table = $('#auditTable').DataTable({
+            "paging": true,
+            "ordering": true,
+            "info": true,
+            "lengthChange": true, // Enables the page size dropdown
+            "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]], // Sets the dropdown values
+            "pageLength": 10, // Default page size
+            "autoWidth": false,
+            // Added 'l' (length) to the dom to render the size dropdown above the table
+            "dom": "<'row mb-2'<'col-sm-12'l>>" +
+                   "<'row'<'col-sm-12'tr>>" +
+                   "<'row mt-3'<'col-sm-5'i><'col-sm-7'p>>",
+           "order": [[0, "desc"]], // Default sort by Date column descending
+            // Configure the export engines in the background
+            buttons: [
+                { extend: 'csv', title: 'Audit_Log_Export' },
+                { extend: 'excel', title: 'Audit_Log_Export' },
+                { extend: 'pdf', title: 'Audit_Log_Export' }
+            ]
+        });
+        // 2. Custom Export Dropdown Trigger Logic
+        $('.grid-export-action').on('click', function (e) {
+            e.preventDefault();
+            var format = $(this).data('format'); // Gets 'csv', 'excel', or 'pdf'
+
+            // Trigger the corresponding hidden DataTables button
+            if (format === 'csv') {
+                table.button('.buttons-csv').trigger();
+            } else if (format === 'excel') {
+                table.button('.buttons-excel').trigger();
+            } else if (format === 'pdf') {
+                table.button('.buttons-pdf').trigger();
+            }
+        });
+        // 2. Custom Global Search Binding
+        $('#auditSearch').on('keyup', function () {
+            table.search(this.value).draw();
+        });
+
+        // 3. Custom Date Range Filtering Logic
+        $.fn.dataTable.ext.search.push(
+            function (settings, data, dataIndex) {
+                if (settings.nTable.id !== 'auditTable') return true;
+
+                var minDateString = $('#auditStartDate').val();
+                var maxDateString = $('#auditEndDate').val();
+                var rowDateString = table.row(dataIndex).node().cells[0].getAttribute('data-order');
+
+                if (!rowDateString) return true;
+
+                var dateRow = new Date(rowDateString);
+                dateRow.setHours(0, 0, 0, 0);
+
+                if (minDateString) {
+                    var minDate = new Date(minDateString + 'T00:00:00');
+                    if (dateRow < minDate) return false;
+                }
+
+                if (maxDateString) {
+                    var maxDate = new Date(maxDateString + 'T23:59:59');
+                    if (dateRow > maxDate) return false;
+                }
+
+                return true;
+            }
+        );
+
+        // 4. Trigger filter on date input change
+        $('#auditStartDate, #auditEndDate').on('change', function () {
+            table.draw();
+        });
+
+        // 5. Clear Filters Button
+        $('#clearAuditFilters').on('click', function () {
+            $('#auditSearch').val('');
+            $('#auditStartDate').val('');
+            $('#auditEndDate').val('');
+            table.search('').draw();
+        });
+
+        // 6. View Button & Modal Logic
+        $('#auditTable').on('click', '.btn-view-audit', function () {
+            var btn = $(this);
+
+            // Populate Modal Header & Meta Data
+            $('#modalAuditTable').text(btn.data('table'));
+            $('#modalAuditAction').text(btn.data('action'));
+            $('#modalAuditUser').text(btn.data('user'));
+            $('#modalAuditRole').text(btn.data('role'));
+            $('#modalAuditDate').text(btn.data('date'));
+            $('#modalAuditId').text(btn.data('id'));
+
+            // Populate Old & New Values (Pulled from hidden divs to prevent quotes breaking attributes)
+            $('#modalAuditOld').text(btn.find('.raw-old-val').text());
+            $('#modalAuditNew').text(btn.find('.raw-new-val').text());
+
+            // Show Modal
+            var auditModal = new bootstrap.Modal(document.getElementById('auditLogDetailModal'));
+            auditModal.show();
+        });
+
+        // 7. Tie dropdown "View Details" click to the main View button
+        $('#auditTable').on('click', '.action-trigger-view', function () {
+            $(this).closest('td').find('.btn-view-audit').click();
+        });
+    });
+    
+</script>

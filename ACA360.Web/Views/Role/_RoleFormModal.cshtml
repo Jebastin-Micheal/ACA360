@@ -1,0 +1,97 @@
+﻿@model ACA360.Web.Models.RoleFormViewModel
+
+ <style>
+    .select2-container {
+        z-index: 9999 !important;
+    }
+    .select2-container--open {
+        z-index: 9999 !important;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--multiple .select2-selection__rendered {
+     padding-left: inherit;
+    }    
+   .select2-container--default .select2-selection--multiple .select2-selection__rendered 
+   {
+    padding-left: inherit;
+   }
+</style>
+<form id="roleForm" method="post">
+
+    <input type="hidden" name="Role.Id" id="Role_Id" value="@Model.Role.Id" />
+
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <label for="RoleName" class="form-label">Role Name</label>
+            <input type="text" id="RoleName" name="Menu.RoleName" class="form-control" value="@Model.Role.RoleName" />
+        </div>
+        <div class="col-md-12">
+            <label for="Description" class="form-label">Description</label>
+            <textarea id="Description" name="Menu.Description" class="form-control">@Model.Role.Description</textarea>
+        </div>
+    </div>
+   
+     <div class="form-check ms-3">
+        <input type="checkbox" id="IsActive" name="Menu.IsActive" class="form-check-input" value="true" @(Model.Role.IsActive ? "checked" : "") />
+        <label for="IsActive" class="form-check-label">Is Active</label>
+    </div> 
+
+    <!-- The Save and Cancel buttons should be in your modal footer, so remove them here -->
+
+</form>
+
+   
+
+<script>
+    $(document).ready(function () {
+        const $select = $('#SelectedActionIds');
+
+        $select.select2({
+            placeholder: 'Select actions',
+            width: '100%',
+            templateResult: function (data) {
+                if (!data.id) return data.text;
+                if (data.element && $(data.element).data('special')) {
+                    return $('<span class="select2-special-option">' + data.text + '</span>');
+                }
+                return data.text;
+            }
+        });
+
+        $select.on('select2:select', function (e) {
+            const selectedValue = e.params.data.id;
+
+            if (selectedValue === 'select_toggle') {
+                const allOptionValues = [];
+                $select.find('option').each(function () {
+                    const val = $(this).val();
+                    if (val !== 'select_toggle') {
+                        allOptionValues.push(val);
+                    }
+                });
+
+                const currentValues = $select.val() || [];
+                const isSelecting = currentValues.length < allOptionValues.length;
+
+                if (isSelecting) {
+                    $select.val(allOptionValues).trigger('change');
+                   $select.find('option[value="select_toggle"]').text('-- Deselect All --').attr('data-toggled', 'true');
+                } else {
+                    $select.val(null).trigger('change');
+                   $select.find('option[value="select_toggle"]').text('-- Select All --').attr('data-toggled', 'false');
+                }
+            }
+        });
+
+        $select.on('change', function () {
+            const totalOptions = $select.find('option').length - 1; // excluding toggle
+            const selectedOptions = ($select.val() || []).length;
+            const toggleText = selectedOptions === totalOptions ? '-- Deselect All --' : '-- Select All --';
+            $select.find('option[value="select_toggle"]').text(toggleText);
+        });
+    });
+</script>
+
+
+
+
+

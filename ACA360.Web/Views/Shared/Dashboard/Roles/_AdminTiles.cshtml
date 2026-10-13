@@ -1,0 +1,66 @@
+@using ACA360.Core.Models
+@model EmployerDashboardPageViewModel
+@{
+    var sys = Model.Role.System ?? new DashboardSystemStats();
+    ViewData["AlertsSpan"] = "c6";
+
+    bool Can(string permission) => User.IsInRole("SuperAdmin") || User.IsInRole("Admin")
+        || User.Claims.Any(c => c.Type == "Permission" && string.Equals(c.Value, permission, StringComparison.OrdinalIgnoreCase));
+
+    // Spec (Admin role sheet): Critical Alerts, User Management, IRS Templates,
+    // Employer Master, Global Settings. Each link shows only with its permission.
+    var shortcuts = new List<(string Label, string Icon, string? Url, bool Show)>
+    {
+        ("Add a user",          "bx-user-plus",     Url.Action("Index", "UserAccounts", new { open = "add" }), Model.Role.CanAddUsers),
+        ("User accounts",       "bx-user-circle",   Url.Action("Index", "UserAccounts"), Can("UserAccounts:Index")),
+        ("Roles & permissions", "bx-key",           Url.Action("Index", "Role"),         Can("Role:Index")),
+        ("IRS templates",       "bxs-file-pdf",     Url.Action("Index", "PdfTemplate"),  Can("PdfTemplate:Index")),
+        ("Employers",           "bx-buildings",     Url.Action("Index", "Employer"),     Can("Employer:Index")),
+        ("Validation rules",    "bx-check-double",  Url.Action("Index", "Rules"),        Can("Rules:Index")),
+        ("System settings",     "bx-slider-alt",    Url.Action("Index", "System"),       Can("System:Index")),
+        ("Background jobs",     "bx-server",        "/hangfire",                         User.IsInRole("SuperAdmin") || User.IsInRole("Admin"))
+    };
+    var filesDelta = sys.FilesThisMonth - sys.FilesLastMonth;
+}
+@* Admin / SuperAdmin: system figures, critical alerts, IRS overview and admin
+   shortcuts, above the shared portfolio band. Every figure is computed
+   (sp_GetDashboardSystemStats, script 032); nothing is hard-coded. *@
+<section class="scope" data-section="role">
+    <div class="scope-bar">
+        <h2>System overview</h2>
+        <div class="sb-spacer"></div>
+        <span class="hint">All employers, plan year @Model.FilingYear</span>
+    </div>
+
+    <div class="grid" id="gridRole">
+        @await Html.PartialAsync("_CountTile", new CountTileModel { Key = "sys-users", Span = "c3", Accent = "blue", Icon = "bx-group", Label = "Active users", Value = sys.ActiveUsers, Sub = $"{sys.ActiveAdmins} admins · {sys.LockedOutUsers} locked out" })
+        @await Html.PartialAsync("_CountTile", new CountTileModel { Key = "sys-online", Span = "c3", Accent = "cyan", Icon = "bx-wifi", Label = "Signed in now", Value = sys.SignedInNow, Sub = "Active in the last 15 minutes" })
+        @await Html.PartialAsync("_CountTile", new CountTileModel { Key = "sys-files", Span = "c3", Accent = "indigo", Icon = "bx-upload", Label = "Files this month", Value = sys.FilesThisMonth, Sub = $"{sys.FilesLastMonth} last month ({(filesDelta >= 0 ? "+" : "")}{filesDelta})" })
+        @await Html.PartialAsync("_CountTile", new CountTileModel { Key = "sys-temp-pw", Span = "c3", Accent = sys.PendingPassword > 0 ? "warn" : "navy", Icon = "bx-lock-open-alt", Label = "Temporary passwords", Value = sys.PendingPassword, Sub = "Users who have not set their own yet" })
+
+        <partial name="Dashboard/Roles/_AlertsTile" model="Model" view-data="ViewData" />
+
+        <partial name="Dashboard/Roles/_IrsOverviewTile" model="Model" />
+
+        <div class="tile c12 ac-navy" data-w="admin-shortcuts">
+            <div class="tile-head">
+                <h4><i class="bx bx-grid-alt"></i> Administration</h4>
+                <div class="th-spacer"></div>
+                <div class="tile-tools"></div>
+            </div>
+            <div class="shortcut-grid">
+                @foreach (var s in shortcuts.Where(s => s.Show))
+                {
+                    <a href="@s.Url" target="@(s.Url == "/hangfire" ? "_blank" : null)" rel="@(s.Url == "/hangfire" ? "noopener" : null)">
+                        <i class="bx @s.Icon"></i><span>@s.Label</span>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="tray" id="trayRole">
+        <h4>Hidden tiles &mdash; click to restore</h4>
+        <div class="tray-items"></div>
+    </div>
+</section>

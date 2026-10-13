@@ -1,0 +1,75 @@
+﻿@model ACA360.Web.Models.RoleViewModel
+
+@{
+    var metadata = Model.Metadata;
+    int countIndex = metadata != null ? ((metadata.CurrentPage - 1) * metadata.PageSize) + 1 : 1;
+}
+
+<div class="roles-table-container ui-table-responsive">
+    <table class="table table-bordered table-hover mb-0 ui-table">
+        <thead>
+            <tr class="align-middle">
+                <th>#</th>
+                <th>
+                    @await Html.PartialAsync("_SortableHeader", new
+                    {
+                        Title = "Role Name", Column = 0, SortColumn = Model.SortColumn,
+                                        SortOrder = Model.SortOrder })
+                </th>
+                <th>Description</th>
+                <th>Active</th>
+                <th>Modified</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Roles != null && Model.Roles.Count > 0)
+            {
+                foreach (var role in Model.Roles)
+                {
+                    <tr>
+                        <td class="text-muted">@(countIndex++)</td>
+                        <td>@role.RoleName</td>
+                        <td title="@role.Description" class="text-truncate" style="max-width: 250px;">@role.Description</td>
+                        <td>
+                            @if (role.IsActive)
+                            {
+                                <span class="badge bg-label-success rounded-pill">Yes</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-label-secondary rounded-pill">No</span>
+                            }
+                        </td>
+                        <td>@role.DateModified?.ToString("MM-dd-yyyy")</td>
+                        <td class="text-center">
+                            <button class="btn p-1 me-1 edit-Role-btn" data-id="@role.Id" title="Edit Role">
+                                <i class="icon-base bx bx-edit bg-info icon-sm fs-4 text-secondary"></i>
+                            </button>
+                            <button class="btn p-1 me-1 per-btn" data-id="@role.Id" title="Permissions">
+                                <i class="bx bx-user-check icon-sm fs-4 text-primary"></i>
+                            </button>
+
+                            <a href="javascript:;" class="btn btn-icon dropdown-toggle hide-arrow action-dots-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="icon-base bx bx-dots-vertical-rounded icon-md"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end m-0">
+                                <a href="javascript:;" class="dropdown-item delete-Role-btn" data-id="@role.Id">
+                                    <i class="icon-base bx bx-trash bg-danger me-1"></i> Delete
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-danger">No role items found.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@await Html.PartialAsync("_GridPagination", Model.Metadata)

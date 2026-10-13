@@ -1,0 +1,30 @@
+@* "Why this code?" (script 058): a modal any page can open with showCodeExplanation(employeeId, year). *@
+<div class="modal fade" id="codeExplanationModal" tabindex="-1" aria-labelledby="codeExplanationTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="codeExplanationTitle"><i class="bx bx-help-circle me-2"></i>Why these codes?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="codeExplanationBody" aria-live="polite"></div>
+        </div>
+    </div>
+</div>
+<script>
+    function showCodeExplanation(employeeId, year) {
+        const body = document.getElementById('codeExplanationBody');
+        body.innerHTML = '<div class="text-center text-muted py-5"><div class="spinner-border spinner-border-sm me-2"></div>Loading…</div>';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('codeExplanationModal')).show();
+        const query = new URLSearchParams({ employeeId: String(employeeId) });
+        if (year) query.set('year', String(year));
+        fetch('@Url.Action("CodeExplanation", "ACA")?' + query, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(r => r.ok ? r.text() : r.text().then(t => Promise.reject(t || 'The explanation could not be loaded.')))
+            .then(html => { body.innerHTML = html; })
+            .catch(message => {
+                const box = document.createElement('div');
+                box.className = 'alert alert-warning mb-0';
+                box.textContent = typeof message === 'string' && message.length < 300 ? message : 'The explanation could not be loaded.';
+                body.replaceChildren(box);
+            });
+    }
+</script>

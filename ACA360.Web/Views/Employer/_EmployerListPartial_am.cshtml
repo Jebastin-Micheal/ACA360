@@ -1,0 +1,256 @@
+﻿@using ACA360.Core.Extensions
+@using ACA360.Core.Models;
+@using ACA360.Web.Helpers;
+@model ACA360.Web.Models.EmployerListViewModel
+
+@* <style>
+    /* 1. Prevent Horizontal Scroll & Provide Room for Zoom */    
+
+    /* 2. Transition Logic (Scale up without hitting edges) */
+    .employer-item {
+        transition: transform 0.2s ease-in-out, background-color 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+        border-bottom: 1px solid #f2f2f3;
+    }
+
+        .employer-item:hover {
+            background-color: #fcfcff !important;
+            transform: scale(1.012);
+            z-index: 5;
+            position: relative;
+            box-shadow: 0 0.25rem 1rem rgba(161, 172, 184, 0.45);
+        }
+
+        /* 3. Active Selection State */
+        .employer-item.active-row {
+            background-color: #f0f2ff !important;
+            border-left: 0.25rem solid #696cff !important;
+        }
+
+    /* 4. Name constraints: grow up to 300px then truncate */
+    .emp-name-wrapper {
+        max-width: 300px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+    }
+
+    /* 5. Light Labels (matches screenshot color) */
+    .label-custom-light {
+        color: #a1acb8 !important;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+    }
+    /* Target the auto-generated d-flex container inside the split header */
+    .split-view-header > div.d-flex {
+        display: flex !important;
+        justify-content: space-between !important; /* Pushes Title Left, Arrows Right */
+        width: 100% !important;
+        align-items: center;
+    }
+
+    /* Target the auto-generated arrow span */
+    .split-view-header .flex-column.lh-1 {
+        margin-left: auto; /* Extra insurance to keep it on the right */
+        text-align: right;
+    }
+
+    
+</style> *@
+<style>
+    /* Stacked list row: name on top, TYPE + TAX ID beneath. Keeps the row
+           readable when the list column is narrow (split view / compare mode). */
+    #employerTable .employer-item {
+        cursor: pointer;
+        border-bottom: 1px solid #f2f2f3;
+    }
+
+        #employerTable .employer-item:hover {
+            background-color: #fcfcff;
+        }
+
+        #employerTable .employer-item.active-row {
+            background-color: #f0f2ff;
+            border-left: .25rem solid #696cff;
+        }
+
+            #employerTable .employer-item.active-row td {
+                padding-left: calc(1rem - .25rem);
+            }
+
+    /* Default (normal / not comparing): name and TYPE·TAX ID on ONE line. */
+    .emp-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        min-width: 0;
+    }
+
+    .emp-name-wrapper {
+        min-width: 0;
+        flex: 0 1 auto;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .emp-meta {
+        flex: 0 0 auto;
+        column-gap: .15rem;
+        font-size: .8125rem;
+        white-space: nowrap;
+    }
+
+    .label-custom-light {
+        color: #a1acb8;
+        font-size: .72rem;
+        text-transform: uppercase;
+    }
+
+    /* Compare mode: the list is narrow, so stack name over TYPE·TAX ID. */
+    .cmp-mode .emp-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: .25rem;
+    }
+
+    .cmp-mode .emp-name-wrapper {
+        max-width: 100%;
+    }
+
+    .cmp-mode .emp-meta {
+        flex-wrap: wrap;
+        white-space: normal;
+    }
+</style>
+
+<div class="row">
+    <div id="employerListScrollWrapper" class="card-body p-0 flex-grow-1">
+
+        <table class="table mb-0 ui-table" id="employerTable">
+            <thead class="text-uppercase">
+                <tr>
+                    <th>
+                        <div class="d-flex align-items-center justify-content-between gap-2">
+                            @await Html.PartialAsync("_SortableHeader", new { Title = "Employers List", Column = "0", SortColumn = Model.SortColumn, SortOrder = Model.SortOrder })
+                            @* Collapse the list to a vertical rail (shown only in split/compare view). *@
+                            <button type="button" id="listToggleBtn" class="cmp-icon-btn cmp-list-toggle" title="Hide the employer list">
+                                <i class="bx bx-chevrons-left"></i>
+                            </button>
+                        </div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Employers != null && Model.Employers.Count > 0)
+                {
+                    foreach (var item in Model.Employers)
+                    {
+                        <tr class="employer-item employer-active">
+
+                            <td class="py-2 px-3">
+                                @* Stacked layout: name on top, TYPE + TAX ID on a second line so the
+                                       row stays readable when the list is narrow (split / compare mode). *@
+                                <div class="emp-row">
+
+                                    @* TOP: Dynamic Name with Tooltip *@
+                                    <div class="emp-name-wrapper cursor-pointer employer-link-am text-truncate3" title="@item.Name" data-employer-id="@item.Id" data-ein="@item.TaxId" data-filingyear="@item.FilingYear">
+                                        <span class="text-primary text-uppercase fw-medium">
+                                            @item.Name
+                                        </span>
+                                    </div>
+
+                                    @* BOTTOM: Labels + Sneat Badges + Tax ID + actions *@
+                                    <div class="emp-meta d-flex align-items-center flex-wrap">
+
+                                        @* TYPE LABEL *@
+                                        <span class="label-custom-light fw-medium">TYPE:</span>
+                                        <span class="ms-2 me-3">
+                                            @if (item.CompanyId == null)
+                                            {
+                                                <span class="badge bg-label-primary rounded-pill">Primary</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-label-warning rounded-pill">Affiliate</span>
+                                            }
+                                        </span>
+
+                                        <span class="mx-2 text-light opacity-50">|</span>
+
+                                        @* TAX ID LABEL *@
+                                        <span class="label-custom-light fw-medium">TAX ID:</span>
+                                        <span class="text-dark fw-bold ms-2">@(CanViewSSNorEIN ? (item.TaxId ?? "") : DataMasker.MaskEIN(item.TaxId ?? ""))</span>
+                                        <div class="dropdown ms-auto">
+                                            <button type="button" class="btn btn-sm btn-icon dropdown-toggle hide-arrow action-dots-btn" data-bs-toggle="dropdown">
+                                                <i class="bx bx-dots-vertical-rounded"></i>
+                                            </button>
+                                            <div class="dropdown-menu dropdown-menu-end m-0">
+                                                <!-- Review Codes -->
+                                                <a asp-controller="ACA"
+                                                   asp-action="CodeReview"
+                                                   asp-route-employerId="@item.Id"
+                                                   asp-route-year="@item.FilingYear"
+                                                   class="dropdown-item text-warning"
+                                                   title="Review Codes">
+                                                    <i class="bx bx-list-check me-1"></i>Review Codes
+                                                </a>
+                                                <!-- Dashboard -->
+                                                <a asp-controller="Employer"
+                                                   asp-action="Dashboard"
+                                                   asp-route-id="@item.Id"
+                                                   asp-route-year="@item.FilingYear"
+                                                   class="dropdown-item text-info"
+                                                   title="Dashboard">
+                                                    <i class="bx bxs-dashboard me-1"></i>Dashboard
+                                                </a>
+                                                <!-- Re-Calculate Codes -->
+                                                <form class="recalculateForm" asp-controller="ACA" asp-action="GenerateCodes" method="post" autocomplete="off">
+                                                    <input type="hidden" name="employerId" value="@item.Id" />
+                                                    <input type="hidden" name="year" value="@item.FilingYear" />
+                                                    <button type="submit" class="dropdown-item text-secondary">
+                                                        <i class='bx bx-calculator me-1'></i>Re-Calculate Codes
+                                                    </button>
+                                                </form>
+                                                <!-- Delete -->
+                                                <a href="javascript:void(0);" class="dropdown-item text-danger delete-employee-btn" data-employee-id="@item.Id">
+                                                    <i class="bx bx-trash me-1"></i> Delete
+                                                </a>
+                                                <div class="dropdown-divider"></div>
+
+                                                <!-- Generate Form Header -->
+                                                <div class="px-3 py-1">
+                                                    <span class="fw-bold text-muted" style="font-size: 11px; text-transform: uppercase;">Generate Form</span>
+                                                </div>
+
+                                                <!-- Form Types -->
+                                                <a href="javascript:void(0);" class="dropdown-item form-gen-btn" data-employer-id="@item.Id" data-year="@item.FilingYear" data-form-type="1094-C">
+                                                    <i class="bx bxs-file-pdf text-danger me-1"></i> 1094-C
+                                                </a>
+                                                <a href="javascript:void(0);" class="dropdown-item form-gen-btn" data-employer-id="@item.Id" data-year="@item.FilingYear" data-form-type="1094-B">
+                                                    <i class="bx bxs-file-pdf text-danger me-1"></i> 1094-B
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td class="text-center p-5 text-muted">No employers found.</td></tr>
+                }
+            </tbody>
+        </table>
+       
+    </div>
+</div>
+
+@await Html.PartialAsync("_GridPagination", Model.Metadata)
+

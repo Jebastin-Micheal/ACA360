@@ -1,0 +1,284 @@
+@using ACA360.Web.ViewComponents
+@using ACA360.BusinessLogic.Services
+@model ACA360.Web.Models.DummyDataViewModel
+@{
+    ViewData["Title"] = "Dummy Data";
+    var d = Model.Defaults;
+    string Where(DummyIssueTarget t) => t switch
+    {
+        DummyIssueTarget.Dependent => "a dependent of the employee",
+        DummyIssueTarget.Plan => "an extra plan no one is on",
+        _ => "the employee",
+    };
+}
+@section Styles {
+    <style>
+        /* Long employer names wrap inside the picker instead of running past it on a phone. */
+        #dummyDataForm .select2-selection__choice { white-space: normal; max-width: 100%; }
+        #dummyDataForm .dd-section { font-size: .8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; color: var(--bs-secondary-color, #6c757d); }
+    </style>
+}
+@await Component.InvokeAsync("Breadcrumb", new {
+    pageTitle = "Dummy Data",
+    items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem { Title = "Administration", Url = "", IsActive = false },
+        new BreadcrumbItem { Title = "Dummy Data", Url = "", IsActive = true }
+    }
+})
+
+<div class="row g-4" data-tour-page="dummy-data">
+    <div class="col-12 col-xl-7">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-1">Make an upload file</h5>
+                <p class="text-muted small mb-0">
+                    Made-up employees, plans, premiums and dependents in the import template, ready to upload.
+                    Affiliates are named DUMMY, e-mail addresses use example.com. Nothing is saved in ACA360.
+                </p>
+            </div>
+            <div class="card-body">
+                <form id="dummyDataForm" novalidate>
+                    @Html.AntiForgeryToken()
+
+                    <div class="dd-section mb-2">Employers</div>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="ddEmployers">Existing employers</label>
+                            <select id="ddEmployers" name="EmployerIds" class="form-select select2" multiple data-placeholder="Choose employers">
+                                @foreach (var e in Model.Employers)
+                                {
+                                    <option value="@e.Id">@e.Name (@e.Ein)</option>
+                                }
+                            </select>
+                            <div class="form-text">The file uses the employer's EIN, so it uploads straight away.</div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="ddNewNames">New employer names</label>
+                            <textarea id="ddNewNames" name="NewEmployerNames" class="form-control" rows="2" placeholder="One name per line"></textarea>
+                            <div class="form-text">Only in the file, with a made-up EIN shown after the download. The upload refuses the file until an employer with that EIN exists.</div>
+                        </div>
+                    </div>
+                    <div class="form-text mb-3">Each employer gets its own file; several come as one .zip (at most 20).</div>
+
+                    <div class="dd-section mb-2">File</div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-6 col-md-4">
+                            <label class="form-label" for="ddYear">Filing year</label>
+                            <select id="ddYear" name="FilingYear" class="form-select">
+                                @foreach (var y in Model.Years.DefaultIfEmpty(d.FilingYear))
+                                {
+                                    <option value="@y" selected="@(y == d.FilingYear)">@y</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <label class="form-label" for="ddAffiliates">Affiliates per file</label>
+                            <input id="ddAffiliates" name="Affiliates" type="number" class="form-control" min="0" max="20" value="@d.Affiliates" />
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <label class="form-label" for="ddPlans">Plans per file</label>
+                            <input id="ddPlans" name="Plans" type="number" class="form-control" min="1" max="20" value="@d.Plans" />
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <label class="form-label" for="ddBanding">Premium banding</label>
+                            <select id="ddBanding" name="Banding" class="form-select">
+                                <option value="Monthly" selected>Monthly</option>
+                                <option value="Salary">Salary bands</option>
+                                <option value="Age">Age bands</option>
+                                <option value="Mixed">Mixed (plans take turns)</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <label class="form-label" for="ddEmployees">Employees per file</label>
+                            <input id="ddEmployees" name="Employees" type="number" class="form-control" min="1" max="50000" value="@d.Employees" />
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <label class="form-label" for="ddSeed">Seed (optional)</label>
+                            <input id="ddSeed" name="Seed" type="number" class="form-control" placeholder="Random" />
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <label class="form-label" for="ddDepMin">Dependents, fewest</label>
+                            <input id="ddDepMin" name="DependentsMin" type="number" class="form-control" min="0" max="6" value="@d.DependentsMin" />
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <label class="form-label" for="ddDepMax">Dependents, most</label>
+                            <input id="ddDepMax" name="DependentsMax" type="number" class="form-control" min="0" max="6" value="@d.DependentsMax" />
+                        </div>
+                    </div>
+
+                    <div class="dd-section mb-2">Employees (% of employees)</div>
+                    <div class="row g-3">
+                        <div class="col-6 col-md-3">
+                            <label class="form-label" for="ddPartTime">Part time</label>
+                            <input id="ddPartTime" name="PartTimePercent" type="number" class="form-control" min="0" max="100" value="@d.PartTimePercent" />
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label" for="ddNewHire">Hired in the year</label>
+                            <input id="ddNewHire" name="NewHirePercent" type="number" class="form-control" min="0" max="100" value="@d.NewHirePercent" />
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label" for="ddCoverage">Elect coverage</label>
+                            <input id="ddCoverage" name="CoveragePercent" type="number" class="form-control" min="0" max="100" value="@d.CoveragePercent" />
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label" for="ddUnion">Union</label>
+                            <input id="ddUnion" name="UnionPercent" type="number" class="form-control" min="0" max="100" value="@d.UnionPercent" />
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <label class="form-label" for="ddLeave">Leave in the year</label>
+                            <input id="ddLeave" name="TerminatedPercent" type="number" class="form-control" min="0" max="100" value="@d.TerminatedPercent" />
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <label class="form-label" for="ddCobra">COBRA (% of leavers)</label>
+                            <input id="ddCobra" name="CobraPercent" type="number" class="form-control" min="0" max="100" value="@d.CobraPercent" />
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <label class="form-label" for="ddRetiree">Retiree (% of leavers)</label>
+                            <input id="ddRetiree" name="RetireePercent" type="number" class="form-control" min="0" max="100" value="@d.RetireePercent" />
+                        </div>
+                    </div>
+                    <div class="form-text mb-3">
+                        Leavers end their coverage at the end of the month they leave, with their dependents; COBRA and retiree coverage
+                        start the day after (for leavers who had coverage). Union members get no plan coverage from the employer.
+                        Dependents go to employees who elected coverage: the first is a spouse, the rest children.
+                    </div>
+
+                    <div class="dd-section mb-2">Warnings and errors</div>
+                    <div class="row g-3">
+                        <div class="col-6 col-md-4">
+                            <label class="form-label" for="ddWarn">Employees with a warning (%)</label>
+                            <input id="ddWarn" name="WarningPercent" type="number" class="form-control" min="0" max="100" value="@d.WarningPercent" />
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <label class="form-label" for="ddError">Employees with an error (%)</label>
+                            <input id="ddError" name="ErrorPercent" type="number" class="form-control" min="0" max="100" value="@d.ErrorPercent" />
+                        </div>
+                    </div>
+                    <div class="form-text">Tick the kinds to use in the list. The same seed and numbers make the same file; at most 100,000 employees in one download.</div>
+
+                    <div id="ddMessage" class="alert alert-danger mt-3 mb-0 d-none" role="alert"></div>
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        <button type="submit" id="ddGenerate" class="btn btn-primary">
+                            <i class="bx bx-download me-1"></i> Generate and download
+                        </button>
+                        <button type="button" class="btn btn-label-secondary" data-preset="clean">Clean</button>
+                        <button type="button" class="btn btn-label-warning" data-preset="warnings">With warnings</button>
+                        <button type="button" class="btn btn-label-danger" data-preset="errors">With errors</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="ddResult" class="card mt-4 d-none">
+            <div class="card-header"><h5 class="mb-0">Downloaded</h5></div>
+            <div class="card-body" id="ddResultBody"></div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-5">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-1">Warnings and errors it can add</h5>
+                <p class="text-muted small mb-0">Each chosen employee gets one of the ticked kinds, taken in turn, so every kind shows up once there are
+                    enough rows. Plan kinds add one extra plan each when warnings are asked for. A warning still imports; an error keeps the
+                    row out until it is fixed.</p>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Use</th><th>Kind</th><th>What is changed</th><th>Rule</th></tr></thead>
+                    <tbody>
+                        @foreach (var i in Model.Issues)
+                        {
+                            <tr>
+                                <td><input class="form-check-input" type="checkbox" name="IssueCodes" value="@i.Code" form="dummyDataForm"
+                                           id="dd-issue-@i.Code" checked aria-label="Use: @i.Description" /></td>
+                                <td><span class="badge @(i.IsError ? "bg-label-danger" : i.IsInformation ? "bg-label-info" : "bg-label-warning")">@i.Severity</span></td>
+                                <td><label for="dd-issue-@i.Code" class="mb-0">@i.Description</label><div class="small text-muted">On @Where(i.Target)</div></td>
+                                <td>@i.RuleId</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            const $form = $('#dummyDataForm');
+            const $employers = $('#ddEmployers');
+            if ($.fn.select2) $employers.select2({ width: '100%', placeholder: $employers.data('placeholder'), closeOnSelect: false });
+
+            const presets = { clean: [0, 0], warnings: [10, 0], errors: [0, 10] };
+            $('[data-preset]').on('click', function () {
+                const p = presets[$(this).data('preset')];
+                $('#ddWarn').val(p[0]); $('#ddError').val(p[1]);
+            });
+
+            function escape(s) { return $('<div>').text(s == null ? '' : String(s)).html(); }
+            function badges(map, css) {
+                const keys = Object.keys(map || {});
+                return keys.length ? '<div class="d-flex flex-wrap gap-1 mb-1">' +
+                    keys.map(k => '<span class="badge ' + css + ' text-wrap text-start">' + escape(k) + ': ' + map[k] + '</span>').join('') + '</div>' : '';
+            }
+            function counts(map) {
+                return Object.keys(map || {}).map(k => '<span>' + escape(k) + ' <strong>' + map[k] + '</strong></span>').join('');
+            }
+            function message(text) { $('#ddMessage').toggleClass('d-none', !text).text(text || ''); }
+
+            $form.on('submit', function (e) {
+                e.preventDefault();
+                message('');
+                if (!($employers.val() || []).length && !$('#ddNewNames').val().trim()) { message('Choose an employer or type a new employer name.'); return; }
+
+                const $btn = $('#ddGenerate'), original = $btn.html();
+                $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Generating…');
+                fetch('@Url.Action("Generate", "DummyData")', {
+                    method: 'POST', body: new FormData(this), credentials: 'same-origin',
+                    headers: { 'RequestVerificationToken': $form.find('input[name="__RequestVerificationToken"]').val() }
+                })
+                .then(async resp => {
+                    if (!resp.ok) {
+                        let text = 'The file could not be generated.';
+                        try { text = (await resp.json()).message || text; } catch (_) { }
+                        throw new Error(text);
+                    }
+                    let name = 'DummyData.xlsx';
+                    const cd = resp.headers.get('content-disposition');
+                    const m = cd && /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(cd);
+                    if (m && m[1]) name = decodeURIComponent(m[1]);
+                    let files = [];
+                    try { files = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(resp.headers.get('@ACA360.Web.Controllers.DummyDataController.SummaryHeader') || ''), c => c.charCodeAt(0)))); } catch (_) { }
+                    return { blob: await resp.blob(), name, files };
+                })
+                .then(r => {
+                    const url = URL.createObjectURL(r.blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = r.name; document.body.appendChild(a); a.click(); a.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+                    $('#ddResultBody').html('<p class="mb-3 text-break"><i class="bx bx-file me-1"></i><strong>' + escape(r.name) + '</strong></p>' +
+                        r.files.map(f =>
+                            '<div class="border rounded p-3 mb-2">' +
+                                '<div class="fw-semibold text-break">' + escape(f.employerName) + ' <span class="text-muted fw-normal">' + escape(f.ein) + '</span>' +
+                                    (f.isNewEmployer ? ' <span class="badge bg-label-info">New: only in the file</span>' : '') + '</div>' +
+                                '<div class="small text-muted text-break mb-2">' + escape(f.fileName) + '</div>' +
+                                '<div class="d-flex flex-wrap gap-3 small mb-2">' +
+                                    '<span>Employers <strong>' + f.employers + '</strong></span><span>Plans <strong>' + f.plans + '</strong></span>' +
+                                    '<span>Premium rows <strong>' + f.premiums + '</strong></span><span>Employees <strong>' + f.employees + '</strong></span>' +
+                                    '<span>Dependents <strong>' + f.dependents + '</strong></span><span>Clean employees <strong>' + f.cleanEmployees + '</strong></span>' +
+                                '</div>' +
+                                '<div class="d-flex flex-wrap gap-3 small mb-2 text-muted">' + counts(f.mix) + '</div>' +
+                                badges(f.warnings, 'bg-label-warning') + badges(f.errors, 'bg-label-danger') +
+                            '</div>').join(''));
+                    $('#ddResult').removeClass('d-none');
+                })
+                .catch(err => message(err.message))
+                .finally(() => $btn.prop('disabled', false).html(original));
+            });
+        });
+    </script>
+}

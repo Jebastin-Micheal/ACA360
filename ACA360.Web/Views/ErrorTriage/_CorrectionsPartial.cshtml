@@ -1,0 +1,128 @@
+@model ACA360.Core.Models.FileCorrectionsViewModel
+@{
+    // The file's corrections (script 056): those validation made automatically and those made
+    // in the Correction Editor. A wrong one is fixed with Edit, which records that change too.
+    bool maskPii = !User.CanViewFullPii();
+    string Shown(string? column, string? value) =>
+        string.IsNullOrEmpty(value) ? "(blank)"
+        : maskPii && column != null && column.Contains("SSN", StringComparison.OrdinalIgnoreCase) ? DataMasker.MaskSSN(value)
+        : value;
+    string TableLabel(string? table) => (table ?? "").Replace("Staging_", "");
+    int total = Model.Groups.Sum(g => g.Changes);
+    int auto = Model.Groups.Where(g => g.Source == "Auto").Sum(g => g.Changes);
+    int manual = total - auto;
+    bool filtered = Model.Source != null || Model.RuleId != null || Model.ColumnName != null || !string.IsNullOrWhiteSpace(Model.Search);
+}
+
+<div id="correctionsRoot" data-total="@total">
+    @if (total == 0)
+    {
+        <div class="text-center text-muted py-5">
+            <i class="bx bx-check-shield fs-1 d-block mb-2"></i>
+            Nothing in this file has been corrected, automatically or by hand.
+        </div>
+    }
+    else
+    {
+        <div class="p-3 border-bottom">
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                <button type="button" class="btn btn-sm @(Model.Source == null ? "btn-primary" : "btn-outline-primary") corr-source" data-source="">All <span class="badge bg-white text-primary ms-1">@total</span></button>
+                <button type="button" class="btn btn-sm @(Model.Source == "Auto" ? "btn-primary" : "btn-outline-primary") corr-source" data-source="Auto">Automatic <span class="badge bg-white text-primary ms-1">@auto</span></button>
+                <button type="button" class="btn btn-sm @(Model.Source == "Manual" ? "btn-primary" : "btn-outline-primary") corr-source" data-source="Manual">Made in the editor <span class="badge bg-white text-primary ms-1">@manual</span></button>
+                <div class="ms-auto d-flex gap-2">
+                    <input type="search" id="corrSearch" class="form-control form-control-sm" style="width:220px" placeholder="Search values, names…" value="@Model.Search" aria-label="Search corrections" />
+                    @if (filtered)
+                    {
+                        <button type="button" class="btn btn-sm btn-outline-secondary corr-clear">Clear</button>
+                    }
+                </div>
+            </div>
+
+            <div class="table-responsive position-relative">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>How</th><th>Rule</th><th>Field</th><th class="text-end">Changes</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var g in Model.Groups)
+                        {
+                            bool active = Model.ColumnName == g.ColumnName && (Model.RuleId == g.RuleId || (g.RuleId == null && Model.Source == "Manual"));
+                            <tr class="corr-group @(active ? "table-primary" : "")" role="button" tabindex="0"
+                                data-source="@g.Source" data-rule="@g.RuleId" data-column="@g.ColumnName">
+                                <td>
+                                    @if (g.Source == "Manual")
+                                    {
+                                        <span class="badge bg-label-primary">Editor</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-label-info">Automatic</span>
+                                    }
+                                </td>
+                                <td class="small">@(g.RuleName ?? (g.Source == "Manual" ? "Changed by hand" : "—"))</td>
+                                <td class="small">@TableLabel(g.StagingTableName) · <span class="fw-semibold">@g.ColumnName</span></td>
+                                <td class="text-end fw-semibold">@g.Changes</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="table-responsive position-relative">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Row</th>
+                        <th>Field</th>
+                        <th>Before</th>
+                        <th>After</th>
+                        <th>By</th>
+                        <th>When</th>
+                        <th class="text-end"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-4">No corrections match.</td></tr>
+                    }
+                    @foreach (var c in Model.Items)
+                    {
+                        <tr>
+                            <td class="small">
+                                <span class="fw-semibold">@(c.RowNumber?.ToString() ?? "—")</span>
+                                <span class="text-muted d-block">@TableLabel(c.StagingTableName)@(string.IsNullOrWhiteSpace(c.RowLabel) ? "" : " · " + c.RowLabel)</span>
+                            </td>
+                            <td class="small fw-semibold">@c.ColumnName</td>
+                            <td class="small"><span class="text-danger text-decoration-line-through">@Shown(c.ColumnName, c.OldValue)</span></td>
+                            <td class="small"><span class="text-success">@Shown(c.ColumnName, c.NewValue)</span></td>
+                            <td class="small">@(c.Source == "Manual" ? (c.ChangedBy ?? "—") : "Validation")</td>
+                            <td class="small text-nowrap">@Html.LocalTime(c.CorrectedAt)</td>
+                            <td class="text-end">
+                                @if (c.RowNumber != null)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-primary edit-row-btn"
+                                            data-filelogid="@Model.FileLogId" data-tablename="@c.StagingTableName" data-rowid="@c.StagingRowId">
+                                        @(Model.CanEdit ? "Edit" : "View")
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div class="d-flex justify-content-between align-items-center p-3 border-top small">
+                <span class="text-muted">@Model.TotalCount corrections · page @Model.PageIndex of @Model.TotalPages</span>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-secondary corr-page" data-page="@(Model.PageIndex - 1)" @(Model.PageIndex <= 1 ? "disabled" : "")>Previous</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary corr-page" data-page="@(Model.PageIndex + 1)" @(Model.PageIndex >= Model.TotalPages ? "disabled" : "")>Next</button>
+                </div>
+            </div>
+        }
+    }
+</div>

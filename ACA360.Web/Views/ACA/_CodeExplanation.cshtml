@@ -1,0 +1,91 @@
+@model ACA360.Core.Models.CodeExplanation
+@using System.Globalization
+@{
+    // "Why this code?" (script 058): each month's 1095-C codes and how they were arrived at.
+    string Money(decimal? v) => v == null ? "—" : "$" + v.Value.ToString("#,##0.00", CultureInfo.InvariantCulture);
+    string Code(string? v) => string.IsNullOrWhiteSpace(v) ? "—" : v!;
+    var risk = Model.Months.Count(m => m.PenaltyRisk);
+    var byHand = Model.Months.Count(m => m.ChangedByHand);
+}
+
+<div class="code-why" data-employee="@Model.EmployeeId" data-year="@Model.FilingYear">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+        <div>
+            <h6 class="mb-0">@Model.EmployeeName</h6>
+            <small class="text-body opacity-75">@Model.EmployerName · filing year @Model.FilingYear</small>
+        </div>
+        <div class="d-flex flex-wrap gap-1">
+            @if (Model.IsLocked) { <span class="badge bg-label-warning"><i class="bx bxs-lock-alt me-1"></i>Locked: not recalculated</span> }
+            @if (Model.DisableCoding) { <span class="badge bg-label-secondary">Automatic coding switched off</span> }
+            @if (risk > 0) { <span class="badge bg-label-danger">@risk penalty-risk month@(risk == 1 ? "" : "s")</span> }
+            @if (byHand > 0) { <span class="badge bg-label-info">@byHand month@(byHand == 1 ? "" : "s") changed by hand</span> }
+        </div>
+    </div>
+
+    @if (!Model.HasDetail)
+    {
+        <div class="alert alert-info small mb-0" role="status">
+            These codes were calculated before explanations were kept. Re-calculate the codes for this employer
+            (the Re-Calculate Codes button on the Employers list) and this will show why each month has its codes.
+            @if (Model.IsLocked || Model.DisableCoding)
+            {
+                <span>This employee's codes are locked or set by hand, so they are not recalculated.</span>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="small text-body opacity-75 mb-3">
+            Calculated @(Model.CalculatedAt.HasValue ? Html.LocalTime(Model.CalculatedAt.Value) : null).
+            Limits for @Model.FilingYear: FPL @Money(Model.MonthlyFpl) a month · affordability
+            @((Model.AffordabilityPct * 100)?.ToString("0.##", CultureInfo.InvariantCulture))% · full-time @Model.FullTimeHours hours.
+            Pay on file: @(Model.HourlyRate > 0 ? Money(Model.HourlyRate) + " an hour" : "no hourly rate")
+            · @(Model.AnnualW2 > 0 ? Money(Model.AnnualW2) + " W-2" : "no W-2 pay").
+        </div>
+
+        <div class="table-responsive position-relative">
+            <table class="table table-sm align-middle mb-0">
+                <caption class="visually-hidden">Codes and reasons by month</caption>
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Month</th>
+                        <th scope="col" class="text-center">Line 14</th>
+                        <th scope="col" class="text-center">Line 15</th>
+                        <th scope="col" class="text-center">Line 16</th>
+                        <th scope="col">Why</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model.Months)
+                    {
+                        <tr class="@(m.PenaltyRisk ? "table-danger" : "")">
+                            <th scope="row" class="small">@m.MonthName</th>
+                            <td class="text-center fw-semibold">@Code(m.Line14)</td>
+                            <td class="text-center small">@Money(m.Line15)</td>
+                            <td class="text-center fw-semibold">@Code(m.Line16)</td>
+                            <td class="small">
+                                @if (m.Detail == null)
+                                {
+                                    <span class="text-body opacity-75">Not calculated.</span>
+                                }
+                                else
+                                {
+                                    @foreach (var why in m.Why14) { <div>@why</div> }
+                                    @if (m.Why15 != null) { <div class="text-body opacity-75">@m.Why15</div> }
+                                    @foreach (var why in m.Why16) { <div>@why</div> }
+                                    @if (m.ChangedByHand)
+                                    {
+                                        <div class="text-info mt-1">
+                                            <i class="bx bx-edit-alt"></i>
+                                            Changed by hand: calculated as @Code(m.Calculated14) / @Money(m.Calculated15) / @Code(m.Calculated16).
+                                        </div>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

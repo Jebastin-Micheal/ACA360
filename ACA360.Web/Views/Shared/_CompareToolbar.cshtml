@@ -1,0 +1,35 @@
+@*
+    Shared filing-year comparison toolbar (Plan / Employee and any screen using
+    compare-core.js). Order + labels match the Employer command bar:
+      record nav (Prev / N of M / Next) → "Compare Filing" picker,
+      and on the right: summary pill → Differences Only → Return.
+    The core docks this into the configured slots (command bar for Plan; the
+    quick-filter bar for Employee) and hides the record nav for modules that
+    supply no idsUrl (Employee reuses its own Prev/Next). The list toggle is NOT
+    here — it lives in the list-table header, exactly like Employer.
+*@
+<div id="cmpDetailToolbar" class="cmp-toolbar d-none">
+    <div class="cmp-nav" role="group" aria-label="Record navigation">
+        <button type="button" id="cmpNavPrev" title="Previous record (Up arrow)">
+            <i class="bx bx-chevron-left"></i> Prev
+        </button>
+        <span id="cmpNavCounter" class="cmp-nav-count"></span>
+        <button type="button" id="cmpNavNext" title="Next record (Down arrow)">
+            Next <i class="bx bx-chevron-right"></i>
+        </button>
+    </div>
+    <span class="cmp-toolbar-label"><i class="bx bx-git-compare me-1"></i>Compare Filing</span>
+    <select class="form-select form-select-sm cmp-year-select"></select>
+</div>
+
+@* Compare-mode controls — docked into the right slot while comparing. *@
+<div id="cmpToolbarCompareRight" class="cmp-right-controls d-none">
+    <span class="cmp-summary"></span>
+    <label class="cmp-onlydiff d-none" title="Show only fields that differ">
+        <input type="checkbox" id="cmpOnlyDiff"><span class="cmp-switch"></span>
+        <span class="cmp-onlydiff-text">Differences Only</span>
+    </label>
+    <button type="button" id="cmpReturnBtn" class="btn btn-sm btn-primary">
+        <i class="bx bx-arrow-back me-1"></i> Return
+    </button>
+</div>

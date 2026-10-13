@@ -1,0 +1,100 @@
+@using ACA360.Core.Models
+@model EmployerDashboardPageViewModel
+@{
+    var rows = Model.Role.FileCounts;
+    var analysts = rows.Where(r => r.AnalystUserId != null).ToList();
+    var waiting = rows.Sum(r => r.Waiting);
+    ViewData["FileCountsScope"] = "all analysts";
+}
+@* DA Supervisor: the spec's file counts by analyst (accepted, rejected, processing,
+   critical errors), above the shared portfolio band. *@
+<section class="scope" data-section="role">
+    <div class="scope-bar">
+        <h2>Analyst file results</h2>
+        <span class="pill pill-info"><span class="dot"></span>@analysts.Count analyst@(analysts.Count == 1 ? "" : "s")</span>
+        <div class="sb-spacer"></div>
+        <span class="hint">Files for plan year @Model.FilingYear</span>
+    </div>
+
+    <div class="grid" id="gridRole">
+        <partial name="Dashboard/Roles/_FileCountTiles" model="Model" view-data="ViewData" />
+
+        <div class="tile c8 ac-blue" data-w="files-by-analyst">
+            <div class="tile-head">
+                <h4><i class="bx bx-group"></i> Files by analyst</h4>
+                <div class="th-spacer"></div>
+                <a class="pill pill-info" href="@Url.Action("Index", "FileUpload")"><span class="dot"></span>Open Files</a>
+                <div class="tile-tools"></div>
+            </div>
+            <div class="tile-body">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Analyst</th>
+                                <th class="n">Accepted</th>
+                                <th class="n">Rejected</th>
+                                <th class="n">Processing</th>
+                                <th class="n">Critical errors</th>
+                                <th class="n">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @* Includes a "Not assigned" row, so the columns add up to the tiles above. *@
+                            @foreach (var r in rows.Where(r => r.AnalystUserId != null || r.Accepted + r.Rejected + r.Processing + r.CriticalErrors > 0))
+                            {
+                                var total = r.Accepted + r.Rejected + r.Processing + r.CriticalErrors;
+                                <tr>
+                                    <td style="font-weight:600">@(r.AnalystUserId == null ? "Not assigned" : r.AnalystName)</td>
+                                    <td class="n num">@r.Accepted</td>
+                                    <td class="n num">@r.Rejected</td>
+                                    <td class="n num">@r.Processing</td>
+                                    <td class="n num">
+                                        @if (r.CriticalErrors > 0)
+                                        {
+                                            <span class="pill pill-crit"><span class="dot"></span>@r.CriticalErrors</span>
+                                        }
+                                        else
+                                        {
+                                            @r.CriticalErrors
+                                        }
+                                    </td>
+                                    <td class="n num">@total</td>
+                                </tr>
+                            }
+                            @if (!analysts.Any())
+                            {
+                                <tr><td colspan="6" class="tbl-empty">No analysts or assigned files for this plan year.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tile stat c4 @(waiting > 0 ? "ac-warn" : "ac-cyan")" data-w="files-waiting">
+            <div class="tile-head"><h4>Waiting for an analyst</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+            <div class="kpi-row">
+                <span class="kpi-ico @(waiting > 0 ? "ic-warn" : "ic-cyan")"><i class="bx bx-user-plus"></i></span>
+                <div>
+                    <div class="val num">@waiting</div>
+                    <div class="sub">
+                        @if (waiting > 0)
+                        {
+                            <a href="@Url.Action("Index", "FileUpload")">Assign them on the Files page</a>
+                        }
+                        else
+                        {
+                            <span class="pill pill-good"><span class="dot"></span>Every file has an analyst</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tray" id="trayRole">
+        <h4>Hidden tiles &mdash; click to restore</h4>
+        <div class="tray-items"></div>
+    </div>
+</section>

@@ -1,0 +1,32 @@
+﻿@using ACA360.Core.Models;
+@using Microsoft.Extensions.Options
+@inject IOptions<ApplicationInfo> ApplicationOptions
+@{
+    var appInfo = ApplicationOptions.Value;
+}
+<footer class="footer py-3 bg-footer-theme">
+    <div class="container d-flex flex-wrap align-items-center justify-content-center justify-content-md-between gap-2 small text-center">
+
+        <!-- Centered links and copyright -->
+        <div class="d-flex flex-wrap align-items-center justify-content-center gap-2 mx-auto ms-md-auto me-md-0">
+            <span>
+                © @DateTime.Now.Year <strong>Medcom Benefits Solutions</strong>. All rights reserved.
+            </span>
+
+            <span>|</span>
+
+            <a href="" class="text-decoration-none">Privacy Policy</a>
+
+            <span>|</span>
+
+            <a href="" class="text-decoration-none">Terms & Conditions</a>
+
+            <span>|</span>
+
+            <a href="" class="text-decoration-none">Contact Us</a>
+        </div>
+
+        <!-- Version pushed to the right end -->
+        <span class="fw-semibold ms-md-auto me-2">Version : @appInfo.Version</span>
+    </div>
+</footer>

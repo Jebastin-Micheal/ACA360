@@ -1,0 +1,14 @@
+@using ACA360.Core.Models
+@model EmployerDashboardPageViewModel
+@{
+    // Totals across the rows given (every analyst for a supervisor, one for an analyst).
+    var rows = Model.Role.FileCounts;
+    int accepted = rows.Sum(r => r.Accepted), rejected = rows.Sum(r => r.Rejected),
+        processing = rows.Sum(r => r.Processing), critical = rows.Sum(r => r.CriticalErrors);
+    var who = ViewData["FileCountsScope"] as string ?? "files";
+}
+@* The spec's four file counts. Same status rule as the File Upload page. *@
+@await Html.PartialAsync("_CountTile", new CountTileModel { Key = "files-accepted", Span = "c3", Accent = "cyan", Icon = "bx-check-double", Label = "Files accepted", Value = accepted, Sub = $"Imported · {who}" })
+@await Html.PartialAsync("_CountTile", new CountTileModel { Key = "files-rejected", Span = "c3", Accent = "navy", Icon = "bx-block", Label = "Files rejected", Value = rejected, Sub = "Rejected or invalid file" })
+@await Html.PartialAsync("_CountTile", new CountTileModel { Key = "files-processing", Span = "c3", Accent = "blue", Icon = "bx-loader-circle", Label = "Files processing", Value = processing, Sub = "Checking, validating, ready or importing" })
+@await Html.PartialAsync("_CountTile", new CountTileModel { Key = "files-critical", Span = "c3", Accent = critical > 0 ? "danger" : "indigo", Icon = "bx-error", Label = "Critical errors", Value = critical, Sub = "Needs fixes or import failed" })

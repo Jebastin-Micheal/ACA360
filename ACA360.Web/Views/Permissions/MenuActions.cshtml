@@ -1,0 +1,42 @@
+﻿@model List<ACA360.Core.Models.Menu>
+
+@{
+    ViewData["Title"] = "Menu Actions";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <h2>Menu Actions</h2>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Menu</th>
+                        <th>Controller</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var menu in Model)
+                    {
+                        <tr>
+                            <td>@menu.MenuName</td>
+                            <td>@menu.Controller</td>
+                            <td>
+                                @foreach (var action in menu.Actions)
+                                {
+                                    <span class="badge bg-primary me-1">@action.ActionName</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

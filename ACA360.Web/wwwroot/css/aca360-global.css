@@ -1,0 +1,105 @@
+/* App-wide rules loaded on every page (from Views/Shared/Components/_Styles.cshtml).
+   These used to sit at the end of tom-select.css, which was removed with the unused
+   Tom Select library. */
+
+.fillingyear {
+    position: relative;
+}
+
+.medcomicon {
+    position: relative;
+}
+
+.menu-inner-wrapper {
+    position: sticky;
+    top: 100px;
+}
+
+.scrollable-sidenav {
+    overflow-y: auto;
+    max-height: calc(100vh - 120px);
+}
+
+.layout-navbar-fixed .layout-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+}
+
+.layout-navbar-hidden .layout-navbar {
+    display: none;
+}
+
+/* Below 1200px the top bar is sticky (above), so it already takes its own space; the template
+   still pads the page by the bar's height (helpers.js), which left an empty band under it. */
+@media (max-width: 1199.98px) {
+    .layout-navbar-fixed .layout-navbar-full .layout-page { padding-top: 0 !important; }
+}
+
+/* ---- Top bar on a phone: everything has to fit the screen. The employer name gives way
+   (cut short with "…"; the full name is its tooltip) instead of pushing the bar, and so every
+   page, wider than the screen. */
+@media (max-width: 575.98px) {
+    #layout-navbar .layout-menu-toggle.me-4 { margin-right: .5rem !important; }
+    #navbar-collapse,
+    #navbar-collapse > .navbar-nav {
+        flex: 1 1 auto;
+        min-width: 0;
+        justify-content: flex-end;
+    }
+    #navbar-collapse > .navbar-nav > .nav-item { margin-right: .375rem !important; }
+    #navbar-collapse > .navbar-nav > .nav-item:last-child { margin-right: 0 !important; }
+    #navbar-collapse [data-tour="employer"] {
+        flex: 0 1 auto;
+        min-width: 0;
+    }
+    #navbar-collapse [data-tour="employer"] > .nav-link {
+        display: flex;
+        align-items: center;
+        gap: .25rem;
+        max-width: 100%;
+        min-width: 0;
+        margin: 0;
+    }
+    #navbar-collapse [data-tour="employer"] > .nav-link > i { flex: none; margin-top: 0; }
+    #navbar-collapse [data-tour="employer"] > .nav-link > span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+/* ---- Guided tour (js/aca360-tour.js, Driver.js popoverClass "aca360-tour"): theme colours,
+   so it follows light / dark mode. */
+.driver-popover.aca360-tour {
+    --aca-tour-bg: var(--bs-paper-bg, #fff);
+    font-family: inherit;
+    background-color: var(--aca-tour-bg);
+    color: var(--bs-body-color, #384551);
+    border-radius: 10px;
+    max-width: 340px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .25);
+}
+.driver-popover.aca360-tour .driver-popover-title { color: var(--bs-heading-color, #384551); font-size: 1.05rem; }
+.driver-popover.aca360-tour .driver-popover-description { font-size: .9rem; }
+.driver-popover.aca360-tour .driver-popover-progress-text { color: var(--bs-secondary-color, #8592a3); }
+.driver-popover.aca360-tour .driver-popover-close-btn { color: var(--bs-secondary-color, #8592a3); }
+.driver-popover.aca360-tour .driver-popover-footer-btn {
+    background-color: transparent;
+    color: var(--bs-body-color, #384551);
+    border: 1px solid var(--bs-border-color, #ccc);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: .85rem;
+    text-shadow: none;
+}
+.driver-popover.aca360-tour .driver-popover-next-btn {
+    background-color: var(--bs-primary, #3F4B6E);
+    border-color: var(--bs-primary, #3F4B6E);
+    color: #fff;
+}
+.driver-popover.aca360-tour .driver-popover-arrow-side-left { border-left-color: var(--aca-tour-bg); }
+.driver-popover.aca360-tour .driver-popover-arrow-side-right { border-right-color: var(--aca-tour-bg); }
+.driver-popover.aca360-tour .driver-popover-arrow-side-top { border-top-color: var(--aca-tour-bg); }
+.driver-popover.aca360-tour .driver-popover-arrow-side-bottom { border-bottom-color: var(--aca-tour-bg); }

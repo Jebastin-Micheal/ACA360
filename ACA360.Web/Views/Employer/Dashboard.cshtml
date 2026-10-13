@@ -1,0 +1,40 @@
+@using ACA360.Core.Models
+@using ACA360.Core.Models.Dashboard
+@model EmployerDashboardPageViewModel
+@{
+    // One page for both Employer/Dashboard and the role home page (/Dashboard);
+    // the role page adds its own tiles through RoleSectionPartial.
+    ViewData["Title"] = Model.PageController == "Dashboard" ? "Dashboard" : "Employer Dashboard";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/aca360-dashboard.css" asp-append-version="true" />
+}
+<div id="dashboard-content" class="p-2">
+@Html.AntiForgeryToken()
+
+<div class="container-fluid px-4 pb-5">
+
+    <partial name="Dashboard/_DashHead" model="Model" />
+
+    <partial name="Dashboard/_Deadlines" model="Model" />
+
+    <partial name="Dashboard/_ExposureGrowth" model="Model" />
+
+    @if (!string.IsNullOrEmpty(Model.RoleSectionPartial))
+    {
+        <partial name="@Model.RoleSectionPartial" model="Model" />
+    }
+
+    <partial name="Dashboard/_PortfolioScope" model="Model" />
+
+    <partial name="Dashboard/_EmployerScope" model="Model" />
+
+    <partial name="Dashboard/_DashLayers" model="Model" />
+
+</div>
+
+</div>
+@section Scripts {
+    <partial name="Dashboard/_DashScripts" model="Model" />
+}

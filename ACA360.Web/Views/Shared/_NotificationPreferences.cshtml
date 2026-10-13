@@ -1,0 +1,38 @@
+@model List<ACA360.Core.Models.NotificationPreference>
+@* Which notifications the user gets (script 070). Used on the Notifications page and Account Settings. *@
+
+<div data-notification-preferences>
+    <p class="small text-body opacity-75">Notifications appear under the bell and on the Notifications page. Nothing is sent by e-mail.</p>
+    <div class="row g-3">
+        @foreach (var p in Model.Where(p => p.IsAvailable))
+        {
+            var info = ACA360.Core.Models.NotificationPreference.Events[p.EventCode];
+            <div class="col-md-6">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="pref_@p.EventCode" data-event-code="@p.EventCode" checked="@p.IsEnabled" />
+                    <label class="form-check-label" for="pref_@p.EventCode">@info.Label</label>
+                    <div class="small text-body opacity-75">@info.Help</div>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="small mt-2" data-pref-status aria-live="polite"></div>
+</div>
+<script>
+    (function () {
+        function bind() {
+            if (window.__notificationPrefsBound) return;
+            window.__notificationPrefsBound = true;
+            $(document).on('change', '[data-event-code]', function () {
+                var $box = $(this), $status = $box.closest('[data-notification-preferences]').find('[data-pref-status]');
+                $.post('/Notifications/SavePreference', {
+                    eventCode: $box.data('event-code'), isEnabled: $box.is(':checked'),
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').first().val()
+                }).done(function () { $status.removeClass('text-danger').addClass('text-success').text('Saved.'); })
+                  .fail(function () { $box.prop('checked', !$box.is(':checked')); $status.removeClass('text-success').addClass('text-danger').text('Not saved. Try again.'); });
+            });
+        }
+        // Rendered with the page, before the layout loads jQuery.
+        if (window.jQuery) bind(); else document.addEventListener('DOMContentLoaded', bind);
+    })();
+</script>

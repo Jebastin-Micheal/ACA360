@@ -1,0 +1,173 @@
+@model List<ACA360.Core.Models.FlaggedEmployeeGrid>
+<link rel="stylesheet" href="~/css/flag-fix.css" asp-append-version="true" />
+<style>
+
+</style>
+<div id="ffg-root" class="flag-fix-modal-container"
+     data-employer-ids="@ViewBag.EmployerIds" data-filing-year="@ViewBag.FilingYear"
+     data-get-url="@Url.Action("GetFlaggedGridData", "Flags")"
+     data-save-url="@Url.Action("SaveFlaggedGrid", "Flags")"
+     data-counts-url="@Url.Action("GetFlaggedGridFlagCounts", "Flags")">
+    @Html.AntiForgeryToken()
+    <div class="modal-header">
+        <div class="d-flex align-items-center gap-3">
+            <!-- Icon Section -->
+            <div class="d-flex align-items-center justify-content-center rounded-circle bg-danger bg-opacity-10 border border-danger border-opacity-50 flex-shrink-0 small fw-bold custom-danger-icon" style="width: 32px; height: 32px;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+
+            <!-- Text Section -->
+            <div>
+                <h5 class="modal-title mb-1">Fix Flagged Employees</h5>
+                <p class="ff-subtitle mb-0">Choose a tab and a record. Edit highlighted fields, then save your changes.</p>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="ff-toolbar">
+        <label for="filterFlag" class="ff-flag-label">
+            Flag
+            <select class="form-select form-select-sm" id="filterFlag"><option value="">All flags</option></select>
+        </label>
+        <label for="ffPageSize">
+            Show
+            <select class="form-select form-select-sm" id="ffPageSize">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select> entries
+        </label>
+        <div class="d-none">
+        <label for="filterSeverity">Status
+            <select id="filterSeverity" class="form-select form-select-sm">
+                <option value="">All</option><option value="critical">Critical</option>
+                <option value="warning">Warning</option><option value="info">Info</option>
+                <option value="editable">Editable</option><option value="edited">Edited (unsaved)</option>
+            </select>
+        </label> 
+        </div>
+        <div class="ff-legend-bar" aria-label="Filter by cell status">
+            <button type="button" class="ff-legend-filter" data-severity="" aria-pressed="false"><span class="ff-legend-box"></span>All</button>
+            <button type="button" class="ff-legend-filter" data-severity="critical" aria-pressed="false"><span class="ff-legend-box flag-crit"></span>Critical</button>
+            <button type="button" class="ff-legend-filter" data-severity="warning" aria-pressed="false"><span class="ff-legend-box flag-warn"></span>Warning</button>
+            <button type="button" class="ff-legend-filter" data-severity="info" aria-pressed="false"><span class="ff-legend-box flag-info"></span>Info</button>
+            <button type="button" class="ff-legend-filter" data-severity="editable" aria-pressed="false"><span class="ff-legend-box ff-editable-swatch"></span>Editable</button>
+            <button type="button" class="ff-legend-filter" data-severity="edited" aria-pressed="false"><span class="ff-legend-box cell-edited"></span>Edited</button>
+        </div>
+    </div>
+    @* <div class="ff-status-row">
+        <div class="ff-status-bar" aria-live="polite">
+            <span id="ffCountsStatus"></span>
+            <button type="button" id="ffRetryCounts" class="btn btn-sm btn-link" hidden>Retry flag counts</button>
+            <button type="button" id="ffRetryPage" class="btn btn-sm btn-link" hidden>Retry page</button>
+        </div>
+
+    </div> *@
+    <div id="ffGridError" class="alert alert-danger m-2" role="alert" hidden></div>
+    <div id="ffSaveStatus" class="ff-save-status" role="status" hidden></div>
+    <div id="ffFlagDetails" class="ff-flag-details pt-5" role="region" aria-label="Flag descriptions">
+        <div class="ff-details-heading">
+            <strong id="ffFlagDetailsHeading">Flag details</strong>
+            <button type="button" id="ffResetDetails" class="btn btn-sm btn-link" hidden>Reset</button>
+        </div>
+        <div id="ffFlagDetailsText" class="ff-details-text" aria-live="polite">
+            Hover a highlighted field or row to see its flags. Click a field or row to read the descriptions here.
+        </div>
+    </div>
+    <div class="mb-3">
+
+        <ul class="nav nav-pills mb-0" role="tablist" aria-label="Employee details">
+            <li class="nav-item">
+                <button class="nav-link py-3"
+                        id="ff-tab-employee"
+                        type="button"
+                        role="tab"
+                        aria-controls="ffGridWrap"
+                        aria-selected="true"
+                        data-tab="employee">
+                    <i class="bx bx-user me-2"></i>
+                    Employee Info
+                </button>
+            </li>
+
+            <li class="nav-item">
+                <button class="nav-link py-3"
+                        id="ff-tab-hire"
+                        type="button"
+                        role="tab"
+                        aria-controls="ffGridWrap"
+                        aria-selected="false"
+                        data-tab="hire">
+                    <i class="bx bx-briefcase me-2"></i>
+                    Hire
+                </button>
+            </li>
+
+            <li class="nav-item">
+                <button class="nav-link py-3"
+                        id="ff-tab-status"
+                        type="button"
+                        role="tab"
+                        aria-controls="ffGridWrap"
+                        aria-selected="false"
+                        data-tab="status">
+                    <i class="bx bx-check-circle me-2"></i>
+                    Status
+                </button>
+            </li>
+
+            <li class="nav-item">
+                <button class="nav-link py-3"
+                        id="ff-tab-payroll"
+                        type="button"
+                        role="tab"
+                        aria-controls="ffGridWrap"
+                        aria-selected="false"
+                        data-tab="payroll">
+                    <i class="bx bx-money me-2"></i>
+                    Payroll
+                </button>
+            </li>
+
+            <li class="nav-item">
+                <button class="nav-link py-3"
+                        id="ff-tab-enrollment"
+                        type="button"
+                        role="tab"
+                        aria-controls="ffGridWrap"
+                        aria-selected="false"
+                        data-tab="enrollment">
+                    <i class="bx bx-list-plus me-2"></i>
+                    Enrollment
+                </button>
+            </li>
+
+            <li class="nav-item">
+                <button class="nav-link py-3"
+                        id="ff-tab-dependent"
+                        type="button"
+                        role="tab"
+                        aria-controls="ffGridWrap"
+                        aria-selected="false"
+                        data-tab="dependent">
+                    <i class="bx bx-group me-2"></i>
+                    Covered Individuals
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div id="ffGridWrap" class="ff-grid-container" role="tabpanel" aria-labelledby="ff-tab-employee">
+        <table id="ffGrid" class="table m-0"><thead><tr></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="modal-footer ff-footer">
+        <span><strong id="changeCount">0</strong> changed cells <span class="ff-key-hint">· Tab moves to the next field</span></span>
+        <div class="pt-3">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" id="btnSaveAllBatch" class="btn ff-save-button" disabled>Save all</button>
+        </div>
+    </div>
+</div>
+<script>
+
+</script>

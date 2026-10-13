@@ -1,0 +1,84 @@
+/* =====================================================================
+   Employee filing-year comparison — MODULE-UNIQUE styles.
+   The shared split/diff chrome lives in compare-core.css; this only adjusts
+   the employee detail for compare mode.
+   ===================================================================== */
+
+/* The employee info panel normally clips to a fixed 300px box and scrolls via
+   perfect-scrollbar (JS). The compare RIGHT pane is a static clone with its
+   scripts stripped, so that scrollbar never initialises and the content is cut
+   off. In compare mode let the content flow at full height and let the pane/page
+   scroll — same behaviour as the Plan and Employer compare screens. Applies to
+   both panes so they stay aligned. */
+.cmp-active .cmp-pane .EmployeeDetailsScrollsize {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding-right: 0 !important;
+}
+/* Hide any perfect-scrollbar rails the live pane left behind. */
+.cmp-active .cmp-pane .ps__rail-x,
+.cmp-active .cmp-pane .ps__rail-y { display: none !important; }
+
+/* ---- Compare-mode layout of the month CODE cards ------------------------------------
+   Scoped to .cmp-shell, so it changes ONLY the comparison view — the live editable page is
+   untouched and there is nothing to undo when compare closes. */
+
+/* ALL-MONTHS is a live-page collapse convenience — compare always shows the 12 real months. */
+.cmp-shell .month-card[id$="card_ALL"] { display: none !important; }
+
+/* Lay the 12 months out as a tidy TWO ROWS of six (grid), instead of one squashed strip.
+   display:grid needs !important to beat Bootstrap's .d-flex utility on the container. */
+.cmp-shell .month-card-container {
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: .5rem; overflow: visible;
+}
+.cmp-shell .month-card { min-width: 0; }
+
+/* A month that differs in any line highlights the WHOLE card, the SAME on both panes: an amber
+   border ring plus an amber fill. The right pane already got an amber fill (from a .cmp-right
+   rule in compare-core.css); the LEFT (live) pane instead carries its risk coloring (green/amber
+   via .status-bar-* on the body), which sat on top and drowned the diff out — so the highlight
+   read as "right only". Overriding the body fill here makes a changed card look identical on both
+   sides. outline (not box-shadow) is deliberate: compare mode flattens .card box-shadow to
+   none !important, which would otherwise swallow a ring. */
+.cmp-shell .month-card.cmp-changed-cell {
+    outline: 2px solid var(--bs-warning, #ffc107);
+    outline-offset: -1px;
+    border-radius: .375rem;
+}
+.cmp-shell .month-card.cmp-changed-cell,
+.cmp-shell .month-card.cmp-changed-cell .month-card-body {
+    background: var(--bs-warning-bg-subtle, #fff3cd) !important;
+    border-bottom-color: var(--bs-warning, #ffc107) !important;
+}
+
+/* "Differences Only" — month-code diffs shown SIDE BY SIDE (current year | compare year),
+   months as rows and Lines 14–17 as columns, mirroring the employer ALE matrix. */
+.cmp-code-block { padding: 4px 4px 6px; }
+.cmp-code-wrap { display: flex; gap: 16px; flex-wrap: wrap; }
+.cmp-code-pane { flex: 1 1 300px; min-width: 0; overflow-x: auto; }
+.cmp-code-head {
+    font-weight: 800; font-size: 12.5px; padding: 0 2px 8px;
+    color: var(--cd-soft, var(--bs-secondary-color, #6b7180));
+}
+.cmp-code-head.cmp-code-cur { color: var(--cd-accent, var(--bs-primary, #696cff)); }
+.cmp-code-tbl {
+    width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12.5px;
+    border: 1px solid var(--cd-line, var(--bs-border-color, #e6e8f0)); border-radius: 10px; overflow: hidden;
+}
+.cmp-code-tbl th, .cmp-code-tbl td {
+    padding: 6px 8px; text-align: center; white-space: nowrap;
+    font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--bs-border-color, #eef0f7);
+}
+.cmp-code-tbl tr:last-child td { border-bottom: 0; }
+.cmp-code-tbl thead th {
+    background: var(--bs-tertiary-bg, #f7f8fb);
+    font-weight: 700; font-size: 10.5px; text-transform: uppercase; letter-spacing: .03em;
+}
+.cmp-code-tbl .cmp-code-mo { text-align: left; font-weight: 700; }
+.cmp-code-tbl td.cmp-code-diff {
+    background: var(--cd-amber-bg, var(--bs-warning-bg-subtle, #fff6e8));
+    color: var(--cd-amber-ink, var(--bs-warning-text-emphasis, #8a5410)); font-weight: 800;
+}

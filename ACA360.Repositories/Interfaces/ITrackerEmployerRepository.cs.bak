@@ -1,0 +1,34 @@
+﻿using ACA360.Core.Models.Tracker;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace ACA360.Repositories.Interfaces
+{
+    public interface ITrackerEmployerRepository
+    {
+        Task<(IEnumerable<TrackerEmployerItem>, int)> GetListAsync(EmployerFilterModel filter);
+        Task<TrackerEmployerItem> GetByIdAsync(int id);
+        //Task SaveAsync(TrackerEmployerItem item);
+        Task<int> SaveAsync(TrackerEmployerItem item); 
+        Task DeleteAsync(int id);
+
+        // Services (Right Pane)
+        Task<IEnumerable<EmployerServiceItem>> GetServicesAsync(int employerId);
+        Task SaveServiceAsync(EmployerServiceItem item);
+        Task<IEnumerable<dynamic>> GetServiceDropdownAsync();
+        Task<EmployerServiceItem> GetServiceByIdAsync(int id);
+        Task DeleteServiceAsync(int id);
+
+        // Affiliates — uses [Employer] table (companyId links affiliates to primary)
+        Task<IEnumerable<AffiliateEmployerItem>> GetAffiliatesAsync(int employerId);
+        Task<AffiliateEmployerItem> GetAffiliateByIdAsync(int id);
+        Task SaveAffiliateAsync(AffiliateEmployerItem item);
+        Task<bool> DeleteAffiliateAsync(int id);
+        // Notes — tbl_Medtracker_Note
+        Task<IEnumerable<EmployerNoteItem>> GetNotesAsync(int employerId);
+        Task<int> SaveNoteAsync(EmployerNoteItem item, int currentUserId);
+        Task DeleteNoteAsync(int noteId, int employerId);
+        //Dashboard Dropdown
+        Task<EmployerDropdownDataModel> GetDropdownDataAsync(int employerId, int? brokerId = null, int? firmId = null);
+    }
+}

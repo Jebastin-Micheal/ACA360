@@ -1,0 +1,61 @@
+@model ACA360.Core.Models.EmployeeConsentViewModel
+@{
+    Layout = null;
+    var year = ViewBag.TaxYear ?? Model.TaxYear;
+    var consentDate = Model.UpdatedOn ?? Model.CreatedOn;
+    var empName = string.IsNullOrWhiteSpace(Model.EmployeeName) ? "This employee" : Model.EmployeeName;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Consent Receipt - @empName - @year</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; padding: 32px; }
+        .receipt { max-width: 720px; margin: 0 auto; }
+        .receipt-head { border-bottom: 2px solid #696cff; padding-bottom: 12px; margin-bottom: 20px; }
+        .brand { font-size: 22px; font-weight: 700; color: #2b3a67; }
+        .brand span { color: #696cff; }
+        table td { padding: 6px 0; vertical-align: top; }
+        .label { color: #777; width: 200px; }
+        .val { font-weight: 600; }
+        .no-print { margin-bottom: 16px; }
+        @@media print { .no-print { display: none; } body { padding: 0; } }
+    </style>
+</head>
+<body>
+    <div class="receipt">
+        <div class="no-print">
+            <button class="btn btn-primary btn-sm" onclick="window.print()">Print / Save as PDF</button>
+        </div>
+
+        <div class="receipt-head d-flex justify-content-between align-items-center">
+            <span class="brand">ACA <span>360</span></span>
+            <span class="text-muted">Electronic Delivery Consent Receipt</span>
+        </div>
+
+        <h4 class="mb-3">Consent Receipt</h4>
+        <p class="text-muted">This document confirms the employee's electronic delivery consent for ACA tax forms and is retained for compliance records.</p>
+
+        <table class="w-100 mt-3">
+            <tr><td class="label">Employee Name</td><td class="val">@empName</td></tr>
+            <tr><td class="label">Employee ID</td><td class="val">EMP-@Model.EmployeeId</td></tr>
+            <tr><td class="label">Effective Tax Year</td><td class="val">@year</td></tr>
+            <tr><td class="label">Status</td><td class="val">@(string.IsNullOrEmpty(Model.Status) ? "Not set" : Model.Status)</td></tr>
+            <tr><td class="label">Delivery Preference</td><td class="val">@(string.IsNullOrEmpty(Model.DeliveryPreference) ? "—" : Model.DeliveryPreference)</td></tr>
+            <tr><td class="label">Consent ID</td><td class="val">@(string.IsNullOrEmpty(Model.ConsentId) ? "—" : Model.ConsentId)</td></tr>
+            <tr><td class="label">Consent Method</td><td class="val">@(string.IsNullOrEmpty(Model.ConsentMethod) ? "—" : Model.ConsentMethod)</td></tr>
+            <tr><td class="label">Consent Date &amp; Time</td><td class="val">@(consentDate.HasValue ? consentDate.Value.ToString("MMM dd, yyyy 'at' h:mm tt") + " UTC" : "—")</td></tr>
+            <tr><td class="label">Work Email</td><td class="val">@(string.IsNullOrEmpty(Model.WorkEmail) ? "—" : Model.WorkEmail)</td></tr>
+            <tr><td class="label">Notification Email</td><td class="val">@(string.IsNullOrEmpty(Model.NotificationEmail) ? "—" : Model.NotificationEmail)</td></tr>
+            <tr><td class="label">IP Address</td><td class="val">@(string.IsNullOrEmpty(Model.IpAddress) ? "—" : Model.IpAddress)</td></tr>
+            <tr><td class="label">Device / Browser</td><td class="val">@(string.IsNullOrEmpty(Model.UserAgent) ? "—" : Model.UserAgent)</td></tr>
+        </table>
+
+        <hr class="my-4" />
+        <p class="text-muted small mb-0">Generated @DateTime.UtcNow.ToString("MMM dd, yyyy 'at' h:mm tt") UTC &middot; &copy; @DateTime.Now.Year Medcom Benefit Solutions, LLC.</p>
+    </div>
+</body>
+</html>

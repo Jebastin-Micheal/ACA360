@@ -1,0 +1,37 @@
+@model List<ACA360.Core.Models.StateFilingResident>
+@using ACA360.BusinessLogic.Services
+@{
+    var dependents = (List<ACA360.Core.Models.StateFilingDependent>)ViewBag.Dependents;
+    bool full = ViewBag.FullSsn;
+    var depBy = dependents.GroupBy(d => d.EmployeeId).ToDictionary(g => g.Key, g => g.Count());
+    string Months(string? m) => string.IsNullOrEmpty(m) ? "Not covered" : m.Split(',').Length == 12 ? "All year" :
+        string.Join(", ", m.Split(',').Select(x => int.TryParse(x, out var n) && n is >= 1 and <= 12 ? new DateTime(2000, n, 1).ToString("MMM") : x));
+}
+
+<p class="mb-2">
+    <strong>@Model.Count</strong> resident@(Model.Count == 1 ? "" : "s"):
+    @Model.Count(r => !string.IsNullOrEmpty(r.CoveredMonths)) covered,
+    <strong>@Model.Count(r => r.SelfInsured && !string.IsNullOrEmpty(r.CoveredMonths))</strong> by a self-insured plan;
+    @dependents.Count covered dependent@(dependents.Count == 1 ? "" : "s").
+</p>
+<div class="table-responsive position-relative">
+    <table class="table table-sm align-middle mb-0">
+        <thead class="table-light">
+            <tr><th>Employee</th><th>SSN</th><th>City</th><th>Plan</th><th>Self-insured</th><th>Months covered</th><th class="text-end">Dependents</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model)
+            {
+                <tr data-resident="@r.EmployeeId">
+                    <td>@r.LastName, @r.FirstName</td>
+                    <td class="text-nowrap">@StateFilingService.Mask(r.Ssn, full)</td>
+                    <td>@r.City</td>
+                    <td>@r.PlanName</td>
+                    <td>@(r.SelfInsured ? "Yes" : "No")</td>
+                    <td>@Months(r.CoveredMonths)</td>
+                    <td class="text-end">@(depBy.TryGetValue(r.EmployeeId, out var n) ? n : 0)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

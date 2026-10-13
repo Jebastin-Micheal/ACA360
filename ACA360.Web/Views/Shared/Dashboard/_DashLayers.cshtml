@@ -1,0 +1,19 @@
+@using ACA360.Core.Models
+@using ACA360.Core.Models.Dashboard
+@model EmployerDashboardPageViewModel
+    @* ============================================================
+       MODALS + FLOATING LAYERS
+       ============================================================ *@
+    <div class="modal fade" id="scanModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-scan me-2"></i>Data Scan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="scanResultBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tip" id="tip"></div>

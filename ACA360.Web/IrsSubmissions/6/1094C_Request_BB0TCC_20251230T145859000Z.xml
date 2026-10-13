@@ -1,0 +1,1630 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<urn:Form1094CUpstreamDetail xmlns:irs="urn:us:gov:treasury:irs:common" xmlns:urn="urn:us:gov:treasury:irs:ext:aca:air:7.0">
+  <urn:SubmissionId>a67330cd-ce78-4357-908d-f263cc1af2c9</urn:SubmissionId>
+  <urn:TaxYr>2025</urn:TaxYr>
+  <urn:CorrectedInd>0</urn:CorrectedInd>
+  <urn:EmployerName>
+    <urn:BusinessNameLine1>PMG VENTURES INC</urn:BusinessNameLine1>
+  </urn:EmployerName>
+  <urn:EmployerEIN>945878064</urn:EmployerEIN>
+  <urn:EmployerAddress>
+    <urn:AddressLine1Txt />
+    <urn:CityNm />
+    <urn:USStateCd />
+    <urn:USZIPCd>00000</urn:USZIPCd>
+  </urn:EmployerAddress>
+  <urn:ContactName>
+    <urn:FirstNm>Admin</urn:FirstNm>
+    <urn:LastNm>User</urn:LastNm>
+    <urn:MiddleNm />
+  </urn:ContactName>
+  <urn:ContactPhoneNum>0000000000</urn:ContactPhoneNum>
+  <urn:AleMemberInformation>
+    <urn:Total1095CAttachedCnt>89</urn:Total1095CAttachedCnt>
+    <urn:AuthoritativeTransmittalInd>1</urn:AuthoritativeTransmittalInd>
+    <urn:Total1095CFiledCnt>89</urn:Total1095CFiledCnt>
+    <urn:AleMemberGroupInd>1</urn:AleMemberGroupInd>
+    <urn:QualifyingOfferMethodInd>0</urn:QualifyingOfferMethodInd>
+    <urn:Section4980HReliefInd>0</urn:Section4980HReliefInd>
+    <urn:NinetyEightPercentOfferMethodInd>0</urn:NinetyEightPercentOfferMethodInd>
+  </urn:AleMemberInformation>
+  <urn:AleMemberInformationMonthly>
+    <urn:AleMemberMonthlyGrp>
+      <urn:MonthId>01</urn:MonthId>
+      <urn:MinEssentialCvrgOffrInd>0</urn:MinEssentialCvrgOffrInd>
+      <urn:FullTimeEmployeeCnt>0</urn:FullTimeEmployeeCnt>
+      <urn:TotalEmployeeCnt>0</urn:TotalEmployeeCnt>
+      <urn:AggregatedGroupInd>0</urn:AggregatedGroupInd>
+    </urn:AleMemberMonthlyGrp>
+    <urn:AleMemberMonthlyGrp>
+      <urn:MonthId>02</urn:MonthId>
+      <urn:MinEssentialCvrgOffrInd>0</urn:MinEssentialCvrgOffrInd>
+      <urn:FullTimeEmployeeCnt>0</urn:FullTimeEmployeeCnt>
+      <urn:TotalEmployeeCnt>0</urn:TotalEmployeeCnt>
+      <urn:AggregatedGroupInd>0</urn:AggregatedGroupInd>
+    </urn:AleMemberMonthlyGrp>
+    <urn:AleMemberMonthlyGrp>
+      <urn:MonthId>03</urn:MonthId>
+      <urn:MinEssentialCvrgOffrInd>0</urn:MinEssentialCvrgOffrInd>
+      <urn:FullTimeEmployeeCnt>0</urn:FullTimeEmployeeCnt>
+      <urn:TotalEmployeeCnt>0</urn:TotalEmployeeCnt>
+      <urn:AggregatedGroupInd>0</urn:AggregatedGroupInd>
+    </urn:AleMemberMonthlyGrp>
+    <urn:AleMemberMonthlyGrp>
+      <urn:MonthId>04</urn:MonthId>
+      <urn:MinEssentialCvrgOffrInd>0</urn:MinEssentialCvrgOffrInd>
+      <urn:FullTimeEmployeeCnt>0</urn:FullTimeEmployeeCnt>
+      <urn:TotalEmployeeCnt>0</urn:TotalEmployeeCnt>
+      <urn:AggregatedGroupInd>0</urn:AggregatedGroupInd>
+    </urn:AleMemberMonthlyGrp>
+    <urn:AleMemberMonthlyGrp>
+      <urn:MonthId>05</urn:MonthId>
+      <urn:MinEssentialCvrgOffrInd>0</urn:MinEssentialCvrgOffrInd>
+      <urn:FullTimeEmployeeCnt>0</urn:FullTimeEmployeeCnt>
+      <urn:TotalEmployeeCnt>0</urn:TotalEmployeeCnt>
+      <urn:AggregatedGroupInd>0</urn:AggregatedGroupInd>
+    </urn:AleMemberMonthlyGrp>
+    <urn:AleMemberMonthlyGrp>
+      <urn:MonthId>06</urn:MonthId>
+      <urn:MinEssentialCvrgOffrInd>0</urn:MinEssentialCvrgOffrInd>
+      <urn:FullTimeEmployeeCnt>0</urn:FullTimeEmployeeCnt>
+      <urn:TotalEmployeeCnt>0</urn:TotalEmployeeCnt>
+      <urn:AggregatedGroupInd>0</urn:AggregatedGroupInd>
+    </urn:AleMemberMonthlyGrp>
+    <urn:AleMemberMonthlyGrp>
+      <urn:MonthId>07</urn:MonthId>
+      <urn:MinEssentialCvrgOffrInd>0</urn:MinEssentialCvrgOffrInd>
+      <urn:FullTimeEmployeeCnt>0</urn:FullTimeEmployeeCnt>
+      <urn:TotalEmployeeCnt>0</urn:TotalEmployeeCnt>
+      <urn:AggregatedGroupInd>0</urn:AggregatedGroupInd>
+    </urn:AleMemberMonthlyGrp>
+    <urn:AleMemberMonthlyGrp>
+      <urn:MonthId>08</urn:MonthId>
+      <urn:MinEssentialCvrgOffrInd>0</urn:MinEssentialCvrgOffrInd>
+      <urn:FullTimeEmployeeCnt>0</urn:FullTimeEmployeeCnt>
+      <urn:TotalEmployeeCnt>0</urn:TotalEmployeeCnt>
+      <urn:AggregatedGroupInd>0</urn:AggregatedGroupInd>
+    </urn:AleMemberMonthlyGrp>
+    <urn:AleMemberMonthlyGrp>
+      <urn:MonthId>09</urn:MonthId>
+      <urn:MinEssentialCvrgOffrInd>0</urn:MinEssentialCvrgOffrInd>
+      <urn:FullTimeEmployeeCnt>0</urn:FullTimeEmployeeCnt>
+      <urn:TotalEmployeeCnt>0</urn:TotalEmployeeCnt>
+      <urn:AggregatedGroupInd>0</urn:AggregatedGroupInd>
+    </urn:AleMemberMonthlyGrp>
+    <urn:AleMemberMonthlyGrp>
+      <urn:MonthId>10</urn:MonthId>
+      <urn:MinEssentialCvrgOffrInd>0</urn:MinEssentialCvrgOffrInd>
+      <urn:FullTimeEmployeeCnt>0</urn:FullTimeEmployeeCnt>
+      <urn:TotalEmployeeCnt>0</urn:TotalEmployeeCnt>
+      <urn:AggregatedGroupInd>0</urn:AggregatedGroupInd>
+    </urn:AleMemberMonthlyGrp>
+    <urn:AleMemberMonthlyGrp>
+      <urn:MonthId>11</urn:MonthId>
+      <urn:MinEssentialCvrgOffrInd>0</urn:MinEssentialCvrgOffrInd>
+      <urn:FullTimeEmployeeCnt>0</urn:FullTimeEmployeeCnt>
+      <urn:TotalEmployeeCnt>0</urn:TotalEmployeeCnt>
+      <urn:AggregatedGroupInd>0</urn:AggregatedGroupInd>
+    </urn:AleMemberMonthlyGrp>
+    <urn:AleMemberMonthlyGrp>
+      <urn:MonthId>12</urn:MonthId>
+      <urn:MinEssentialCvrgOffrInd>0</urn:MinEssentialCvrgOffrInd>
+      <urn:FullTimeEmployeeCnt>0</urn:FullTimeEmployeeCnt>
+      <urn:TotalEmployeeCnt>0</urn:TotalEmployeeCnt>
+      <urn:AggregatedGroupInd>0</urn:AggregatedGroupInd>
+    </urn:AleMemberMonthlyGrp>
+  </urn:AleMemberInformationMonthly>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>137</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>ISUF</urn:FirstNm>
+      <urn:LastNm>AJETI</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>247170330</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>205</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>ISUF</urn:FirstNm>
+      <urn:LastNm>AJETI</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>358281441</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>208</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CAROLYN</urn:FirstNm>
+      <urn:LastNm>BALHARRY GOODLETT</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>650670842</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>140</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CAROLYN</urn:FirstNm>
+      <urn:LastNm>BALHARRY GOODLETT</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>549569731</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>142</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>THAWNG</urn:FirstNm>
+      <urn:LastNm>BIAK</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>553762469</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>210</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>THAWNG</urn:FirstNm>
+      <urn:LastNm>BIAK</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>664873570</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>211</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>DELERON</urn:FirstNm>
+      <urn:LastNm>BILLINGER</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>655097364</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>143</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>DELERON</urn:FirstNm>
+      <urn:LastNm>BILLINGER</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>544986253</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>144</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CAMERON</urn:FirstNm>
+      <urn:LastNm>BUTT</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>166004710</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>212</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CAMERON</urn:FirstNm>
+      <urn:LastNm>BUTT</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>277115821</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>213</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>LUCAS</urn:FirstNm>
+      <urn:LastNm>CHENEY</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>897230725</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>145</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>LUCAS</urn:FirstNm>
+      <urn:LastNm>CHENEY</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>786129614</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>146</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>LAL</urn:FirstNm>
+      <urn:LastNm>CINZAH</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>782517695</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>214</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>LAL</urn:FirstNm>
+      <urn:LastNm>CINZAH</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>893628706</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>216</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CHRISTOPHER</urn:FirstNm>
+      <urn:LastNm>CUMMINGS</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>684970885</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>148</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CHRISTOPHER</urn:FirstNm>
+      <urn:LastNm>CUMMINGS</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>573869774</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>149</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CHAWN</urn:FirstNm>
+      <urn:LastNm>CUNG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>124502696</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>150</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>RO</urn:FirstNm>
+      <urn:LastNm>CUNG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>888246838</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>217</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CHAWN</urn:FirstNm>
+      <urn:LastNm>CUNG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>235613707</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>218</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>RO</urn:FirstNm>
+      <urn:LastNm>CUNG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>999357949</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>219</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>DUNG</urn:FirstNm>
+      <urn:LastNm>DANG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>954213050</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>151</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>DUNG</urn:FirstNm>
+      <urn:LastNm>DANG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>843102949</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>152</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>ELIZABETH</urn:FirstNm>
+      <urn:LastNm>DOBSON</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>366601471</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>220</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>ELIZABETH</urn:FirstNm>
+      <urn:LastNm>DOBSON</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>477712582</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>221</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>LOC</urn:FirstNm>
+      <urn:LastNm>DUONG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>288190718</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>153</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>LOC</urn:FirstNm>
+      <urn:LastNm>DUONG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>177089607</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>155</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>JACQUELINE</urn:FirstNm>
+      <urn:LastNm>GUEVARA</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>366085447</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>223</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>JACQUELINE</urn:FirstNm>
+      <urn:LastNm>GUEVARA</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>477196558</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>224</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>SAMUEL</urn:FirstNm>
+      <urn:LastNm>HAMM</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>476871880</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>156</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>SAMUEL</urn:FirstNm>
+      <urn:LastNm>HAMM</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>365760779</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>159</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>BRITTANY</urn:FirstNm>
+      <urn:LastNm>HASSELL</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>532529118</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>227</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>BRITTANY</urn:FirstNm>
+      <urn:LastNm>HASSELL</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>643630229</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>231</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>PHUONG</urn:FirstNm>
+      <urn:LastNm>HO</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>880509171</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>163</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>PHUONG</urn:FirstNm>
+      <urn:LastNm>HO</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>779498060</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>164</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>DAT</urn:FirstNm>
+      <urn:LastNm>HUYNH</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>244602770</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>232</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>DAT</urn:FirstNm>
+      <urn:LastNm>HUYNH</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>355713881</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>235</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>RAL</urn:FirstNm>
+      <urn:LastNm>KUNG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>801508534</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>167</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>RAL</urn:FirstNm>
+      <urn:LastNm>KUNG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>790497423</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>169</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>TUU</urn:FirstNm>
+      <urn:LastNm>LE</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>344727009</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>170</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>XUAN</urn:FirstNm>
+      <urn:LastNm>LE</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>779575101</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>237</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>TUU</urn:FirstNm>
+      <urn:LastNm>LE</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>455838110</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>238</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>XUAN</urn:FirstNm>
+      <urn:LastNm>LE</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>880686212</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>240</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>PHUN</urn:FirstNm>
+      <urn:LastNm>LUNG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>894688250</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>241</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>THAWNG</urn:FirstNm>
+      <urn:LastNm>LUNG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>894688257</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>172</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>PHUN</urn:FirstNm>
+      <urn:LastNm>LUNG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>783577149</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>173</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>THAWNG</urn:FirstNm>
+      <urn:LastNm>LUNG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>783577146</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>174</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>DAVID</urn:FirstNm>
+      <urn:LastNm>MANG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>781573272</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>242</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>DAVID</urn:FirstNm>
+      <urn:LastNm>MANG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>892684383</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>243</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CODY</urn:FirstNm>
+      <urn:LastNm>MARINELLO</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>609335450</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>244</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>MATTHEW</urn:FirstNm>
+      <urn:LastNm>MARINELLO</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>406189917</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>175</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CODY</urn:FirstNm>
+      <urn:LastNm>MARINELLO</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>598224349</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>176</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>MATTHEW</urn:FirstNm>
+      <urn:LastNm>MARINELLO</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>395078806</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>177</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CHRISTIAN</urn:FirstNm>
+      <urn:LastNm>MARTINEZ</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>563505137</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>245</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CHRISTIAN</urn:FirstNm>
+      <urn:LastNm>MARTINEZ</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>674616248</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>246</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>ALEX</urn:FirstNm>
+      <urn:LastNm>MAZINGUE</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>461016430</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>178</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>ALEX</urn:FirstNm>
+      <urn:LastNm>MAZINGUE</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>350905329</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>179</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>IAN</urn:FirstNm>
+      <urn:LastNm>MCRAE</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>781185563</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>247</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>IAN</urn:FirstNm>
+      <urn:LastNm>MCRAE</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>892296674</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>250</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>DINH</urn:FirstNm>
+      <urn:LastNm>NGUYEN</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>960243848</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>251</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>KHANH</urn:FirstNm>
+      <urn:LastNm>NGUYEN</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>358165999</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>252</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>LUAT</urn:FirstNm>
+      <urn:LastNm>NGUYEN</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>422751803</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>253</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>PHUC</urn:FirstNm>
+      <urn:LastNm>NGUYEN</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>921962574</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>182</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>DINH</urn:FirstNm>
+      <urn:LastNm>NGUYEN</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>859132737</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>183</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>KHANH</urn:FirstNm>
+      <urn:LastNm>NGUYEN</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>247054888</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>184</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>LUAT</urn:FirstNm>
+      <urn:LastNm>NGUYEN</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>311640792</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>185</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>PHUC</urn:FirstNm>
+      <urn:LastNm>NGUYEN</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>810851463</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>186</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CRAIG</urn:FirstNm>
+      <urn:LastNm>ORI</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>471859441</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>254</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CRAIG</urn:FirstNm>
+      <urn:LastNm>ORI</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>582960552</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>255</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>BRIAN</urn:FirstNm>
+      <urn:LastNm>OZMENT</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>468675408</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>187</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>BRIAN</urn:FirstNm>
+      <urn:LastNm>OZMENT</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>357564397</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>188</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>DINH</urn:FirstNm>
+      <urn:LastNm>PHAN</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>891943897</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>256</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>DINH</urn:FirstNm>
+      <urn:LastNm>PHAN</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>902054908</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>257</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>COCO</urn:FirstNm>
+      <urn:LastNm>PRICE</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>470812449</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>189</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>COCO</urn:FirstNm>
+      <urn:LastNm>PRICE</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>369701338</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>190</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CASEY</urn:FirstNm>
+      <urn:LastNm>SIMMONS</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>604806542</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>191</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CHRISTOPHER</urn:FirstNm>
+      <urn:LastNm>SIMMONS</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>635680002</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>258</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CASEY</urn:FirstNm>
+      <urn:LastNm>SIMMONS</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>715917653</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>259</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>CHRISTOPHER</urn:FirstNm>
+      <urn:LastNm>SIMMONS</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>746791113</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>260</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>BRYAN</urn:FirstNm>
+      <urn:LastNm>SLUSS</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>477698030</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>192</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>BRYAN</urn:FirstNm>
+      <urn:LastNm>SLUSS</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>366587929</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>194</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>LAL</urn:FirstNm>
+      <urn:LastNm>THANG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>782451983</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>195</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>VAN</urn:FirstNm>
+      <urn:LastNm>THANG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>858300421</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>262</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>LAL</urn:FirstNm>
+      <urn:LastNm>THANG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>893562094</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>263</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>VAN</urn:FirstNm>
+      <urn:LastNm>THANG</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>969411532</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>265</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>HONG</urn:FirstNm>
+      <urn:LastNm>TRAN</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>475010084</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>197</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>HONG</urn:FirstNm>
+      <urn:LastNm>TRAN</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>364909973</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>198</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>GIANG</urn:FirstNm>
+      <urn:LastNm>TRINH</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>622341493</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>266</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>GIANG</urn:FirstNm>
+      <urn:LastNm>TRINH</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>733452504</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+  <urn:Form1095CUpstreamDetail>
+    <urn:RecordId>201</urn:RecordId>
+    <urn:CorrectedInd>0</urn:CorrectedInd>
+    <urn:EmployeeName>
+      <urn:FirstNm>SHARONDA</urn:FirstNm>
+      <urn:LastNm>WARD SAWYERS</urn:LastNm>
+      <urn:MiddleNm />
+    </urn:EmployeeName>
+    <urn:EmployeeSSN>366668313</urn:EmployeeSSN>
+    <urn:EmployeeOfferAndCoverage>
+      <urn:EmployeeOfferMethod>
+        <urn:MonthId>00</urn:MonthId>
+        <urn:OfferOfCoverageCd>1H</urn:OfferOfCoverageCd>
+        <urn:EmployeeRequiredContriAmt />
+      </urn:EmployeeOfferMethod>
+    </urn:EmployeeOfferAndCoverage>
+  </urn:Form1095CUpstreamDetail>
+</urn:Form1094CUpstreamDetail>

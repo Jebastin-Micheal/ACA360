@@ -1,0 +1,1452 @@
+@using ACA360.Core.Extensions
+@using ACA360.Web.ViewComponents
+@using ACA360.Web.Models
+@model ACA360.Web.Models.GroupedDashboardViewModel
+
+@{
+    ViewData["Title"] = "Mission Control";
+}
+
+@* --- SAFE STYLES (Removed @Section wrapper to prevent crashes) --- *@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="~/css/import-analysis.css" asp-append-version="true" />
+<style>
+    /* Live refresh indicator: the dot pulses only while files are being polled */
+    #liveUpdated .live-dot {
+        display: none;
+        width: 7px; height: 7px; border-radius: 50%;
+        background: var(--bs-success); margin-right: 6px;
+        vertical-align: middle;
+        animation: livePulse 1.6s ease-in-out infinite;
+    }
+    #liveUpdated.is-live .live-dot { display: inline-block; }
+    @@keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+    /* A row whose status just changed */
+    tr.row-flash > td { animation: rowFlash 2.4s ease-out 1; }
+    @@keyframes rowFlash { 0% { background-color: rgba(var(--bs-primary-rgb), .18); } 100% { background-color: transparent; } }
+
+    /* Metric Cards - Hover Effect */
+    .card-metric {
+        transition: all 0.2s ease-in-out;
+        cursor: pointer;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+        .card-metric:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+        }
+
+    /* Unified Control Panel */
+    .control-panel {  
+        background: #fff;
+        border-radius: 0.75rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        padding: 1.25rem;
+        border: 1px solid rgba(0,0,0,0.02);
+    }
+
+    /* Better Loader with Backdrop */
+    #loader {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8); /* Dims the screen */
+        backdrop-filter: blur(2px); /* Modern blur effect */
+        z-index: 9999;
+        display: flex; /* Flex to center perfectly */
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+
+    .filter-bar {       
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    /* STRICT COLOR CODING FOR LOGS */
+    .log-item-error {
+        color: #dc3545 !important; /* Bootstrap Danger Red */
+        background-color: #fff5f5;
+        border-left: 4px solid #dc3545;
+    }
+
+    .log-item-success {
+        color: #198754 !important; /* Bootstrap Success Green */
+        background-color: #f6fbf7;
+        border-left: 4px solid #198754;
+    }
+
+    .detailed-log-container {
+        max-height: 250px;
+        overflow-y: auto;
+        border: 1px solid #e0e0e0;
+        border-radius: 0.375rem;
+        text-align: left;
+    }
+</style>
+
+@* 1. CRITICAL: Anti-Forgery Token for AJAX POST requests *@
+@Html.AntiForgeryToken()
+
+@* 2. SAFE BREADCRUMB (Replaced crashing Component with standard HTML) *@
+@{
+    try
+    {
+        @await Component.InvokeAsync("Breadcrumb", new {
+        pageTitle = "File Management",
+    items = new List<BreadcrumbItem> {
+        new BreadcrumbItem { Title = "Client Files", Url = "", IsActive = true }
+        }
+        })
+    } catch {
+    // Fallback if Component fails
+    <nav aria-label="breadcrumb" class="mb-4"><ol class="breadcrumb"><li class="breadcrumb-item active">Client Files</li></ol></nav>
+}
+}
+
+@* 3. NOTIFICATIONS *@
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <i class="bx bx-check-circle me-1"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <i class="bx bx-error me-1"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger">
+        <strong>System Error:</strong> @ViewBag.ErrorMessage
+    </div>
+}
+
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-metric h-100 border-start border-primary" onclick="applyQuickFilter('All')">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted fw-semibold d-block mb-1">Total Files</span>
+                        <h3 class="mb-0 text-dark" id="cardTotal">@Model.StatusCounts.Total</h3>
+                    </div>
+                    <div class="avatar flex-shrink-0">
+                        <span class="avatar-initial rounded bg-label-primary"><i class="bx bx-cloud-upload bx-sm"></i></span>
+                    </div>
+                </div>
+                <small class="text-muted mt-2 d-block">In the current view</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-metric h-100 border-start border-danger" onclick="applyQuickFilter('Attention')">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted fw-semibold d-block mb-1">Action Required</span>
+                        <h3 class="mb-0 text-danger" id="cardAction">@Model.StatusCounts.ActionRequired</h3>
+                    </div>
+                    <div class="avatar flex-shrink-0">
+                        <span class="avatar-initial rounded bg-label-danger"><i class="bx bx-error bx-sm"></i></span>
+                    </div>
+                </div>
+                <small class="text-danger mt-2 d-block fw-bold">Assign, fix or import</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-metric h-100 border-start border-info" onclick="applyQuickFilter('Processing')">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted fw-semibold d-block mb-1">Processing</span>
+                        <h3 class="mb-0 text-info" id="cardProcessing">@Model.StatusCounts.Processing</h3>
+                    </div>
+                    <div class="avatar flex-shrink-0">
+                        <span class="avatar-initial rounded bg-label-info"><i class="bx bx-loader-circle bx-spin bx-sm"></i></span>
+                    </div>
+                </div>
+                <small class="text-muted mt-2 d-block">Live Activity</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-metric h-100 border-start border-success" onclick="applyQuickFilter('Imported')">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted fw-semibold d-block mb-1">Imported</span>
+                        <h3 class="mb-0 text-success" id="cardCompleted">@Model.StatusCounts.Completed</h3>
+                    </div>
+                    <div class="avatar flex-shrink-0">
+                        <span class="avatar-initial rounded bg-label-success"><i class="bx bx-check-double bx-sm"></i></span>
+                    </div>
+                </div>
+                <small class="text-muted mt-2 d-block">Data is in the live tables</small>
+            </div>
+        </div>
+    </div>
+</div>
+<ul class="nav nav-pills mb-3" id="viewModeTabs" data-tour-page="files">
+    <li class="nav-item">
+        <button class="nav-link active" onclick="switchView('Active')" id="tab-Active">
+            <i class="bx bx-folder-open me-1"></i> Active Files
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" onclick="switchView('Archived')" id="tab-Archived">
+            <i class="bx bx-archive me-1"></i> Archive
+        </button>
+    </li>
+    @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin"))
+    {
+        <li class="nav-item ms-auto">
+            <button class="nav-link btn-label-danger text-danger" onclick="switchView('RecycleBin')" id="tab-RecycleBin">
+                <i class="bx bx-trash me-1"></i> Recycle Bin
+            </button>
+        </li>
+    }
+</ul>
+<div class="card filter-bar mb-4">
+    <div class="row g-3 align-items-center">
+    <div class="col-lg-3 col-md-6">
+        <div class="input-group input-group-merge">
+                <span class="input-group-text border-light ps-3"><i class="bx bx-search"></i></span>
+                <input type="text" id="searchInput" class="form-control border-light" placeholder="Search files, employers, EIN..." value="@Model.SearchTerm">
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6">
+        <div class="input-group">
+                <span class="input-group-text border-light ps-3"><i class="bx bx-calendar"></i></span>
+                <input type="text" id="dateRangePicker" class="form-control border-light" placeholder="Filter by Date" value="@Model.DateRange">
+        </div>
+    </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="form-check form-switch d-flex align-items-center gap-2 pt-1">
+                <input class="form-check-input" type="checkbox" id="myFilesToggle" @(Model.ShowMyFilesOnly ? "checked" : "")>
+                <label class="form-check-label fw-bold text-heading mb-0" for="myFilesToggle">My Uploads Only</label>
+            </div>
+        </div>
+
+        <div class="col-lg-2 col-md-6 text-end">
+            <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                <i class="bx bx-cloud-upload me-1"></i> Upload
+            </button>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-3 align-items-center flex-wrap">
+        <span class="text-muted small me-2">Status:</span>
+        <input type="hidden" id="currentFilter" value="@Model.SelectedStatus" />
+
+        @{
+            // Filter value (a bucket name, or All/Attention/Processing) → label and colour.
+            var chips = new[]
+            {
+                ("All", "All", "primary"),
+                ("Attention", "Action required", "danger"),
+                ("NeedsAssignment", "Waiting for analyst", "warning"),
+                ("NeedsFixes", "Needs fixes", "danger"),
+                ("ReadyToImport", "Ready to import", "info"),
+                ("Processing", "Processing", "info"),
+                ("Imported", "Imported", "success"),
+                ("OnHold", "On hold", "secondary")
+            };
+        }
+        @foreach (var (value, text, color) in chips)
+        {
+            <button class="btn btn-sm rounded-pill filter-chip @(Model.SelectedStatus == value ? $"btn-label-{color} active" : "btn-outline-secondary")"
+                    data-filter="@value" data-color="@color">@text</button>
+        }
+        <small id="liveUpdated" class="ms-auto text-muted" title="The list refreshes itself while files are processing.">
+            <span class="live-dot"></span>Updated <span class="js-age">just now</span>
+        </small>
+    </div>
+</div>
+
+@* Bulk actions (idea #20): shows while files are ticked *@
+<div class="card mb-3 d-none position-sticky" style="top: 4.5rem; z-index: 5;" data-bulk-bar role="region" aria-label="Selected files">
+    <div class="card-body py-2 d-flex flex-wrap align-items-center gap-2">
+        <strong><span data-bulk-count>0</span> selected</strong>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-files-bulk="assign"><i class="bx bx-user-check me-1"></i>Assign to analyst…</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-files-bulk="hold"><i class="bx bx-pause me-1"></i>Put on hold</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-files-bulk="release"><i class="bx bx-play me-1"></i>Release hold</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-files-bulk="archive"><i class="bx bx-archive-in me-1"></i><span data-archive-label>Archive</span></button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-files-bulk="report"><i class="bx bx-file-find me-1"></i>Validation reports</button>
+        <button type="button" class="btn btn-sm btn-link ms-auto" data-bulk-clear>Clear</button>
+        <span class="small text-body opacity-75 w-100" data-bulk-progress aria-live="polite"></span>
+    </div>
+</div>
+
+<div id="fileTableContainer" class="position-relative">
+    <partial name="_FileLogTable" model="Model" />
+</div>
+
+<div id="loader" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:9999;">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+
+<div class="modal fade" id="uploadModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        @await Html.PartialAsync("_Upload", Model.UploadModel ?? new ACA360.Core.Models.UploadedFileModel())
+    </div>
+</div>
+
+@if (TempData["DuplicateWarning"] is bool duplicateWarning && duplicateWarning)
+{
+    <div class="modal fade" id="duplicateWarningModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger">
+                <div class="modal-header bg-label-danger">
+                    <h5 class="modal-title text-danger"><i class='bx bx-error me-2'></i>Duplicate File Detected</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <p class="mb-3">This file appears to be identical to one already in the system:</p>
+                                <div class="alert alert-warning">
+                                    <ul class="mb-0 small">
+                                        <li><strong>Original File:</strong> @TempData["DuplicateFileName"]</li>
+                                        <li><strong>Uploaded On:</strong> @TempData["DuplicateDate"]</li>
+                                        <li><strong>Uploaded By:</strong> @TempData["DuplicateUser"]</li>
+                                    </ul>
+                                </div>
+                                <p class="mb-0 fw-bold">Do you want to upload it anyway?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer py-3">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="$('#forceUploadOverride').show(); $('#duplicateWarningModal').modal('hide'); $('#uploadModal').modal('show');">
+                        Return to Upload
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var myModal = new bootstrap.Modal(document.getElementById('duplicateWarningModal'));
+            myModal.show();
+        });
+    </script>
+}
+<partial name="_ImportAnalysisModal" />
+
+<div class="modal fade" id="receiptModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold">Import Successful</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-5">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <div class="avatar avatar-xl mx-auto mb-2"><span class="avatar-initial rounded-circle bg-label-success"><i class="bx bx-check fs-1"></i></span></div>
+                                <h4 class="mb-1">Import Successful!</h4>
+                                <p class="text-muted">Data has been merged into live tables.</p>
+                            </div>
+                            <div id="receiptContentArea"></div>
+                            <div class="alert alert-warning mb-4 p-3 shadow-sm" id="rcpt_Message">
+                                <div class="d-flex align-items-center"><i class="bx bx-info-circle fs-4 me-3"></i><span class="fw-semibold">...</span></div>
+                            </div>
+                            <button type="button" class="btn btn-primary w-100" onclick="location.reload()"><i class="bx bx-refresh me-1"></i> Close & Refresh Page</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="logModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content" id="logModalContent"></div></div></div>
+
+@* Column mapping (script 073): an employer's own names for template columns *@
+<div class="modal fade" id="columnMappingModal" tabindex="-1" aria-labelledby="columnMappingTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="columnMappingTitle"><i class="bx bx-git-compare me-2"></i>Map columns</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="columnMappingBody" aria-live="polite"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="columnMappingSave">Save and check again</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Processing Logs Modal — SEPARATE from history *@
+<div class="modal fade" id="logModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content" id="logModalContent">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-semibold">
+                    <i class="bx bx-list-ul me-2 text-danger"></i>System Logs
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-5">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="spinner-border text-danger"></div>
+                            <p class="text-muted mt-2 mb-0 small">Loading logs…</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Timeline / History Modal — SEPARATE from log modal *@
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content" id="historyModalContent">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-semibold">
+                    <i class="bx bx-history me-2 text-primary"></i>File Timeline
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-5">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="spinner-border text-primary"></div>
+                            <p class="text-muted mt-2 mb-0 small">Loading timeline…</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Toast container *@
+<div id="toastContainer"
+     style="position:fixed;bottom:1.5rem;right:1.5rem;z-index:11000;
+            display:flex;flex-direction:column;gap:.5rem;min-width:290px;max-width:380px;">
+</div>
+
+@* ─────────────────────────────────────────────────────────────────────────────
+   @section Scripts — FULL REPLACEMENT
+   ──────────────────────────────────────────────────────────────────────────── 
+*@
+
+@section Scripts {
+<script src="~/js/local-time.js" asp-append-version="true"></script>
+<script src="~/js/import-analysis.js" asp-append-version="true"></script>
+<script src="~/js/bulk-select.js" asp-append-version="true"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<style>
+@@keyframes slideInRight {
+    from { transform: translateX(110%); opacity: 0; }
+    to   { transform: translateX(0);   opacity: 1; }
+}
+</style>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// GLOBAL STATE
+// ══════════════════════════════════════════════════════════════════════════════
+var currentFileId = 0;
+var currentState  = { page: 1, viewMode: 'Active' };
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AREA 4 — FILTER BAR & METRIC CARDS
+// ══════════════════════════════════════════════════════════════════════════════
+
+$(document).ready(function () {
+
+    // ── Date range picker ──────────────────────────────────────────────────
+    flatpickr('#dateRangePicker', {
+        mode: 'range',
+        dateFormat: 'Y-m-d',
+        onChange: function (dates) {
+            if (dates.length === 2) loadFileData(1);
+        },
+        onReady: function () {
+            // Clear button inside the date input
+            $('#dateRangePicker').after(
+                '<span class="date-clear-btn" title="Clear date filter" ' +
+                'style="cursor:pointer;position:absolute;right:32px;top:50%;' +
+                'transform:translateY(-50%);color:var(--bs-secondary-color);' +
+                'display:none;font-size:16px;">&#x2715;</span>'
+            );
+        },
+        onChange: function (dates, str) {
+            if (dates.length === 2) {
+                $('#dateRangePicker').next('.date-clear-btn').show();
+                loadFileData(1);
+            }
+        }
+    });
+
+    // Clear date filter
+    $(document).on('click', '.date-clear-btn', function () {
+        $('#dateRangePicker')[0]._flatpickr.clear();
+        $(this).hide();
+        loadFileData(1);
+    });
+
+    // ── Status filter chips ────────────────────────────────────────────────
+    $(document).on('click', '.filter-chip', function () {
+        applyQuickFilter($(this).data('filter'));
+    });
+
+    // ── My Files toggle ────────────────────────────────────────────────────
+    $('#myFilesToggle').on('change', function () { loadFileData(1); });
+
+    // ── Search with debounce ───────────────────────────────────────────────
+    let debounceTimer;
+    $('#searchInput').on('input', function () {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => loadFileData(1), 450);
+    });
+
+    // Clear search with Escape
+    $('#searchInput').on('keydown', function (e) {
+        if (e.key === 'Escape') { $(this).val(''); loadFileData(1); }
+    });
+
+    // ── Pagination ─────────────────────────────────────────────────────────
+    $(document).on('click', '.page-link-btn', function () {
+        var page = parseInt($(this).data('page'));
+        if (!$(this).parent().hasClass('disabled')) loadFileData(page);
+    });
+
+    // ── Metric card clicks → quick filter ─────────────────────────────────
+    // (Cards already have onclick="applyQuickFilter(...)" in markup — no extra wiring needed)
+
+    // ── AREA 2: Start polling if any file is in processing state ──────────
+    startStatusPoller();
+
+    // Called by the upload modal when an upload is accepted. Refreshes the list in
+    // place instead of reloading the page, so filters and scroll position survive.
+    window.onFileUploaded = function () {
+        // A brand-new file is always "working": make sure the current chip can show it.
+        const f = $('#currentFilter').val();
+        if (f !== 'All' && f !== 'Processing') applyQuickFilter('All');
+        if (currentState.viewMode !== 'Active') switchView('Active');
+        else loadFileData(1, true);
+        showToast('success', 'File uploaded. It is being checked now; this list updates by itself.');
+    };
+});
+
+// ── View mode tabs ─────────────────────────────────────────────────────────
+function switchView(mode) {
+    currentState.viewMode = mode;
+    currentState.page     = 1;
+    $('.nav-link').removeClass('active');
+    $('#tab-' + mode).addClass('active');
+    loadFileData(1);
+}
+
+// ── Filter chips ────────────────────────────────────────────────────────────
+function applyQuickFilter(status) {
+    $('.filter-chip').each(function () {
+        $(this).removeClass('active btn-label-' + $(this).data('color')).addClass('btn-outline-secondary');
+    });
+
+    $('#currentFilter').val(status);
+
+    const btn = $(`.filter-chip[data-filter='${status}']`);
+    btn.removeClass('btn-outline-secondary').addClass('active btn-label-' + (btn.data('color') || 'primary'));
+
+    loadFileData(1);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// CORE DATA LOADER
+// ══════════════════════════════════════════════════════════════════════════════
+// options.flashIds: rows to briefly highlight after the reload (files that just changed state).
+function loadFileData(page, silent = false, options = {}) {
+    currentState.page = page || 1;
+    if (!silent) showPageLoader(true);
+
+    // A background refresh must not move the page under the user: remember which
+    // employer group is open and where they are scrolled, and put both back.
+    const openKeys = $('#filesAccordion .accordion-collapse.show').closest('.accordion-item')
+        .map(function () { return $(this).data('group-key'); }).get();
+    const scrollY = window.scrollY;
+
+    $.get('/FileUpload/GetPaginatedData', {
+        searchTerm:  $('#searchInput').val(),
+        pageSize:    50,
+        pageNumber:  currentState.page,
+        filter:      $('#currentFilter').val() || 'All',
+        showMyFiles: $('#myFilesToggle').is(':checked'),
+        dateRange:   $('#dateRangePicker').val(),
+        viewMode:    currentState.viewMode,
+        sortColumn:  'UploadedAt',
+        sortOrder:   'DESC'
+    })
+    .done(function (html) {
+        $('#fileTableContainer').html(html);
+        if (silent) {
+            restoreOpenGroups(openKeys);
+            window.scrollTo(0, scrollY);
+        }
+        (options.flashIds || []).forEach(function (id) {
+            $('tr[data-fileid="' + id + '"]').addClass('row-flash');
+        });
+        refreshSummaryCards();
+        markRefreshed();
+        showPageLoader(false);
+        // After refresh, restart poller in case processing state changed
+        startStatusPoller();
+    })
+    .fail(function () {
+        showPageLoader(false);
+        if (!silent) showToast('danger', 'Failed to load file list. Please refresh.');
+    });
+}
+
+// The partial opens the first group by default; reopen the user's group instead if it is still listed.
+function restoreOpenGroups(keys) {
+    if (!keys.length) return;
+    const $items = $('#filesAccordion .accordion-item').filter(function () {
+        return keys.indexOf($(this).data('group-key')) !== -1;
+    });
+    if (!$items.length) return;
+    $('#filesAccordion .accordion-item').each(function () {
+        const open = $items.is(this);
+        $(this).toggleClass('active', open)
+            .find('.accordion-collapse').first().toggleClass('show', open);
+        $(this).find('.accordion-button').first().toggleClass('collapsed', !open).attr('aria-expanded', open);
+    });
+}
+
+// "Updated 5s ago" next to the status chips, so a quiet page visibly isn't stale.
+var _lastRefresh = Date.now();
+function markRefreshed() { _lastRefresh = Date.now(); renderRefreshAge(); }
+function renderRefreshAge() {
+    const el = document.getElementById('liveUpdated');
+    if (!el) return;
+    const s = Math.round((Date.now() - _lastRefresh) / 1000);
+    const age = s < 5 ? 'just now' : s < 60 ? s + 's ago' : Math.floor(s / 60) + ' min ago';
+    el.querySelector('.js-age').textContent = age;
+    el.classList.toggle('is-live', _pollerRunning);
+}
+setInterval(renderRefreshAge, 1000);
+
+// The grid partial carries the card counts for the same rows it was drawn from.
+function refreshSummaryCards() {
+    const data = document.getElementById('statusCountsData');
+    if (!data) return;
+    $('#cardTotal').text(data.dataset.total);
+    $('#cardAction').text(data.dataset.action);
+    $('#cardProcessing').text(data.dataset.processing);
+    $('#cardCompleted').text(data.dataset.completed);
+}
+
+function showPageLoader(show) {
+    const loader = document.getElementById('loader');
+    if (loader) loader.style.display = show ? 'flex' : 'none';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AREA 2 — STATUS AUTO-REFRESH POLLER
+// Checks every 5 s whether any visible file is still processing.
+// While a file works, only its status cell is updated (label, % bar, step text).
+// When one finishes, the grid is reloaded silently — keeping the open group and
+// scroll position — and the finished rows are briefly highlighted.
+// ══════════════════════════════════════════════════════════════════════════════
+var _pollerTimer   = null;
+var _pollerRunning = false;
+const POLL_MS      = 5000;
+
+function startStatusPoller() {
+    stopStatusPoller(); // clear any existing timer first
+
+    // Count files currently showing a working spinner
+    var processingRows = $('tr[data-fileid]').filter(function () {
+        return $(this).find('.spinner-border').length > 0
+            || $(this).find('.bx-spin').length > 0;
+    });
+
+    if (processingRows.length === 0) { renderRefreshAge(); return; } // nothing to poll
+
+    _pollerRunning = true;
+    _pollerTimer   = setInterval(pollProcessingFiles, POLL_MS);
+    pollProcessingFiles(); // show real progress straight away, not after the first interval
+    renderRefreshAge();
+}
+
+function stopStatusPoller() {
+    if (_pollerTimer) { clearInterval(_pollerTimer); _pollerTimer = null; }
+    _pollerRunning = false;
+}
+
+async function pollProcessingFiles() {
+    // Collect IDs of rows still showing working state
+    var ids = [];
+    $('tr[data-fileid]').each(function () {
+        var row = $(this);
+        if (row.find('.spinner-border').length > 0 || row.find('.bx-spin').length > 0) {
+            ids.push(parseInt(row.data('fileid')));
+        }
+    });
+
+    if (ids.length === 0) {
+        stopStatusPoller();
+        return;
+    }
+
+    try {
+        const resp = await fetch('/FileUpload/PollStatus?ids=' + ids.join(','),
+                                 { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (resp.status === 401) {
+            // Session ended: same handling as the layout's AJAX calls.
+            window.location.href = '/Account/Login?ReturnUrl=' + encodeURIComponent(location.pathname + location.search);
+            return;
+        }
+        if (!resp.ok) {
+            // Do not fail silently. A broken poller looks exactly like a system
+            // with nothing to report, which is how the tbl_UploadedFileLog typo
+            // survived unnoticed.
+            console.error('PollStatus failed:', resp.status, await resp.text());
+            stopStatusPoller();
+            return;
+        }
+        const results = await resp.json(); // array of { fileLogId, label, color, icon, isWorking, progress* }
+        markRefreshed();
+        if (!results.length) { stopStatusPoller(); return; } // rows no longer visible to this user
+
+        // Finished files need a reload so their buttons are right (they can't safely
+        // be rebuilt client-side); the reload keeps the user's place.
+        const finished = results.filter(r => !r.isWorking).map(r => r.fileLogId);
+        results.filter(r => r.isWorking).forEach(function (item) {
+            updateStatusBadge(item.fileLogId, item.label, item.color, item.icon, item);
+        });
+
+        if (finished.length) {
+            stopStatusPoller();
+            loadFileData(currentState.page, true, { flashIds: finished });
+        }
+    } catch (err) {
+        // Silent — polling errors should never surface as toasts
+        console.warn('Status poll failed:', err);
+    }
+}
+
+        function updateStatusBadge(fileLogId, label, color, icon, item) {
+            var row = $('tr[data-fileid="' + fileLogId + '"]');
+            if (!row.length) return;
+
+            // Status badge is in the second <td>
+            var statusCell = row.find('td').eq(1);
+            var badge      = statusCell.find('.badge').first();
+            if (!badge.length) return;
+
+            // "Importing" on its own says nothing about how long is left. When the import
+            // is running, sp_ProcessEmployerData reports which employer it is on, so show
+            // that instead of an indeterminate spinner.
+            var text = label;
+            if (item && item.progressTotal > 0) {
+                text = label + ' \u2014 ' + item.progressDone + ' of ' + item.progressTotal;
+            }
+
+            // Keep the spinner — just update the label if it changed
+            badge.attr('class', 'badge bg-label-' + color);
+            badge.html('<i class="bx ' + icon + ' bx-spin me-1"></i>' + text);
+
+            // The full step text ("Calculated ATLANTIC COASTAL SERVICES LLC (2 of 3)",
+            // "Reading Employee: 1,200 of 4,800 rows") goes under the bar and on the tooltip.
+            var step = (item && item.progressStep) || '';
+            if (step) badge.attr('title', step);
+            statusCell.find('.js-work-step').text(step).attr('title', step);
+
+            // A real percentage when the job reports one, otherwise a full striped bar.
+            var pct = item && item.progressPercent != null ? Number(item.progressPercent) : null;
+            statusCell.find('.js-work-bar').css('width', pct == null ? '100%' : Math.max(3, Math.min(100, pct)) + '%');
+        }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AREA 3 — MODAL WIRING (logs + history use SEPARATE modals)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── Bulk actions (idea #20) ────────────────────────────────────────────────
+// Each picked file goes through the same action its own button uses, one after another.
+BulkSelect.init({ root: '#fileTableContainer', bar: '[data-bulk-bar]' });
+$('[data-bulk-bar]').on('bulk:changed', function () {
+    $(this).find('[data-archive-label]').text(currentState.viewMode === 'Archived' ? 'Unarchive' : 'Archive');
+});
+$(document).on('click', '[data-files-bulk]', async function () {
+    const action = this.dataset.filesBulk;
+    const picked = BulkSelect.selected();
+    const $progress = $('[data-bulk-progress]');
+    let items = picked, verb = 'done', worker = null;
+
+    if (action === 'assign') {
+        items = picked.filter(cb => cb.dataset.assign === '1');
+        if (!items.length) { showToast('warning', 'None of the selected files can be assigned now.'); return; }
+        const pick = await pickAnalyst('');
+        if (!pick) return;
+        verb = 'assigned to ' + pick.name;
+        worker = cb => $.post('/FileUpload/AssignFile', { fileLogId: cb.value, targetUserId: pick.id, __RequestVerificationToken: getToken() });
+    } else if (action === 'hold' || action === 'release') {
+        items = picked.filter(cb => cb.dataset.hold === action);
+        if (!items.length) { showToast('warning', action === 'hold' ? 'None of the selected files can be put on hold.' : 'None of the selected files is on hold.'); return; }
+        verb = action === 'hold' ? 'put on hold' : 'released';
+        worker = cb => $.post('/FileUpload/ToggleHold', { fileLogId: cb.value, __RequestVerificationToken: getToken() });
+    } else if (action === 'archive') {
+        verb = currentState.viewMode === 'Archived' ? 'unarchived' : 'archived';
+        worker = cb => $.post('/FileUpload/ToggleArchive', { fileLogId: cb.value, __RequestVerificationToken: getToken() });
+    } else if (action === 'report') {
+        items = picked.filter(cb => cb.dataset.report === '1');
+        if (!items.length) { showToast('warning', 'None of the selected files has a validation report.'); return; }
+        verb = 'downloaded';
+        worker = async cb => { await downloadValidationReport('/FileUpload/DownloadReport?fileLogId=' + cb.value, 'ValidationReport_' + cb.value + '.xlsx'); return { success: true }; };
+    }
+    if (!worker) return;
+    if (items.length < picked.length && action !== 'report')
+        $progress.text((picked.length - items.length) + ' of the selected files are left out: that action does not apply to them.');
+
+    $('[data-files-bulk]').prop('disabled', true);
+    const result = await BulkSelect.runEach(items, worker, (done, total) => $progress.text('Working… ' + done + ' of ' + total));
+    $('[data-files-bulk]').prop('disabled', false);
+    $progress.text('');
+    // showToast writes HTML; names and server messages are text.
+    showToast(result.failed ? 'warning' : 'success', $('<div>').text(BulkSelect.summary(result, verb) + '.').html());
+    if (action !== 'report') loadFileData(currentState.page, true);
+});
+
+// ── Column mapping (script 073) ───────────────────────────────────────────
+function openColumnMapping(fileId) {
+    const $body = $('#columnMappingBody');
+    $body.html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading</span></div></div>');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('columnMappingModal')).show();
+    $.get('/FileUpload/ColumnMapping', { id: fileId })
+        .done(html => $body.html(html))
+        .fail(xhr => $body.html($('<div class="alert alert-danger" role="alert"></div>').text((xhr.responseJSON && xhr.responseJSON.message) || 'The mapping could not be loaded.')));
+}
+$(document).on('click', '#columnMappingSave', function () {
+    const $form = $('#columnMappingForm'); if (!$form.length) return;
+    const $btn = $(this).prop('disabled', true);
+    $.post('/FileUpload/SaveColumnMapping?id=' + $form.data('file-id'), $form.serialize())
+        .done(r => {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('columnMappingModal')).hide();
+            showToast('success', r.message);
+            loadFileData(currentState.page, true);
+        })
+        .fail(xhr => $form.find('[data-map-status]').addClass('text-danger').text((xhr.responseJSON && xhr.responseJSON.message) || 'Not saved.'))
+        .always(() => $btn.prop('disabled', false));
+});
+$(document).on('click', '[data-delete-map]', function () {
+    const $form = $('#columnMappingForm'), mapId = $(this).data('delete-map');
+    $.post('/FileUpload/DeleteColumnMapping', { id: $form.data('file-id'), mapId: mapId, __RequestVerificationToken: $form.find('input[name="__RequestVerificationToken"]').val() })
+        .done(() => $form.find('[data-saved-map="' + mapId + '"]').remove())
+        .fail(() => $form.find('[data-map-status]').addClass('text-danger').text('The mapping could not be removed.'));
+});
+
+function viewLogs(fileId) {
+    // Reset to loading state
+    $('#logModalContent').html(`
+        <div class="modal-header border-0 pb-0">
+            <div>
+                <h5 class="modal-title fw-semibold">
+                    <i class="bx bx-list-ul me-2 text-danger"></i>System Logs
+                </h5>
+                <small class="text-muted">Errors and warnings recorded during validation</small>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center py-5">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+            <div class="spinner-border text-danger"></div>
+            <p class="text-muted mt-2 mb-0 small">Loading logs…</p>
+        </div></div></div></div>`);
+
+    new bootstrap.Modal(document.getElementById('logModal')).show();
+
+    $.get('/FileUpload/GetProcessingLogs/' + fileId)
+     .done(function (html) { $('#logModalContent').html(html); })
+     .fail(function ()     {
+         $('#logModalContent').html(`
+             <div class="modal-header"><h5 class="modal-title">System Logs</h5>
+             <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                     <div class="modal-body"><div class="col-12">
+                    <div class="card">
+                        <div class="card-body"><div class="alert alert-danger m-3">Failed to load logs.</div></div></div></div></div>`);
+     });
+}
+
+function viewHistory(fileId) {
+    // Reset to loading state
+    $('#historyModalContent').html(`
+        <div class="modal-header border-0 pb-0">
+            <div>
+                <h5 class="modal-title fw-semibold">
+                    <i class="bx bx-history me-2 text-primary"></i>File Timeline
+                </h5>
+                <small class="text-muted">Full audit trail of every action</small>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center py-5">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+            <div class="spinner-border text-primary"></div>
+            <p class="text-muted mt-2 mb-0 small">Loading timeline…</p>
+        </div></div></div></div>`);
+
+    new bootstrap.Modal(document.getElementById('historyModal')).show();
+
+    $.get('/FileUpload/GetFileHistory/' + fileId)
+     .done(function (html) { $('#historyModalContent').html(html); })
+     .fail(function ()     {
+         $('#historyModalContent').html(`
+             <div class="modal-header"><h5 class="modal-title">File Timeline</h5>
+             <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                     <div class="modal-body"><div class="col-12">
+                    <div class="card">
+                        <div class="card-body"><div class="alert alert-danger m-3">Failed to load timeline.</div></div></div></div></div>`);
+     });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TOAST NOTIFICATION SYSTEM
+// ══════════════════════════════════════════════════════════════════════════════
+function showToast(type, message, duration = 4500) {
+    const icons = { success:'bx-check-circle', danger:'bx-error-circle',
+                    warning:'bx-error',         info:'bx-info-circle' };
+    const bgMap = { success:'#198754', danger:'#dc3545', warning:'#ffc107', info:'#0dcaf0' };
+    const txMap = { success:'#fff',    danger:'#fff',    warning:'#000',     info:'#000' };
+    const id    = 'toast_' + Date.now();
+    const html  = `
+        <div id="${id}"
+             class="d-flex align-items-center gap-2 px-3 py-2 rounded shadow"
+             style="background:${bgMap[type]||bgMap.info};color:${txMap[type]||'#fff'};
+                    animation:slideInRight .25s ease;min-width:260px;">
+            <i class="bx ${icons[type]||'bx-bell'} fs-5 flex-shrink-0"></i>
+            <span class="small flex-grow-1">${message}</span>
+            <button onclick="document.getElementById('${id}').remove()"
+                    class="btn-close ${type==='warning'||type==='info' ? '' : 'btn-close-white'}
+                           btn-close-sm ms-1 flex-shrink-0"></button>
+        </div>`;
+    document.getElementById('toastContainer').insertAdjacentHTML('beforeend', html);
+    setTimeout(() => document.getElementById(id)?.remove(), duration);
+}
+
+// ── Confirmation modal (returns Promise<bool>) ─────────────────────────────
+function showConfirm(title, message, confirmLabel = 'Confirm', confirmClass = 'btn-primary') {
+    return new Promise(resolve => {
+        const id  = 'cfm_' + Date.now();
+        document.body.insertAdjacentHTML('beforeend', `
+            <div class="modal fade" id="${id}" tabindex="-1" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+                    <div class="modal-content">
+                        <div class="modal-header border-0 pb-0">
+                            <h6 class="modal-title fw-bold">${title}</h6>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body pt-2 text-muted small">
+                                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">${message}</div></div></div></div>
+                        <div class="modal-footer border-0 pt-0 gap-2 py-3">
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2"
+                                    data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-sm ${confirmClass} mt-2"
+                                    id="${id}_ok">${confirmLabel}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`);
+        const el  = document.getElementById(id);
+        const bsm = new bootstrap.Modal(el);
+        bsm.show();
+        document.getElementById(id + '_ok').onclick = () => { bsm.hide(); resolve(true); };
+        el.addEventListener('hidden.bs.modal', () => { el.remove(); resolve(false); }, { once: true });
+    });
+}
+
+// ── Modal with a reason box (returns Promise<string|null>; null = cancelled) ──
+function showReasonPrompt(title, message, confirmLabel, confirmClass, placeholder) {
+    return new Promise(resolve => {
+        const id = 'rsn_' + Date.now();
+        document.body.insertAdjacentHTML('beforeend', `
+            <div class="modal fade" id="${id}" tabindex="-1" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered" style="max-width:460px;">
+                    <div class="modal-content">
+                        <div class="modal-header border-0 pb-0">
+                            <h6 class="modal-title fw-bold"></h6>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body pt-2">
+                            <div class="col-12"><div class="card"><div class="card-body">
+                                <p class="text-muted small mb-2 js-msg"></p>
+                                <textarea class="form-control form-control-sm" rows="3" maxlength="500"></textarea>
+                            </div></div></div>
+                        </div>
+                        <div class="modal-footer border-0 pt-0 gap-2 py-3">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-sm ${confirmClass} js-ok"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>`);
+        const el = document.getElementById(id);
+        el.querySelector('.modal-title').textContent = title;
+        el.querySelector('.js-msg').textContent = message;
+        el.querySelector('textarea').placeholder = placeholder || 'Reason (optional)';
+        el.querySelector('.js-ok').textContent = confirmLabel;
+        const bsm = new bootstrap.Modal(el);
+        let result = null;
+        el.querySelector('.js-ok').onclick = () => { result = el.querySelector('textarea').value.trim(); bsm.hide(); };
+        el.addEventListener('shown.bs.modal', () => el.querySelector('textarea').focus(), { once: true });
+        el.addEventListener('hidden.bs.modal', () => { el.remove(); resolve(result); }, { once: true });
+        bsm.show();
+    });
+}
+
+// ── Analyst picker for reassigning (returns Promise<{id,name}|null>) ────────
+const DATA_ANALYSTS = @Json.Serialize(((List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.DataAnalysts ?? new()).Select(a => new { id = a.Value, name = a.Text }));
+function pickAnalyst(currentId) {
+    return new Promise(resolve => {
+        const id = 'pick_' + Date.now();
+        document.body.insertAdjacentHTML('beforeend', `
+            <div class="modal fade" id="${id}" tabindex="-1" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+                    <div class="modal-content">
+                        <div class="modal-header border-0 pb-0">
+                            <h6 class="modal-title fw-bold">Reassign analyst</h6>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body pt-2">
+                            <div class="col-12"><div class="card"><div class="card-body">
+                                <p class="text-muted small mb-2">The file moves to the analyst you choose. Its data and progress are kept.</p>
+                                <select class="form-select form-select-sm"></select>
+                            </div></div></div>
+                        </div>
+                        <div class="modal-footer border-0 pt-0 gap-2 py-3">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-sm btn-primary js-ok">Reassign</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`);
+        const el = document.getElementById(id);
+        const sel = el.querySelector('select');
+        // The current assignee may not be a Data Analyst (e.g. an admin who uploaded it);
+        // then nothing is preselected rather than silently showing the first analyst.
+        if (!DATA_ANALYSTS.some(a => String(a.id) === String(currentId))) {
+            const ph = new Option('Choose an analyst…', '', true, true);
+            ph.disabled = true;
+            sel.add(ph);
+        }
+        DATA_ANALYSTS.forEach(a => {
+            const o = new Option(a.name, a.id, false, String(a.id) === String(currentId));
+            sel.add(o);
+        });
+        const bsm = new bootstrap.Modal(el);
+        let result = null;
+        el.querySelector('.js-ok').onclick = () => {
+            if (!sel.value) { sel.focus(); return; }                           // nothing chosen yet
+            if (String(sel.value) === String(currentId)) { bsm.hide(); return; } // no change
+            result = { id: sel.value, name: sel.options[sel.selectedIndex].text };
+            bsm.hide();
+        };
+        el.addEventListener('hidden.bs.modal', () => { el.remove(); resolve(result); }, { once: true });
+        bsm.show();
+    });
+}
+
+// ── Anti-forgery token ─────────────────────────────────────────────────────
+function getToken() {
+    return document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+}
+
+// ── Row busy state ─────────────────────────────────────────────────────────
+function setRowBusy(fileId, busy) {
+    const row  = document.querySelector(`tr[data-fileid="${fileId}"]`);
+    if (!row) return;
+    const cell = row.querySelector('td:last-child');
+    if (!cell) return;
+    if (busy) {
+        cell.dataset.saved = cell.innerHTML;
+        cell.innerHTML = `<div class="d-flex justify-content-end pe-2">
+            <span class="spinner-border spinner-border-sm text-primary"></span></div>`;
+    } else if (cell.dataset.saved) {
+        cell.innerHTML = cell.dataset.saved;
+    }
+}
+
+// ── Assigned cell inline update ────────────────────────────────────────────
+function updateAssignedCell(fileId, name, isMe) {
+    const row  = document.querySelector(`tr[data-fileid="${fileId}"]`);
+    if (!row) return;
+    const cell = row.querySelectorAll('td')[2];
+    if (!cell || !cell.classList.contains('assigned-cell')) return;
+    if (!name) {
+        cell.innerHTML = `<span class="text-muted small">
+            <i class="bx bx-user-x me-1"></i>Unassigned</span>`;
+        return;
+    }
+    const init = name.charAt(0).toUpperCase();
+    cell.innerHTML = `
+        <div class="d-flex align-items-center gap-2">
+            <span class="avatar avatar-xs flex-shrink-0">
+                <span class="avatar-initial rounded-circle
+                             bg-label-${isMe?'primary':'secondary'} small fw-semibold">
+                    ${init}
+                </span>
+            </span>
+            <div class="lh-sm overflow-hidden">
+                <div class="small fw-semibold ${isMe?'text-primary':'text-body'} text-truncate"
+                     style="max-width:95px;">${isMe ? 'You' : name}</div>
+                ${isMe ? '<span class="badge bg-label-primary" style="font-size:.6rem;">Mine</span>' : ''}
+            </div>
+        </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ASSIGNMENT ACTIONS (delegated — survive AJAX reloads)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Manager assign dropdown
+document.addEventListener('change', function (e) {
+    if (!e.target.classList.contains('assign-select')) return;
+    const fileId = parseInt(e.target.dataset.fileid);
+    const userId = e.target.value;
+    const name   = e.target.options[e.target.selectedIndex]?.text;
+    const sel    = e.target;
+    sel.disabled = true;
+
+    if (!userId) { unassignFile(fileId, sel); return; }
+
+    $.post('/FileUpload/AssignFile', {
+        fileLogId: fileId, targetUserId: userId,
+        __RequestVerificationToken: getToken()
+    })
+    .done(function (res) {
+        if (res.success) {
+            showToast('success', res.message || 'File assigned.');
+            updateAssignedCell(fileId, name, false);
+            // Assigning starts validation in the background: reload so the row shows
+            // "Validating" and the poller picks it up.
+            loadFileData(currentState.page, true, { flashIds: [fileId] });
+        } else {
+            showToast('danger', res.message || 'Assignment failed.');
+            sel.value = '';
+        }
+    })
+    .fail(function () { showToast('danger', 'Server error. Assignment not saved.'); sel.value = ''; })
+    .always(function () { sel.disabled = false; });
+});
+
+// DA Accept
+document.addEventListener('click', async function (e) {
+    const btn = e.target.closest('.btn-accept');
+    if (!btn) return;
+    const fileId = parseInt(btn.dataset.fileid);
+    const ok = await showConfirm('Accept File',
+        'You will be assigned this file and processing will begin immediately.',
+        'Accept & Start', 'btn-primary');
+    if (!ok) return;
+    setRowBusy(fileId, true);
+    $.post('/FileUpload/AcceptFile', {
+        fileLogId: fileId, __RequestVerificationToken: getToken()
+    })
+    .done(function (res) {
+        if (res.success) { showToast('success', 'File accepted. Processing started.'); loadFileData(currentState.page, true); }
+        else             { showToast('danger', res.message); setRowBusy(fileId, false); }
+    })
+    .fail(function ()  { showToast('danger', 'Server error.'); setRowBusy(fileId, false); });
+});
+
+// Release / force unassign
+document.addEventListener('click', async function (e) {
+    const btn = e.target.closest('.btn-release');
+    if (!btn) return;
+    const fileId = parseInt(btn.dataset.fileid);
+    const ok = await showConfirm('Release File',
+        'This file will be returned to the unassigned pool.',
+        'Release', 'btn-warning');
+    if (!ok) return;
+    unassignFile(fileId);
+});
+
+// Reassign (⋮ menu)
+document.addEventListener('click', async function (e) {
+    const btn = e.target.closest('.btn-reassign');
+    if (!btn) return;
+    const fileId = parseInt(btn.dataset.fileid);
+    const pick = await pickAnalyst(btn.dataset.current);
+    if (!pick) return;
+    setRowBusy(fileId, true);
+    $.post('/FileUpload/AssignFile', {
+        fileLogId: fileId, targetUserId: pick.id, __RequestVerificationToken: getToken()
+    })
+    .done(function (res) {
+        if (res.success) { showToast('success', 'Reassigned to ' + pick.name + '.'); loadFileData(currentState.page, true, { flashIds: [fileId] }); }
+        else             { showToast('danger', res.message || 'Reassignment failed.'); setRowBusy(fileId, false); }
+    })
+    .fail(function () { showToast('danger', 'Server error. Reassignment not saved.'); setRowBusy(fileId, false); });
+});
+
+// Put on hold / release hold. These buttons existed but nothing handled them.
+document.addEventListener('click', async function (e) {
+    const btn = e.target.closest('.btn-toggle-hold');
+    if (!btn) return;
+    const fileId = parseInt(btn.dataset.fileid);
+    const releasing = btn.dataset.isOnHold === 'true';
+    let reason = '';
+    if (releasing) {
+        if (!await showConfirm('Release hold', 'The file goes back to the queue and needs an analyst again.', 'Release hold', 'btn-primary')) return;
+    } else {
+        reason = await showReasonPrompt('Put file on hold', 'Processing stops until someone releases the hold.', 'Put on hold', 'btn-warning', 'Why is it on hold? (optional)');
+        if (reason === null) return;
+    }
+    setRowBusy(fileId, true);
+    $.post('/FileUpload/ToggleHold', { fileLogId: fileId, reason: reason, __RequestVerificationToken: getToken() })
+    .done(function (res) {
+        if (res.success) { showToast('info', res.isOnHold ? 'File put on hold.' : 'Hold released.'); loadFileData(currentState.page, true, { flashIds: [fileId] }); }
+        else             { showToast('danger', res.message || 'Could not change the hold.'); setRowBusy(fileId, false); }
+    })
+    .fail(function () { showToast('danger', 'Server error.'); setRowBusy(fileId, false); });
+});
+
+// Reject (⋮ menu). Also existed with no handler.
+document.addEventListener('click', async function (e) {
+    const btn = e.target.closest('.btn-reject-da');
+    if (!btn) return;
+    const fileId = parseInt(btn.dataset.fileid);
+    const reason = await showReasonPrompt('Reject file', 'A rejected file cannot be imported. The uploader will need to send a corrected file.', 'Reject file', 'btn-danger', 'Reason for rejecting (shown in the timeline)');
+    if (reason === null) return;
+    setRowBusy(fileId, true);
+    $.post('/FileUpload/RejectFile', { fileLogId: fileId, reason: reason, __RequestVerificationToken: getToken() })
+    .done(function (res) {
+        if (res.success) { showToast('info', 'File rejected.'); loadFileData(currentState.page, true, { flashIds: [fileId] }); }
+        else             { showToast('danger', res.message || 'Could not reject the file.'); setRowBusy(fileId, false); }
+    })
+    .fail(function () { showToast('danger', 'Server error.'); setRowBusy(fileId, false); });
+});
+
+function unassignFile(fileId) {
+    setRowBusy(fileId, true);
+    $.post('/FileUpload/UnassignFile', {
+        fileLogId: fileId, __RequestVerificationToken: getToken()
+    })
+    .done(function (res) {
+        if (res.success) {
+            showToast('info', 'File returned to unassigned pool.');
+            updateAssignedCell(fileId, null, false);
+            loadFileData(currentState.page, true);
+        } else {
+            showToast('danger', res.message);
+            setRowBusy(fileId, false);
+        }
+    })
+    .fail(function () { showToast('danger', 'Server error.'); setRowBusy(fileId, false); });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ARCHIVE / DELETE ACTIONS
+// ══════════════════════════════════════════════════════════════════════════════
+function toggleArchive(id) {
+    $.post('/FileUpload/ToggleArchive', {
+        fileLogId: id, __RequestVerificationToken: getToken()
+    })
+    .done(function (res) {
+        if (res.success) { showToast('success', 'Archive status updated.'); loadFileData(currentState.page); }
+        else             { showToast('danger', 'Archive failed: ' + res.message); }
+    })
+    .fail(function () { showToast('danger', 'Server error — archive not saved.'); });
+}
+
+function restoreFile(id) {
+    showConfirm('Restore File', 'Move this file back to Active?', 'Restore', 'btn-success')
+    .then(ok => {
+        if (!ok) return;
+        $.post('/FileUpload/RestoreFile', { fileLogId: id, __RequestVerificationToken: getToken() })
+         .done(function () { showToast('success', 'File restored.'); loadFileData(currentState.page); })
+         .fail(function () { showToast('danger', 'Restore failed.'); });
+    });
+}
+
+function hardDelete(id) {
+    showConfirm('Permanent Delete',
+        '<strong>This cannot be undone.</strong> The file and all associated data will be permanently removed.',
+        'Delete Forever', 'btn-danger')
+    .then(ok => {
+        if (!ok) return;
+        $.post('/FileUpload/PermanentDelete', { fileLogId: id, __RequestVerificationToken: getToken() })
+         .done(function () { showToast('success', 'File permanently deleted.'); loadFileData(currentState.page); })
+         .fail(function () { showToast('danger', 'Delete failed.'); });
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DOWNLOAD HELPERS
+// ══════════════════════════════════════════════════════════════════════════════
+function downloadFile(fileId) {
+    window.open('/FileUpload/DownloadFile/' + fileId, '_blank');
+}
+
+async function downloadValidationReport(url, fileName) {
+    try {
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const blob = await resp.blob();
+        const a    = document.createElement('a');
+        a.href     = URL.createObjectURL(blob);
+        a.download = fileName;
+        document.body.appendChild(a); a.click(); a.remove();
+    } catch (err) { showToast('danger', 'Download failed: ' + err.message); }
+}
+
+function downloadErrorReport(fileLogId) {
+    fetch('/ErrorTriage/DownloadErrorReport/' + fileLogId)
+        .then(r => r.blob())
+        .then(blob => {
+            const a    = document.createElement('a');
+            a.href     = URL.createObjectURL(blob);
+            a.download = 'ErrorReport_' + fileLogId + '.xlsx';
+            document.body.appendChild(a); a.click(); a.remove();
+        })
+        .catch(err => showToast('danger', 'Download failed: ' + err));
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// approveFile() and sendForApproval() were removed with the AM authorisation step.
+// A file now goes straight from validation to import: runAnalysis() opens the
+// impact preview and confirmImport() posts to /FileUpload/ImportData.
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ANALYSIS & IMPORT (unchanged logic, alert() replaced with toast/showConfirm)
+// ══════════════════════════════════════════════════════════════════════════════
+function runAnalysis(fileId) {
+    currentFileId = fileId;
+    window.AcaImportAnalysis.open(fileId);
+}
+document.addEventListener('import-analysis:queued', function (event) {
+    currentFileId = event.detail.fileLogId;
+    showToast('info', event.detail.message || 'Import started.');
+    loadFileData(1);
+});
+
+function viewImportReceipt(fileId) {
+    showPageLoader(true);
+    $.get('/FileUpload/GetImportStatus/' + fileId)
+     .done(function (res) { showPageLoader(false); if (res.success) showReceipt(res.data); else showToast('danger', res.message); })
+     .fail(function ()    { showPageLoader(false); showToast('danger', 'Failed to load receipt.'); });
+}
+
+function showReceipt(data) {
+            if (!data) return;
+            const fmt = new Intl.NumberFormat('en-US', { style:'currency', currency:'USD' });
+    $('#receiptContentArea').html(`
+        <div class="row g-3 mb-4 text-start">
+            <div class="col-6 col-md-4"><div class="p-3 border rounded bg-light h-100"><div class="d-flex align-items-center mb-2"><span class="badge bg-label-primary p-2 me-2"><i class="bx bx-user"></i></span><small class="text-uppercase text-muted fw-bold">Employees</small></div><h4 class="mb-0 text-primary">${data.totalEmployees}</h4><small class="text-muted">Active</small></div></div>
+            <div class="col-6 col-md-4"><div class="p-3 border rounded bg-light h-100"><div class="d-flex align-items-center mb-2"><span class="badge bg-label-info p-2 me-2"><i class="bx bx-face"></i></span><small class="text-uppercase text-muted fw-bold">Dependents</small></div><h4 class="mb-0 text-info">${data.dependentRows||0}</h4><small class="text-muted">Covered</small></div></div>
+            <div class="col-6 col-md-4"><div class="p-3 border rounded bg-light h-100"><div class="d-flex align-items-center mb-2"><span class="badge bg-label-success p-2 me-2"><i class="bx bx-check-shield"></i></span><small class="text-uppercase text-muted fw-bold">Enrollments</small></div><h4 class="mb-0 text-success">${data.enrollmentRows}</h4><small class="text-muted">Coverage</small></div></div>
+            <div class="col-6 col-md-4"><div class="p-3 border rounded bg-light h-100"><div class="d-flex align-items-center mb-2"><span class="badge bg-label-warning p-2 me-2"><i class="bx bx-file"></i></span><small class="text-uppercase text-muted fw-bold">Plans</small></div><h4 class="mb-0 text-warning">${data.planCount}</h4></div></div>
+            <div class="col-6 col-md-4"><div class="p-3 border rounded bg-light h-100"><div class="d-flex align-items-center mb-2"><span class="badge bg-label-secondary p-2 me-2"><i class="bx bx-purchase-tag"></i></span><small class="text-uppercase text-muted fw-bold">Premiums</small></div><h4 class="mb-0 text-secondary">${data.premiumRows||0}</h4></div></div>
+            <div class="col-6 col-md-4"><div class="p-3 border rounded bg-light h-100"><div class="d-flex align-items-center mb-2"><span class="badge bg-label-success p-2 me-2"><i class="bx bx-dollar"></i></span><small class="text-uppercase text-muted fw-bold">Payroll</small></div><h5 class="mb-0 text-success text-truncate" title="${fmt.format(data.totalPayrollImported||0)}">${fmt.format(data.totalPayrollImported||0)}</h5></div></div>
+        </div>`);
+            // Check if the warning box should be shown (Your existing logic)
+            const msg = $('#rcpt_Message').removeClass('alert-success alert-warning alert-danger');
+            msg.find('span').text(data.validationMessage || 'Import complete.');
+            msg.addClass(data.isImportComplete ? 'alert-success' : 'alert-warning');
+            if (data.enrollmentRows < (data.totalEmployees * 0.5)) {
+                msg.removeClass('alert-success').addClass('alert-warning');
+                msg.find('span').html(`<strong>Warning:</strong> Only ${data.enrollmentRows} employees have coverage records. Check your mapping.`);
+            }
+
+            // NEW: Inject a container for the detailed upload log
+            $('#receiptContentArea').append(`
+                <hr class="my-4" />
+                <h5 class="text-start mb-3"><i class="bx bx-list-ul me-2"></i>Detailed Upload Results</h5>
+                <div class="detailed-log-container p-0" id="receiptDetailedLogs">
+                    <div class="p-3 text-center text-muted">
+                        <span class="spinner-border spinner-border-sm me-2"></span>Loading detailed results...
+                    </div>
+                </div>
+            `);
+
+            new bootstrap.Modal(document.getElementById('receiptModal')).show();
+
+            // Fetch the detailed logs and color code them
+            $.get('/FileUpload/GetProcessingLogs/' + currentFileId)
+                .done(function (html) {
+                    // Because GetProcessingLogs returns the full modal HTML (from _ProcessingLogsPartial),
+                    // we will extract just the list items from it.
+                    const logItems = $(html).find('.list-group-item');
+
+                    if (logItems.length === 0) {
+                        $('#receiptDetailedLogs').html(`
+                            <div class="p-3 log-item-success fw-bold">
+                                <i class="bx bx-check-circle me-2"></i>Done! All records processed successfully without errors.
+                            </div>
+                        `);
+                        return;
+                    }
+
+                    let logHtml = '<div class="list-group list-group-flush">';
+                    logHtml += `<div class="list-group-item bg-light text-muted small">Starting Validation Process...</div>`;
+
+                    logItems.each(function() {
+                        const item = $(this);
+                        const text = item.text().trim();
+
+                        // Determine if this is an error or a success/warning based on your existing classes
+                        const isError = item.hasClass('list-group-item-danger') || text.toLowerCase().includes('error') || text.toLowerCase().includes('incorrect');
+
+                        const cssClass = isError ? 'log-item-error' : 'log-item-success';
+                        const icon = isError ? 'bx-x-circle' : 'bx-check-circle';
+
+                        logHtml += `
+                            <div class="list-group-item px-3 py-2 ${cssClass} fw-semibold" style="font-size: 0.85rem;">
+                                <i class="bx ${icon} me-2"></i>${text}
+                            </div>
+                        `;
+                    });
+
+                    logHtml += `<div class="list-group-item bg-light text-muted small fw-bold">Done!</div>`;
+                    logHtml += '</div>';
+
+                    $('#receiptDetailedLogs').html(logHtml);
+                })
+                .fail(function () {
+                    $('#receiptDetailedLogs').html('<div class="p-3 text-danger">Failed to load detailed logs.</div>');
+                });
+}
+</script>
+}

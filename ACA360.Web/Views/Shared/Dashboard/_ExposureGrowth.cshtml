@@ -1,0 +1,40 @@
+@using ACA360.Core.Models
+@model EmployerDashboardPageViewModel
+@* Employers in scope whose estimated penalty grew most since last year (script 064). *@
+@if (Model.ExposureGrowth.Any())
+{
+    <section class="scope" data-section="exposure-growth" aria-label="Penalty exposure growing">
+        <div class="scope-bar">
+            <h2>Penalty exposure growing</h2>
+            <div class="sb-spacer"></div>
+            <span class="hint">Estimated penalty, @(Model.FilingYear - 1) to @Model.FilingYear</span>
+        </div>
+        <div class="card mb-4">
+            <div class="table-responsive position-relative">
+                <table class="table table-sm align-middle mb-0">
+                    <caption class="visually-hidden">Employers whose estimated penalty grew most</caption>
+                    <thead class="table-light">
+                        <tr><th scope="col">Employer</th><th scope="col" class="text-end">@(Model.FilingYear - 1)</th><th scope="col" class="text-end">@Model.FilingYear</th><th scope="col" class="text-end">Growth</th><th scope="col"><span class="visually-hidden">Open</span></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var g in Model.ExposureGrowth)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@g.EmployerName</div>
+                                    <small>EIN @g.Ein</small>
+                                </td>
+                                <td class="text-end">@g.LastYear.ToString("$#,##0")</td>
+                                <td class="text-end fw-semibold">@g.ThisYear.ToString("$#,##0")</td>
+                                <td class="text-end text-danger fw-semibold">+@g.Growth.ToString("$#,##0")</td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-outline-primary" href="@Url.Action("PenaltyRisk", "ACA", new { employerId = g.EmployerId, year = Model.FilingYear })">Penalty risk</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+}

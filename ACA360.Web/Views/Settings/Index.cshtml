@@ -1,0 +1,380 @@
+﻿@using ACA360.Core.Extensions
+@using ACA360.Web.ViewComponents
+@model ACA360.Web.Models.SettingsListViewModel
+@inject ACA360.Web.Infrastructure.IDuoTwoFactorService DuoTwoStep
+@{
+    ViewData["Title"] = "Account Settings";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var activeTab = Model.UserProfile.ActiveTab ?? "account";
+}
+
+@await Component.InvokeAsync("Breadcrumb", new {
+pageTitle = "Settings",
+    items = new List<BreadcrumbItem>
+{
+    new BreadcrumbItem { Title = "Home", Url = Url.Action("Index", "Home"), IsActive = false },
+    new BreadcrumbItem { Title = "Account Settings", Url = "", IsActive = true }
+}
+})
+
+@if (TempData["SuccessMessage"] != null || TempData["ErrorMessage"] != null)
+{
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            @if (TempData["SuccessMessage"] != null)
+            {
+                        <text>
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: @Json.Serialize(TempData["SuccessMessage"]?.ToString()),
+                            confirmButtonText: 'OK'
+                        });
+                        </text>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                        <text>
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: @Json.Serialize(TempData["ErrorMessage"]?.ToString()),
+                            confirmButtonText: 'OK'
+                        });
+                        </text>
+            }
+        });
+    </script>
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="nav-align-top">
+            <ul class="nav nav-pills flex-column flex-md-row-start mb-3" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link @(activeTab == "account" ? "active" : "")" data-bs-toggle="tab" href="#account-tab" role="tab"><i class="bx bx-user me-1"></i> Account</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(activeTab == "security" ? "active" : "")" data-bs-toggle="tab" href="#security-tab" role="tab"><i class="bx bx-lock-alt me-1"></i> Security</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(activeTab == "notifications" ? "active" : "")" data-bs-toggle="tab" href="#notifications-tab" role="tab"><i class="bx bx-bell me-1"></i> Notifications</a>
+                </li>
+            </ul>
+        </div>
+        <div class="tab-content bg-transparent shadow-none p-0">
+
+            <div class="tab-pane fade @(activeTab == "account" ? "show active" : "")" id="account-tab" role="tabpanel">
+                <div class="card mb-4">
+                    <h5 class="card-header">Profile Details</h5>
+                    <form asp-controller="Settings" asp-action="UpdateProfile" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="UserProfile.UserId" />
+                        <input type="hidden" asp-for="UserProfile.RoleId" />
+                        <input type="hidden" asp-for="UserProfile.RefId" />
+                        <input type="hidden" asp-for="UserProfile.UserName" />
+                        <input type="hidden" asp-for="UserProfile.ProfilePicture" />
+
+                        <div class="card mb-4 shadow-sm border-0">
+                            <div class="card-body d-flex align-items-center gap-4">
+                                <img src="@(string.IsNullOrEmpty(Model.UserProfile.ProfilePicture) ? "/assets/img/avatars/1.png" : Model.UserProfile.ProfilePicture)"
+                                     alt="user-avatar" class="d-block rounded" height="80" width="80" id="uploadedAvatar" />
+
+                                <div class="button-wrapper">
+                                    <label for="upload" class="btn btn-primary me-2 mb-2" tabindex="0">
+                                        <i class="bx bx-upload d-block d-sm-none"></i>
+                                        <span class="d-none d-sm-block">Upload New Photo</span>
+                                        <input asp-for="UserProfile.ProfileImage" type="file" id="upload" class="account-file-input" hidden accept="image/png, image/jpeg" />
+                                    </label>
+                                    <button type="button" class="btn btn-outline-secondary account-image-reset mb-2">
+                                        <i class="bx bx-reset d-block d-sm-none"></i>
+                                        <span class="d-none d-sm-block">Reset</span>
+                                    </button>
+                                    <div class="text-muted small mt-1">Allowed JPG, GIF or PNG. Max size of 800K</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card shadow-sm border-0">
+                            <h5 class="card-header border-bottom bg-transparent fw-bold">Personal Information</h5>
+                            <div class="card-body mt-4">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.FirstName" class="form-control" placeholder="John" />
+                                            <label asp-for="UserProfile.FirstName">First Name</label>
+                                        </div>
+                                        <span asp-validation-for="UserProfile.FirstName" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.LastName" class="form-control" placeholder="Doe" />
+                                            <label asp-for="UserProfile.LastName">Last Name</label>
+                                        </div>
+                                        <span asp-validation-for="UserProfile.LastName" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.Email" class="form-control bg-light" readonly />
+                                            <label asp-for="UserProfile.Email">Email Address</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.PhoneNumber" class="form-control mask-us-phone" placeholder="123-456-7890" />
+                                            <label asp-for="UserProfile.PhoneNumber">Phone Number</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4 text-muted opacity-50">
+
+                                <h6 class="fw-bold mb-3">Address Details</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-12">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.Address1" class="form-control" placeholder="123 Main St" />
+                                            <label asp-for="UserProfile.Address1">Address Line 1</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.City" class="form-control" placeholder="New York" />
+                                            <label asp-for="UserProfile.City">City</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.State" class="form-control" placeholder="NY" />
+                                            <label asp-for="UserProfile.State">State</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-floating form-floating-outline">
+                                            <input asp-for="UserProfile.ZipCode" class="form-control" placeholder="10001" />
+                                            <label asp-for="UserProfile.ZipCode">Zip Code</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary px-4">Save Changes</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+
+            <div class="tab-pane fade @(activeTab == "security" ? "show active" : "")" id="security-tab" role="tabpanel">
+                <div class="card mb-4">
+                    <h5 class="card-header">Change Password</h5>
+                    <div class="card-body">
+                        <input type="hidden" id="User_ID" value="@ViewBag.UserId" />
+                        <form asp-action="ChangePassword" method="post" id="formChangePassword">
+                            @Html.AntiForgeryToken()
+                            <div class="row">
+                                <div class="mb-3 col-md-6 form-password-toggle">
+                                    <label class="form-label" for="txt_old_password">Current Password</label>
+                                    <div class="input-group input-group-merge">
+                                        <input asp-for="ChangePassword.CurrentPassword" class="form-control" type="password" placeholder="········" />
+                                        <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                                    </div>
+                                    <span asp-validation-for="ChangePassword.CurrentPassword" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="mb-3 col-md-6 form-password-toggle">
+                                    <label class="form-label" for="txt_new_password">New Password</label>
+                                    <div class="input-group input-group-merge">
+                                        <input asp-for="ChangePassword.NewPassword" class="form-control" type="password" placeholder="············" />
+                                        <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                                    </div>
+                                    <span asp-validation-for="ChangePassword.NewPassword" class="text-danger small"></span>
+                                </div>
+                                <div class="mb-3 col-md-6 form-password-toggle">
+                                    <label class="form-label" for="txt_Confirm_password">Confirm New Password</label>
+                                    <div class="input-group input-group-merge">
+                                        <input asp-for="ChangePassword.ConfirmPassword" class="form-control" type="password" placeholder="············" />
+                                        <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                                    </div>
+                                    <span asp-validation-for="ChangePassword.ConfirmPassword" class="text-danger small"></span>
+                                </div>
+                                @{
+                                    var pwdPolicy = ViewBag.PasswordPolicy as ACA360.Core.Models.SecuritySettingsDto
+                                    ?? new ACA360.Core.Models.SecuritySettingsDto();
+                                }
+                                <div class="alert alert-warning mt-4 d-flex" role="alert">
+                                    <i class="bx bx-info-circle me-2 mt-1"></i>
+                                    <div>
+                                        <span class="fw-bold">Password Requirements:</span>
+                                        <ul class="mb-0 ps-3 small mt-1" id="pwdPolicyList">
+                                            <li>Minimum @pwdPolicy.MinPasswordLength characters long</li>
+                                            @if (pwdPolicy.RequireUppercase)
+                                            {
+                                                <li>At least one uppercase letter</li>
+                                            }
+                                            @if (pwdPolicy.RequireDigits)
+                                            {
+                                                <li>At least one number (0-9)</li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end mt-3">
+                                    <button type="submit" id="btnChangePassword" class="btn btn-warning">Update Password</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                @{
+                    var mfaOn = Model.UserProfile.IsMFAEnabled == true;
+                    var sessions = ViewBag.Sessions as List<ACA360.Repositories.Interfaces.AuthSessionInfo> ?? new();
+                    var thisSession = ViewBag.CurrentSessionId as string;
+                    string Device(string? ua) => string.IsNullOrEmpty(ua) ? "Unknown browser"
+                        : (ua.Contains("Edg/") ? "Edge" : ua.Contains("Chrome/") ? "Chrome" : ua.Contains("Firefox/") ? "Firefox" : ua.Contains("Safari/") ? "Safari" : "Browser")
+                          + " on " + (ua.Contains("Windows") ? "Windows" : ua.Contains("Android") ? "Android" : ua.Contains("iPhone") || ua.Contains("iPad") ? "iOS" : ua.Contains("Mac OS") ? "macOS" : ua.Contains("Linux") ? "Linux" : "another device");
+                }
+                <div class="card mb-4" data-two-step>
+                    <h5 class="card-header">Two-step verification (Duo)</h5>
+                    <div class="card-body">
+                        <form asp-action="ToggleMFA" method="post" class="d-flex flex-wrap gap-3 align-items-center justify-content-between">
+                            <div class="form-check form-switch mb-0">
+                                <input type="hidden" name="enable" value="@(mfaOn ? "false" : "true")" />
+                                <input class="form-check-input" type="checkbox" role="switch" id="twoStepSwitch" @(mfaOn ? "checked" : "")
+                                       onchange="if (this.checked || confirm('Turn off two-step verification?')) this.form.submit(); else this.checked = true;" />
+                                <label class="form-check-label fw-semibold" for="twoStepSwitch">@(mfaOn ? "On" : "Off")</label>
+                                <div class="small text-body opacity-75">
+                                    After your password, Duo asks you to approve the sign-in on your phone.
+                                    @if (!DuoTwoStep.IsConfigured)
+                                    {
+                                        <span class="d-block">Duo is not set up on this server yet: your choice is kept and applies once it is.</span>
+                                    }
+                                </div>
+                            </div>
+                            <noscript><button type="submit" class="btn btn-outline-primary">@(mfaOn ? "Turn off" : "Turn on")</button></noscript>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card mb-4" data-my-sessions>
+                    <h5 class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        Where you are signed in
+                        @if (sessions.Count > 1)
+                        {
+                            <form asp-action="SignOutOtherSessions" method="post" class="m-0">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Sign out of every other browser and device?');">Sign out everywhere else</button>
+                            </form>
+                        }
+                    </h5>
+                    <div class="table-responsive position-relative">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light"><tr><th>Browser</th><th>Address</th><th>Signed in</th><th>Last active</th></tr></thead>
+                            <tbody>
+                                @foreach (var x in sessions)
+                                {
+                                    var mine = string.Equals(x.SessionId.ToString(), thisSession, StringComparison.OrdinalIgnoreCase);
+                                    <tr>
+                                        <td>@Device(x.UserAgent) @if (mine) { <span class="badge bg-label-success ms-1">This browser</span> }</td>
+                                        <td class="text-nowrap">@x.IpAddress</td>
+                                        <td class="text-nowrap">@Html.LocalTime(DateTime.SpecifyKind(x.CreatedAt, DateTimeKind.Utc))</td>
+                                        <td class="text-nowrap">@Html.LocalTime(DateTime.SpecifyKind(x.LastActivityAt, DateTimeKind.Utc))</td>
+                                    </tr>
+                                }
+                                @if (sessions.Count == 0)
+                                {
+                                    <tr><td colspan="4" class="text-body opacity-75">No other sign-ins.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-body pt-2 small text-body opacity-75">A sign-in ends after 15 minutes without use, and when you sign out.</div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade @(activeTab == "notifications" ? "show active" : "")" id="notifications-tab" role="tabpanel">
+                <div class="card">
+                    <h5 class="card-header">What you hear about</h5>
+                    <div class="card-body">
+                        <partial name="_NotificationPreferences" model="(ViewBag.NotificationPreferences as List<ACA360.Core.Models.NotificationPreference>) ?? new List<ACA360.Core.Models.NotificationPreference>()" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/local-time.js" asp-append-version="true"></script>
+    <script>
+         document.addEventListener('DOMContentLoaded', function () {
+            const fileInput = document.getElementById('upload');
+            const mainAvatar = document.getElementById('uploadedAvatar');
+            const sidebarAvatar = document.getElementById('sidebarAvatar');
+            const resetBtn = document.querySelector('.account-image-reset');
+            const form = document.getElementById('formChangePassword');
+            const btn = document.getElementById('btnChangePassword');
+
+            if (mainAvatar) {
+                const originalSrc = mainAvatar.src;
+
+                // Preview on Select
+                fileInput.onchange = () => {
+                    if (fileInput.files[0]) {
+                        const newSrc = window.URL.createObjectURL(fileInput.files[0]);
+                        mainAvatar.src = newSrc;
+                        if(sidebarAvatar) sidebarAvatar.src = newSrc; // Update Sidebar too
+                    }
+                };
+
+                // Reset
+                resetBtn.onclick = () => {
+                    fileInput.value = '';
+                    mainAvatar.src = originalSrc;
+                    if(sidebarAvatar) sidebarAvatar.src = originalSrc;
+                };
+            }
+
+        });
+
+                document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('formChangePassword');
+            const btn = document.getElementById('btnChangePassword');
+
+            if (form && btn) {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    if (btn.disabled) return;
+
+                    const newPwd = document.getElementById('ChangePassword_NewPassword').value;
+                    const confirmPwd = document.getElementById('ChangePassword_ConfirmPassword').value;
+
+                    if (!newPwd || newPwd !== confirmPwd) {
+                        Swal.fire('Error!', 'New password and confirm password do not match.', 'error');
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "Do you want to update this password?",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, update it!',
+                        cancelButtonText: 'Cancel',
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            btn.disabled = true;
+                            btn.textContent = 'Updating...';
+                            form.submit();
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+}

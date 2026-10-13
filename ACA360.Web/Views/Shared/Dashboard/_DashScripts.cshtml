@@ -1,0 +1,35 @@
+@using ACA360.Core.Models
+@using ACA360.Core.Models.Dashboard
+@model EmployerDashboardPageViewModel
+@* Page data for aca360-dashboard.js. Render inside the page's Scripts section. *@
+    <script>
+        window.ACA360_DASHBOARD = {
+            config: {
+                dashboardKey:     "@Model.DashboardKey",
+                saveLayoutUrl:    "@Url.Action("SaveDashboardLayout", "TrackerEmployer")",
+                getLayoutUrl:     "@Url.Action("GetDashboardLayout", "TrackerEmployer")",
+                beginViewAsUrl:   "@Url.Action("Begin", "ViewAs")",
+                endViewAsUrl:     "@Url.Action("End", "ViewAs")",
+                riskAnalysisUrl:  "@(Model.EmployerIdValue > 0 ? Url.Action("GetRiskAnalysis", "FormGeneration", new { employerId = Model.EmployerIdValue, year = Model.FilingYear }) : "")",
+                anomalyUrl:       "@Url.Action("RunAnomalyCheck", "Employer", new { id = Model.EmployerIdValue, year = Model.FilingYear })",
+                antiForgeryToken: document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            monthly:        @Html.Raw(Json.Serialize(Model.Employer360.Monthly)),
+            coverage:       @Html.Raw(Json.Serialize(Model.CoveragePercent)),
+            aleTrend:       @Html.Raw(Json.Serialize(Model.AleTrend)),
+            processPercent: @Model.Employer360.ProcessCompletePercent,
+            workforce: {
+                fullTime: @Model.WorkforceFullTime,
+                partTime: @Model.WorkforcePartTime,
+                variable: @Model.WorkforceVariable,
+                cobra:    @Model.WorkforceCobra
+            },
+            deadlines: {
+                mailing: "@Model.Employer360.MailingDeadline.ToString("yyyy-MM-ddTHH:mm:ss")",
+                efiling: "@Model.Employer360.EfilingDeadline.ToString("yyyy-MM-ddTHH:mm:ss")"
+            }
+        };
+    </script>
+    <script src="~/js/aca360-dashboard.js" asp-append-version="true"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

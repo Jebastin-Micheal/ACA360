@@ -1,0 +1,217 @@
+﻿@using ACA360.Core.Models.ACA360.Core.Models
+@model PdfMappingViewModel
+@{
+    ViewData["Title"] = "Map PDF Fields";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold py-3 mb-0">Field Mapping</h4>
+        <p class="text-muted mb-0">Template: <strong>@Model.TemplateName</strong> (ID: @Model.TemplateId)</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</div>
+
+<form asp-action="SaveMapping" method="post" id="mappingForm">
+    <input type="hidden" name="templateId" value="@Model.TemplateId" />
+    
+    <div class="card">
+        <div class="card-header bg-light">
+            <div class="row fw-bold">
+                <div class="col-md-5">PDF Field Name (Internal)</div>
+                <div class="col-md-5">Map To System Data</div>
+                <div class="col-md-2">Status</div>
+            </div>
+        </div>
+        
+        <div class="card-body p-0" style="max-height: 70vh; overflow-y: auto;">
+            <table class="table table-striped table-hover mb-0">
+                <tbody>
+                    @for (int i = 0; i < Model.FieldList.Count; i++)
+                    {
+                        var field = Model.FieldList[i];
+                        bool isMapped = !string.IsNullOrEmpty(field.MappedSystemKey);
+                        
+                        <tr>
+                            <td class="col-md-5 align-middle text-break">
+                                <input type="hidden" name="mappings[@i].PdfFieldName" value="@field.PdfFieldName" />
+                                <span class="badge bg-label-secondary text-lowercase" style="font-family: monospace; font-size: 0.85rem;">
+                                    @field.PdfFieldName
+                                </span>
+                            </td>
+                            <td class="col-md-5">
+                                <div class="input-group input-group-sm">
+                                    <input type="text" 
+                                           class="form-control field-mapper" 
+                                           name="mappings[@i].SystemDataKey" 
+                                           value="@field.MappedSystemKey" 
+                                           list="systemKeysData" 
+                                           placeholder="Type to search..." />
+                                    <button type="button" class="btn btn-outline-secondary" onclick="clearInput(this)">
+                                        <i class='bx bx-x'></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="col-md-2 align-middle">
+                                @if (isMapped)
+                                {
+                                    <i class='bx bxs-check-circle text-success' title="Mapped"></i>
+                                }
+                                else
+                                {
+                                    <i class='bx bx-radio-circle text-muted'></i>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card-footer text-end border-top py-3">
+            <button type="button" class="btn btn-outline-secondary me-2" onclick="autoMap()">
+                <i class='bx bx-magic-wand me-1'></i> Auto-Guess Mapping
+            </button>
+            <button type="submit" class="btn btn-primary px-5">Save Mappings</button>
+        </div>
+    </div>
+</form>
+
+<datalist id="systemKeysData">
+    @foreach (var group in Model.SystemDataKeys.GroupBy(x => x.Group?.Name))
+    {
+        @foreach (var item in group)
+        {
+            <option value="@item.Value">@item.Text (@item.Group?.Name)</option>
+        }
+    }
+</datalist>
+
+@section Scripts {
+    <script>
+        function clearInput(btn) {
+            $(btn).closest('.input-group').find('input').val('').focus();
+        }
+
+        function autoMap() {
+            var matchCount = 0;
+            var formType = detectFormType();
+            //console.log("Detected Form Type:", formType);
+
+            if(!confirm(`Detected form type: ${formType}. \n\nThis will overwrite existing mappings. Continue?`)) {
+                return;
+            }
+
+            $('.field-mapper').each(function() {
+                var input = $(this);
+                
+                // 1. Get Raw Field Name
+                var hiddenInput = input.closest('tr').find('input[type=hidden]');
+                if (hiddenInput.length === 0) return;
+                var rawField = hiddenInput.val();
+                
+                // 2. Clean Extraction
+                var leafName = "";
+                var parts = rawField.split('.');
+                if (parts.length > 0) {
+                    leafName = parts[parts.length - 1].replace(/\[\d+\]/g, '').toLowerCase();
+                }
+
+                // --- MAPPING LOGIC (Same as before) ---
+                var newVal = "";
+
+                if (formType === '1095-C') {
+                    if (leafName === 'f1_1') newVal = "Employee.FirstName";
+                    else if (leafName === 'f1_2') newVal = "Employee.MiddleName";
+                    else if (leafName === 'f1_3') newVal = "Employee.LastName";
+                    else if (leafName === 'f1_4') newVal = "Employee.SSN";
+                    else if (leafName === 'f1_5') newVal = "Employee.Address";
+                    else if (leafName === 'f1_6') newVal = "Employee.City";
+                    else if (leafName === 'f1_7') newVal = "Employee.State";
+                    else if (leafName === 'f1_8') newVal = "Employee.Zip";
+                    else if (leafName === 'f1_9') newVal = "Employer.Name";
+                    else if (leafName === 'f1_10') newVal = "Employer.EIN";
+                    else if (leafName === 'f1_11') newVal = "Employer.Address";
+                    else if (leafName === 'f1_12') newVal = "Employer.City";
+                    else if (leafName === 'f1_13') newVal = "Employer.State";
+                    else if (leafName === 'f1_14') newVal = "Employer.Zip";
+                    else if (leafName === 'f1_15') newVal = "Employer.Phone";
+                    
+                    // Codes
+                    else if (leafName === 'f1_17') newVal = "Code.All.14";
+                    else if (leafName === 'f1_18') newVal = "Code.Jan.14";
+                    // ... (Add your specific code mappings here)
+                } 
+                else if (formType === '1095-B') {
+                    if (leafName === 'f1_01') newVal = "Employee.FirstName";
+                    else if (leafName === 'f1_02') newVal = "Employee.MiddleName";
+                    else if (leafName === 'f1_03') newVal = "Employee.LastName";
+                    else if (leafName === 'f1_04') newVal = "Employee.SSN";
+                    else if (leafName === 'f1_05') newVal = "Employee.DOB";
+                    else if (leafName === 'f1_10') newVal = "Employer.Name";
+                    else if (leafName === 'f1_11') newVal = "Employer.EIN";
+                }
+                else if (formType === '1094-C') {
+                    if (leafName === 'f1_1') newVal = "Employer.Name";
+                    else if (leafName === 'f1_2') newVal = "Employer.EIN";
+                    else if (leafName === 'f1_18') newVal = "TotalForms";
+                    // Part IV: Other ALE Members
+                    // Logic: These are usually inside a table or sequential list.
+                    // Based on dictionary_1094c.txt from your legacy app:
+                    // Row 36 is first row of Part IV.
+                    // f3_01 = Name Row 1, f3_02 = EIN Row 1
+                    // f3_03 = Name Row 2, f3_04 = EIN Row 2
+                    // ... and so on.
+
+                    // Heuristic: Check if field starts with "f3_" (Page 3)
+                    if (leafName.startsWith("f3_")) {
+                        var num = parseInt(leafName.replace("f3_", ""));
+                        // Assuming Name is Odd, EIN is Even
+                        // 1=Name1, 2=EIN1, 3=Name2, 4=EIN2
+                        var rowNum = Math.ceil(num / 2);
+                        var isName = (num % 2 !== 0);
+
+                        if (rowNum <= 30) {
+                            if (isName) setVal(select, `OtherALE.Name.${rowNum}`);
+                            else setVal(select, `OtherALE.EIN.${rowNum}`);
+                        }
+                    }
+                }
+
+                // Fallbacks
+                if (newVal === "") {
+                     if (leafName.includes("firstname")) newVal = "Employee.FirstName";
+                     else if (leafName.includes("ssn") && !leafName.includes("covered")) newVal = "Employee.SSN";
+                }
+
+                // Apply
+                if (newVal !== "") {
+                    input.val(newVal);
+                    input.closest('tr').addClass('table-success');
+                    matchCount++;
+                }
+            });
+
+            if (matchCount > 0) {
+                alert(`Auto-mapped ${matchCount} fields.`);
+            } else {
+                alert("No fields matched.");
+            }
+        }
+
+        function detectFormType() {
+            var allFields = "";
+            $('.field-mapper').each(function() {
+                // Look at the hidden input for the name, not the mapper input
+                var name = $(this).closest('tr').find('input[type=hidden]').val();
+                if(name) allFields += name.toLowerCase() + " ";
+            });
+
+            if (allFields.includes("f1_14") && allFields.includes("f1_1") && !allFields.includes("f1_01")) return '1095-C';
+            if (allFields.includes("f1_01") && allFields.includes("f1_24")) return '1095-B';
+            if (allFields.includes("ale member") || (allFields.includes("f1_1") && allFields.includes("f1_18"))) return '1094-C';
+            if (allFields.includes("f1_01") && allFields.includes("f1_09")) return '1094-B';
+            return 'Unknown';
+        }
+    </script>
+}

@@ -1,0 +1,46 @@
+@using ACA360.Core.Models
+@model EmployerDashboardPageViewModel
+@{
+    // The next filing deadlines (script 063), for every role. Edited on Administration > Filing Deadlines.
+    var today = DateTime.Today;
+    var canEdit = User.IsInRole(ACA360.Core.Constants.UserRoles.SuperAdmin) || User.IsInRole(ACA360.Core.Constants.UserRoles.Admin);
+}
+@if (Model.UpcomingDeadlines.Any())
+{
+    <section class="scope" data-section="deadlines" aria-label="Upcoming filing deadlines">
+        <div class="scope-bar">
+            <h2>Upcoming deadlines</h2>
+            <div class="sb-spacer"></div>
+            <a class="hint" href="@Url.Action("Index", "Calendar")">Calendar</a>
+            @if (canEdit)
+            {
+                <span class="hint mx-1">·</span><a class="hint" href="@Url.Action("Index", "FilingDeadlines")">Edit dates</a>
+            }
+        </div>
+        <div class="row g-3 mb-4">
+            @foreach (var d in Model.UpcomingDeadlines)
+            {
+                var left = d.DaysLeft(today);
+                var tone = left <= 14 ? "danger" : left <= 45 ? "warning" : "primary";
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card h-100 border-start border-4 border-@tone">
+                        <div class="card-body py-3">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <span class="badge @(d.Jurisdiction == "IRS" ? "bg-label-primary" : "bg-label-info")">@d.Jurisdiction · TY @d.FilingYear</span>
+                                <span class="fw-bold text-@tone text-nowrap">@(left == 0 ? "Today" : left == 1 ? "1 day" : $"{left} days")</span>
+                            </div>
+                            <div class="fw-semibold mt-2">@d.Title</div>
+                            <div class="small">
+                                @d.DueDate.ToString("ddd, MMM d, yyyy")
+                                @if (d.NeedsCheck)
+                                {
+                                    <span class="badge bg-label-warning ms-1" title="Filled in for you; an administrator should confirm it">Check</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+}

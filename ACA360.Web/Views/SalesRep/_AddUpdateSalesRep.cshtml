@@ -1,0 +1,35 @@
+﻿@using ACA360.Core.Models.Tracker
+@model SalesRepItem
+
+<form id="frmSalesRep">
+    @Html.AntiForgeryToken()
+    <div class="modal-header">
+        <h5 class="modal-title">@(Model.SalesRepId == 0 ? "Add Sales Rep" : "Edit Sales Rep")</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <input type="hidden" asp-for="SalesRepId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Name <span class="text-danger">*</span></label>
+                        <input asp-for="SalesRepName" class="form-control" required placeholder="Enter Sales representative name" />
+                        <span asp-validation-for="SalesRepName" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-check form-switch mt-4">
+                        <input class="form-check-input" type="checkbox" asp-for="IsActive" />
+                        <label class="form-check-label fw-bold" asp-for="IsActive">Active</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-footer py-3">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveSalesRep()">Save</button>
+    </div>
+</form>

@@ -1,0 +1,231 @@
+﻿@model ACA360.Web.Models.MenuFormViewModel
+@using System.Text.Json
+<style>
+    .select2-container {
+        z-index: 9999 !important;
+    }
+    .select2-container--open {
+        z-index: 9999 !important;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--multiple .select2-selection__rendered {
+        padding-left: inherit;
+    }    
+    .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+        padding-left: inherit;
+    }
+    /* Optional: Ensure Select2 gets the red border properly */
+    .select2-selection.border-danger {
+        border: 1px solid #dc3545 !important;
+    }
+</style>
+<form id="menuForm" method="post">
+    <input type="hidden" name="Menu.Id" value="@Model.Menu.Id" />
+    
+    <!-- ACTUAL Field submitted to the server -->
+    <input type="hidden" id="ActualParentMenuId" name="Menu.ParentMenuId" value="@Model.Menu.ParentMenuId" />
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="MenuName" class="form-label">Menu Name</label><span class="text-danger">*</span>
+            <input type="text" id="MenuName" name="Menu.MenuName" class="form-control required-field" value="@Model.Menu.MenuName" />
+        </div>
+        <div class="col-md-6">
+            <label for="Controller" class="form-label">Controller</label><span class="text-danger">*</span>
+            <input type="text" id="Controller" name="Menu.Controller" class="form-control required-field" value="@Model.Menu.Controller" />
+        </div>
+    </div>
+
+    <!-- NEW: Cascading Parent Selection -->
+    <div class="row mb-3">
+        <div class="col-md-12 mb-2">
+            <strong>Parent Placement Setup</strong>
+        </div>
+        <div class="col-md-6">
+            <label for="MainParentSelect" class="form-label">Main Parent (Level 1)</label>
+            <select id="MainParentSelect" class="form-select">
+                <option value="">-- Set as Main Menu --</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label for="SubParentSelect" class="form-label">Sub Parent (Level 2)</label>
+            <select id="SubParentSelect" class="form-select" disabled>
+                <option value="">-- Optional: Select Sub Parent --</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="Icon" class="form-label">Icon</label>
+            <input type="text" id="Icon" name="Menu.Icon" class="form-control" value="@Model.Menu.Icon" />
+        </div>
+        <div class="col-md-6">
+            <label for="DisplayOrder" class="form-label">Display Order</label><span class="text-danger">*</span>
+            <input type="number" id="DisplayOrder" name="Menu.DisplayOrder" class="form-control required-field" value="@Model.Menu.DisplayOrder" />
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <label for="SelectedActionIds" class="form-label">Menu Actions</label><span class="text-danger">*</span>
+            <select id="SelectedActionIds" name="SelectedActionIds[]" class="form-select required-field" multiple>
+                <option value="select_toggle" data-special="true">-- Select All --</option>
+                @foreach (var action in Model.AvailableActions)
+                {
+                    @:<option value="@action.Value" @(Model.SelectedActionIds.Contains(int.Parse(action.Value)) ? "selected" : "")>@action.Text</option>
+                }
+            </select>        
+        </div>
+    </div>
+
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-6">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="IsVisible" name="Menu.IsVisible" value="true" @(Model.Menu.IsVisible ? "checked" : "") />
+                <label class="form-check-label" for="IsVisible">Show in Sidebar?</label>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-check mt-3 mt-md-0">
+                <input type="checkbox" id="IsActive" name="Menu.IsActive" class="form-check-input" value="true" @(Model.Menu.IsActive ? "checked" : "") />
+                <label for="IsActive" class="form-check-label">Is Active</label>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    $(document).ready(function () {
+        // 1. Pass the C# object to Javascript
+        const parentMenus = @Html.Raw(JsonSerializer.Serialize(Model.ParentMenus));
+        const initialParentId = $('#ActualParentMenuId').val();
+        
+        const $mainParent = $('#MainParentSelect');
+        const $subParent = $('#SubParentSelect');
+        const $actualParent = $('#ActualParentMenuId');
+
+        // 2. Separate Level 1 (No Parent) and Level 2 (Has Parent)
+        const level1Menus = parentMenus.filter(m => m.ParentMenuId === null);
+        const level2Menus = parentMenus.filter(m => m.ParentMenuId !== null);
+
+        // 3. Populate Level 1 Dropdown
+        level1Menus.forEach(menu => {
+            $mainParent.append(new Option(menu.MenuName, menu.Id));
+        });
+
+        // 4. Function to Populate Level 2 based on Level 1 selection
+        function loadSubParents(mainId, preselectId = null) {
+            $subParent.empty().append(new Option("-- Optional: Select Sub Parent --", ""));
+            
+            if (!mainId) {
+                $subParent.prop('disabled', true);
+                return;
+            }
+
+            const children = level2Menus.filter(m => m.ParentMenuId == mainId);
+            if (children.length > 0) {
+                $subParent.prop('disabled', false);
+                children.forEach(menu => {
+                    $subParent.append(new Option(menu.MenuName, menu.Id));
+                });
+                
+                if (preselectId) {
+                    $subParent.val(preselectId);
+                }
+            } else {
+                $subParent.prop('disabled', true);
+            }
+        }
+
+        // 5. Initialize form state if editing an existing menu
+        if (initialParentId) {
+            const selectedMenu = parentMenus.find(m => m.Id == initialParentId);
+            if (selectedMenu) {
+                if (selectedMenu.ParentMenuId === null) {
+                    // It's a Level 1 assignment
+                    $mainParent.val(selectedMenu.Id);
+                    loadSubParents(selectedMenu.Id);
+                } else {
+                    // It's a Level 2 assignment
+                    $mainParent.val(selectedMenu.ParentMenuId);
+                    loadSubParents(selectedMenu.ParentMenuId, selectedMenu.Id);
+                }
+            }
+        }
+
+        // 6. Handle UI Changes & Update the Hidden Input
+        $mainParent.change(function () {
+            const selectedMain = $(this).val();
+            loadSubParents(selectedMain);
+            $actualParent.val(selectedMain); // Default to Main Parent ID
+        });
+
+        $subParent.change(function () {
+            const selectedSub = $(this).val();
+            const selectedMain = $mainParent.val();
+            
+            // If sub parent is chosen, use it; otherwise fallback to main parent
+            $actualParent.val(selectedSub ? selectedSub : selectedMain); 
+        });
+        
+        // Ensure checkboxes post boolean values correctly
+        $('#IsVisible, #IsActive').on('change', function(){
+            $(this).val($(this).is(':checked') ? "true" : "false");
+        });
+        
+        // Select2 Initialization (Kept from your original script)
+        $('#SelectedActionIds').select2({ placeholder: 'Select actions', width: '100%' });
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+        const $select = $('#SelectedActionIds');
+
+        $select.select2({
+            placeholder: 'Select actions',
+            width: '100%',
+            templateResult: function (data) {
+                if (!data.id) return data.text;
+                if (data.element && $(data.element).data('special')) {
+                    return $('<span class="select2-special-option">' + data.text + '</span>');
+                }
+                return data.text;
+            }
+        });
+
+        $select.on('select2:select', function (e) {
+            const selectedValue = e.params.data.id;
+
+            if (selectedValue === 'select_toggle') {
+                const allOptionValues = [];
+                $select.find('option').each(function () {
+                    const val = $(this).val();
+                    if (val !== 'select_toggle') {
+                        allOptionValues.push(val);
+                    }
+                });
+
+                const currentValues = $select.val() || [];
+                const isSelecting = currentValues.length < allOptionValues.length;
+
+                if (isSelecting) {
+                    $select.val(allOptionValues).trigger('change');
+                   $select.find('option[value="select_toggle"]').text('-- Deselect All --').attr('data-toggled', 'true');
+                } else {
+                    $select.val(null).trigger('change');
+                   $select.find('option[value="select_toggle"]').text('-- Select All --').attr('data-toggled', 'false');
+                }
+            }
+        });
+
+        $select.on('change', function () {
+            const totalOptions = $select.find('option').length - 1; // excluding toggle
+            const selectedOptions = ($select.val() || []).length;
+            const toggleText = selectedOptions === totalOptions ? '-- Deselect All --' : '-- Select All --';
+            $select.find('option[value="select_toggle"]').text(toggleText);
+        });
+    });
+</script>
+
+

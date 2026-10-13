@@ -1,0 +1,117 @@
+@* Global search (Ctrl+K): pages, employers, employees of the selected employer, files. See SearchController. *@
+<div class="modal fade" id="globalSearchModal" tabindex="-1" aria-labelledby="globalSearchLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" style="margin-top:8vh">
+        <div class="modal-content">
+            @* The input is in the body, not a .modal-header: the theme colours modal headers. *@
+            <div class="d-flex align-items-center p-2 border-bottom bg-body rounded-top">
+                <i class="bx bx-search fs-4 mx-2 text-body opacity-75" aria-hidden="true"></i>
+                <label class="visually-hidden" id="globalSearchLabel" for="globalSearchInput">Search</label>
+                <input id="globalSearchInput" type="search" class="form-control border-0 shadow-none fs-5" autocomplete="off"
+                       placeholder="Search pages, employers, employees, files…"
+                       role="combobox" aria-expanded="false" aria-controls="globalSearchResults" aria-autocomplete="list" />
+                <kbd class="me-2 d-none d-sm-inline">Esc</kbd>
+            </div>
+            <div class="modal-body p-0">
+                <div id="globalSearchResults" role="listbox" aria-label="Search results"></div>
+                <div id="globalSearchHint" class="text-body opacity-75 small p-3">
+                    Type at least two letters. Employees are searched in the employer you are working in;
+                    four digits find the last four of an SSN. Use ↑ ↓ and Enter.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    (function () {
+        const modalEl = document.getElementById('globalSearchModal');
+        if (!modalEl) return;
+        const input = document.getElementById('globalSearchInput');
+        const results = document.getElementById('globalSearchResults');
+        const hint = document.getElementById('globalSearchHint');
+        const url = '@Url.Action("Query", "Search")';
+        const groups = [['pages', 'Pages'], ['employers', 'Employers'], ['employees', 'Employees'], ['files', 'Files']];
+        let timer = null, controller = null, links = [], active = -1;
+
+        function open() { bootstrap.Modal.getOrCreateInstance(modalEl).show(); }
+        function highlight(index) {
+            links.forEach((a, i) => { a.classList.toggle('active', i === index); a.setAttribute('aria-selected', String(i === index)); });
+            active = index;
+            if (index >= 0) { links[index].scrollIntoView({ block: 'nearest' }); input.setAttribute('aria-activedescendant', links[index].id); }
+            else input.removeAttribute('aria-activedescendant');
+        }
+        function note(text) {
+            const p = document.createElement('p');
+            p.className = 'text-body opacity-75 small px-3 py-2 mb-0';
+            p.textContent = text;
+            return p;
+        }
+        function render(data) {
+            results.replaceChildren();
+            links = [];
+            groups.forEach(([key, label]) => {
+                const hits = data[key] || [];
+                const message = key === 'employees' ? data.employeeNote : null;
+                if (!hits.length && !message) return;
+                const head = document.createElement('div');
+                head.className = 'small text-uppercase fw-semibold text-body opacity-75 px-3 pt-3 pb-1';
+                head.textContent = label;
+                results.appendChild(head);
+                if (message) results.appendChild(note(message));
+                const list = document.createElement('div');
+                list.className = 'list-group list-group-flush';
+                hits.forEach(hit => {
+                    const a = document.createElement('a');
+                    a.href = hit.url;
+                    a.id = 'gs-' + links.length;
+                    a.className = 'list-group-item list-group-item-action d-flex align-items-center gap-3';
+                    a.setAttribute('role', 'option');
+                    const icon = document.createElement('i');
+                    icon.className = (hit.icon || 'bx bx-right-arrow-alt') + ' fs-5 text-primary';
+                    icon.setAttribute('aria-hidden', 'true');
+                    const text = document.createElement('div');
+                    text.style.minWidth = '0';
+                    const title = document.createElement('div');
+                    title.className = 'fw-semibold text-break';
+                    title.textContent = hit.title;
+                    text.appendChild(title);
+                    if (hit.subtitle) {
+                        const sub = document.createElement('small');
+                        sub.className = 'text-body opacity-75 text-break';
+                        sub.textContent = hit.subtitle;
+                        text.appendChild(sub);
+                    }
+                    a.append(icon, text);
+                    list.appendChild(a);
+                    links.push(a);
+                });
+                results.appendChild(list);
+            });
+            if (!links.length && !results.children.length) results.appendChild(note('Nothing found.'));
+            input.setAttribute('aria-expanded', String(links.length > 0));
+            highlight(links.length ? 0 : -1);
+        }
+        function search() {
+            const q = input.value.trim();
+            controller?.abort();
+            if (q.length < 2) { results.replaceChildren(); links = []; hint.hidden = false; input.setAttribute('aria-expanded', 'false'); return; }
+            hint.hidden = true;
+            controller = new AbortController();
+            fetch(url + '?q=' + encodeURIComponent(q), { signal: controller.signal, credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(r => r.ok ? r.json() : Promise.reject(new Error('Search failed')))
+                .then(render)
+                .catch(error => { if (error.name !== 'AbortError') { results.replaceChildren(note('Search is not available right now.')); links = []; } });
+        }
+
+        input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(search, 250); });
+        input.addEventListener('keydown', e => {
+            if (e.key === 'ArrowDown' && links.length) { e.preventDefault(); highlight((active + 1) % links.length); }
+            else if (e.key === 'ArrowUp' && links.length) { e.preventDefault(); highlight((active - 1 + links.length) % links.length); }
+            else if (e.key === 'Enter' && active >= 0) { e.preventDefault(); window.location.href = links[active].href; }
+        });
+        modalEl.addEventListener('shown.bs.modal', () => { input.focus(); input.select(); });
+        document.addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k') { e.preventDefault(); open(); }
+        });
+        window.AcaSearch = { open };
+    })();
+</script>

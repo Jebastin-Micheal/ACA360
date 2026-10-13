@@ -1,0 +1,81 @@
+@using System.Security.Claims
+@using ACA360.Core.Constants
+@{
+    var profilePic = User.FindFirst("ProfilePicture")?.Value;
+
+    if (string.IsNullOrWhiteSpace(profilePic))
+    {
+        profilePic = Url.Content("~/assets/img/avatars/default.png");
+    }
+}
+
+<li data-tour="profile" class="nav-item navbar-dropdown dropdown-user dropdown">
+    <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">
+        <div class="avatar avatar-online">
+            <img id="top_profilepic_icon" src="@profilePic" class="rounded-circle" alt="Profile Picture" />
+        </div>
+
+    </a>
+    
+    
+    <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+            <a class="dropdown-item" href="">
+                <div class="d-flex">
+                    <div class="flex-shrink-0 me-3">
+                        <div class="avatar avatar-online">
+                            <img id="top_profilepic_drp_icon" src="@profilePic" class="rounded-circle" />
+                        </div>
+                    </div>
+
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0">@((User.FindFirst("Profile_Name")?.Value) ?? "Guest")</h6>
+                        <small class="text-body-secondary text-truncate d-block">
+                            @((User.FindFirst(ClaimTypes.Role)?.Value) ?? "No Role")
+                        </small>
+                    </div>
+
+                </div>
+            </a>
+        </li>
+        <li>
+            <div class="dropdown-divider my-1"></div>
+        </li>
+        @if (User.IsInRole(UserRoles.SuperAdmin) || User.IsInRole(UserRoles.Admin) || User.IsInRole(UserRoles.AccountManager))
+        {
+            <li>
+                <a class="dropdown-item" asp-controller="Account" asp-action="MyProfile">
+                    <i class="bx bx-user me-2"></i>
+                    <span class="align-middle">My Profile</span>
+                </a>
+            </li>
+        }
+        <li>
+            <a class="dropdown-item" asp-controller="Settings" asp-action="Index"> <i class="icon-base bx bx-cog icon-md me-3"></i><span>Settings</span> </a>
+        </li>
+        <li>
+            <div class="dropdown-divider my-1"></div>
+        </li>
+        <li>
+            <a class="dropdown-item" asp-controller="faq" asp-action="Index"> <i class="icon-base bx bx-help-circle icon-md me-3"></i><span>FAQ</span> </a>
+        </li>
+        @* Replays the guided tour of the home dashboard (js/aca360-tour.js). *@
+        <li>
+            <a class="dropdown-item" href="javascript:void(0);" data-tour-start> <i class="icon-base bx bx-map-alt icon-md me-3"></i><span>Take the tour</span> </a>
+        </li>
+        @* Shown by js/pwa.js only when the browser can install ACA360 as an app. *@
+        <li class="d-none" data-pwa-install>
+            <a class="dropdown-item" href="javascript:void(0);"> <i class="icon-base bx bx-download icon-md me-3"></i><span>Install ACA360 app</span> </a>
+        </li>
+        <li class="d-none" data-pwa-ios-hint>
+            <span class="dropdown-item-text small text-muted"><i class="icon-base bx bx-share icon-md me-3"></i>To install: Share, then Add to Home Screen</span>
+        </li>
+        <li>
+            <div class="dropdown-divider my-1"></div>
+        </li>
+
+        <li>
+            <a class="dropdown-item" href="@Url.Action("Logout", "Account")"> <i class="icon-base bx bx-power-off icon-md me-3"></i><span>Log Out</span> </a>
+        </li>
+    </ul>
+</li>

@@ -1,0 +1,697 @@
+using ACA360.Core.Models.Tracker;
+using Dapper;
+using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
+using ACA360.Repositories.Interfaces;
+namespace ACA360.Repositories.Implementations
+{
+    public class TrackerEmployerRepository : ITrackerEmployerRepository
+    {
+        private readonly string _connStr;
+        public TrackerEmployerRepository(IConfiguration config)
+        { 
+            _connStr = config.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException(
+                    "ConnectionStrings:DefaultConnection is missing from configuration."); ;
+        }
+        private IDbConnection Db => new SqlConnection(_connStr);
+
+        // 1. GET LIST (JOIN Core + Extension + Firm)
+        public async Task<(IEnumerable<TrackerEmployerItem>, int)> GetListAsync(EmployerFilterModel filter)
+        {
+            using (var db = Db)
+            {
+                var p = new DynamicParameters();
+                p.Add("@SearchText", filter.SearchText);
+                p.Add("@FirmId", filter.FirmId);
+                p.Add("@BrokerId", filter.BrokerId);
+                p.Add("@FundingType", filter.FundingType);
+                p.Add("@IsPriority", filter.IsPriority);
+                p.Add("@SortColumn", filter.SortColumn);
+                p.Add("@SortOrder", filter.SortOrder);
+                p.Add("@PageNumber", filter.Page);
+                p.Add("@PageSize", filter.PageSize);
+
+                var res = await db.QueryAsync<TrackerEmployerItem>("sp_Tracker_GetEmployerList", p, commandType: CommandType.StoredProcedure);
+                return (res, res.FirstOrDefault()?.TotalCount ?? 0);
+            }
+        }
+        // 2. GET BY ID (JOIN Core + Extension)
+        public async Task<TrackerEmployerItem?> GetByIdAsync(int id)
+        {
+            try
+            {
+                using (var db = Db)
+                {
+                    return await db.QueryFirstOrDefaultAsync<TrackerEmployerItem>(
+                        "sp_GetTrackerEmployerById",
+                        new { Id = id },
+                        commandType: CommandType.StoredProcedure);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error fetching employer with ID {id}: {ex.Message}", ex);
+            }
+        }
+
+        // 3. SAVE (Update BOTH Tables Transactionally)
+        public async Task<int> SaveAsync(TrackerEmployerItem item)
+        {
+            using (var db = Db)
+            {
+                var p = new DynamicParameters();
+
+                // -- BEHAVIOR FLAG -----------------------------------------
+                p.Add("@SaveMode", 1); // Employer Form = full save
+
+                // -- CORE: Employer Table ----------------------------------
+                p.Add("@EmployerId", item.EmployerId);
+                p.Add("@EmployerName", item.EmployerName);
+                p.Add("@EIN", item.EIN);
+                p.Add("@Address", item.Address);
+                p.Add("@City", item.City);
+                p.Add("@State", item.State);
+                p.Add("@Zip", item.Zip);
+                p.Add("@ContactName", item.ContactName);
+                p.Add("@Phone", item.Phone);
+                p.Add("@Email", item.Email);
+                // AFTER ? — also check if it's a valid number
+                var filingYear = int.TryParse(item.Filingyear, out int fy) && fy > 0
+                    ? fy.ToString()
+                    : DateTime.Now.Year.ToString();
+                p.Add("@FilingYear", !string.IsNullOrEmpty(item.Filingyear)
+                ? item.Filingyear
+                : DateTime.Now.Year.ToString());
+                // -- EXTENSION: Team / Identity ----------------------------
+                p.Add("@FirmId", item.FirmId);
+                p.Add("@BrokerId", item.BrokerId);
+                p.Add("@AccountManagerId", item.AcctManagerId);
+                p.Add("@SalesRepId", item.SalesRepId);
+                p.Add("@IndustryId", item.IndustryId);
+                p.Add("@DataTypeId", item.DataTypeId);
+                p.Add("@DataAnalyst", item.DataAnalyst);
+                p.Add("@Vendor", item.Vendor);
+
+                // -- EXTENSION: Data Specifications ------------------------
+                p.Add("@PlanYear", item.PlanYear);
+                p.Add("@FundingType", item.FundingType);
+                p.Add("@FormType", item.FormType);
+                p.Add("@DataFrequency", item.DataFrequency);
+
+                // -- EXTENSION: Pricing & Counts ---------------------------
+                p.Add("@FormProposed", item.FormProposed);
+                p.Add("@Form1095Process", item.Form1095Process);
+                p.Add("@OverProposedFormCount", item.OverProposedFormCount);
+                p.Add("@OverProposedFormCountPrice", item.OverProposedFormPrice);
+
+                // -- EXTENSION: Checkboxes ---------------------------------
+                p.Add("@IsPriority", item.IsPriority);
+                p.Add("@ConditionalOffer", item.ConditionalOffer);
+                p.Add("@SFTP", item.SFTP);
+                p.Add("@AnnualPO", item.AnnualPO);
+                p.Add("@AnnualCOI", item.AnnualCOI);
+                p.Add("@NoAutoRenewal", item.NoAutoRenewal);
+
+                // -- NOT passed from this form (other page owns these) -----
+                // @AffiliateId, @BillingContactId, @ContactId,
+                // @ContactPhone, @ContactEmail, @BillingPhone, @BillingEmail,
+                // @WaitingPeriod, @BandingType  ? stay NULL ? COALESCE preserves DB value
+
+                var result = await db.QueryFirstOrDefaultAsync<dynamic>(
+                    "sp_AddEmployerInfoTracker_new", p,
+                    commandType: CommandType.StoredProcedure);
+
+                return (int)(result?.EmployerId ?? item.EmployerId);
+            }
+        }
+        //public async Task SaveAsync(TrackerEmployerItem item)
+        //{
+        //    using (var db = Db)
+        //    {
+        //        db.Open();
+        //        using (var trans = db.BeginTransaction())
+        //        {
+        //            try
+        //            {
+        //                int empId = item.EmployerId;
+
+        //                // ---------------------------------------------------------
+        //                // A. Insert/Update CORE Table (Employer)
+        //                // ---------------------------------------------------------
+        //                if (empId == 0)
+        //                {
+        //                    var sqlCore = @"INSERT INTO Employer (name, taxid, address, city, state, zip, contactName, phoneNumber, CreatedDate, IsDeleted) 
+        //                            VALUES (@Name, @EIN, @Addr, @City, @State, @Zip, @Contact, @Phone, GETUTCDATE(), 0);
+        //                            SELECT CAST(SCOPE_IDENTITY() as int);";
+        //                    empId = await db.ExecuteScalarAsync<int>(sqlCore, new
+        //                    {
+        //                        Name = item.EmployerName,
+        //                        EIN = item.EIN,
+        //                        Addr = item.Address,
+        //                        City = item.City,
+        //                        State = item.State,
+        //                        Zip = item.Zip,
+        //                        Contact = item.ContactName,
+        //                        Phone = item.Phone
+        //                    }, transaction: trans);
+        //                }
+        //                else
+        //                {
+        //                    var sqlCore = @"UPDATE Employer SET name=@Name, taxid=@EIN, address=@Addr, city=@City, state=@State, zip=@Zip, contactName=@Contact, phoneNumber=@Phone 
+        //                            WHERE id=@Id";
+        //                    await db.ExecuteAsync(sqlCore, new
+        //                    {
+        //                        Id = empId,
+        //                        Name = item.EmployerName,
+        //                        EIN = item.EIN,
+        //                        Addr = item.Address,
+        //                        City = item.City,
+        //                        State = item.State,
+        //                        Zip = item.Zip,
+        //                        Contact = item.ContactName,
+        //                        Phone = item.Phone
+        //                    }, transaction: trans);
+        //                }
+
+        //                // ---------------------------------------------------------
+        //                // B. Insert/Update EXTENSION Table (Tracker_EmployerExtension)
+        //                // ---------------------------------------------------------
+
+        //                // 1. Prepare Parameters (Mapping Model -> SQL Column Names)
+        //                var p = new DynamicParameters();
+        //                p.Add("@Id", empId);
+
+        //                // Dropdowns (IDs)
+        //                p.Add("@FirmId", item.FirmId);
+        //                p.Add("@BrokerId", item.BrokerId);
+        //                p.Add("@AcctMgr", item.AcctManagerId);
+        //                p.Add("@SalesRep", item.SalesRepId);
+        //                p.Add("@Industry", item.IndustryId);       // Maps to _IndustryId
+        //                p.Add("@DataType", item.DataTypeId);       // Maps to _datatypeid
+
+        //                // Text Fields
+        //                p.Add("@PlanYear", item.PlanYear);
+        //                p.Add("@Funding", item.FundingType);
+        //                p.Add("@FormType", item.FormType);
+        //                p.Add("@DataFreq", item.DataFrequency);
+        //                p.Add("@Vendor", item.Vendor);             // Maps to _vendor
+        //                p.Add("@Analyst", item.DataAnalyst);       // Maps to _dataAnalyst
+        //                p.Add("@WaitPeriod", item.WaitingPeriod);  // Maps to WaitingPeriod
+        //                p.Add("@Banding", item.BandingType);       // Maps to BandingType
+        //                p.Add("@Complexity", item.LevelOfComplexity); // Maps to _LevelofComplexity
+        //                p.Add("@DataLoads", item.DataLoads);       // Maps to _DataLoads
+        //                p.Add("@Comm", item.Communication);        // Maps to _Communication
+        //                p.Add("@BrokerInv", item.BrokerInvolvement); // Maps to _Broker_Involvement
+        //                p.Add("@PlanTerm", item.PlanTermination);  // Maps to _PlanTermination
+
+        //                // Pricing & Counts
+        //                p.Add("@OverCount", item.OverProposedFormCount);           // _OverProposedFormCount
+        //                p.Add("@OverPrice", item.OverProposedFormPrice);           // _OverProposedFormCountPrice
+        //                p.Add("@OverTrackCount", item.OverProposedTrackedCount);   // _OverProposedTrackedEmployeeCount
+        //                p.Add("@OverTrackPrice", item.OverProposedTrackedPrice);   // _OverProposedTrackedEmployeeCountPrice
+
+        //                // Checkboxes (Bit Fields)
+        //                p.Add("@Priority", item.IsPriority);
+        //                p.Add("@SpecialMailing", item.HasSpecialMailing);
+        //                p.Add("@NoRenewal", item.NoAutoRenewal);
+        //                p.Add("@SFTP", item.SFTP);
+        //                p.Add("@AnnualCOI", item.AnnualCOI);       // Maps to _AnnualCOI
+        //                p.Add("@AnnualPO", item.AnnualPO);         // Maps to _AnnualPO
+        //                p.Add("@CondOffer", item.ConditionalOffer); // Maps to _ConditionalOffer
+        //                p.Add("@SpecDates", item.SpecialPaymentDates); // Maps to _SpecialPaymentDates
+
+
+        //                // 2. Check if row exists
+        //                var extExists = await db.ExecuteScalarAsync<bool>("SELECT COUNT(1) FROM Tracker_EmployerExtension WHERE EmployerId = @Id", new { Id = empId }, transaction: trans);
+
+        //                if (!extExists)
+        //                {
+        //                    // INSERT (All Columns)
+        //                    var sqlExt = @"INSERT INTO Tracker_EmployerExtension 
+        //                           (EmployerId, firmid, brokerid, AcctManagerid, srepid, _IndustryId, _datatypeid,
+        //                            _planyear, _fundingtype, _FormType, _DataFrequency, _vendor, _dataAnalyst,
+        //                            WaitingPeriod, BandingType, _LevelofComplexity, _DataLoads, _Communication, _Broker_Involvement, _PlanTermination,
+        //                            _OverProposedFormCount, _OverProposedFormCountPrice, _OverProposedTrackedEmployeeCount, _OverProposedTrackedEmployeeCountPrice,
+        //                            Priority, _SpecialMailing, _noAutoRenewal, SFTP, _AnnualCOI, _AnnualPO, _ConditionalOffer, _SpecialPaymentDates) 
+        //                           VALUES 
+        //                           (@Id, @FirmId, @BrokerId, @AcctMgr, @SalesRep, @Industry, @DataType,
+        //                            @PlanYear, @Funding, @FormType, @DataFreq, @Vendor, @Analyst,
+        //                            @WaitPeriod, @Banding, @Complexity, @DataLoads, @Comm, @BrokerInv, @PlanTerm,
+        //                            @OverCount, @OverPrice, @OverTrackCount, @OverTrackPrice,
+        //                            @Priority, @SpecialMailing, @NoRenewal, @SFTP, @AnnualCOI, @AnnualPO, @CondOffer, @SpecDates)";
+
+        //                    await db.ExecuteAsync(sqlExt, p, transaction: trans);
+        //                }
+        //                else
+        //                {
+        //                    // UPDATE (All Columns)
+        //                    var sqlExt = @"UPDATE Tracker_EmployerExtension SET 
+        //                           firmid=@FirmId, brokerid=@BrokerId, AcctManagerid=@AcctMgr, srepid=@SalesRep, _IndustryId=@Industry, _datatypeid=@DataType,
+        //                           _planyear=@PlanYear, _fundingtype=@Funding, _FormType=@FormType, _DataFrequency=@DataFreq, _vendor=@Vendor, _dataAnalyst=@Analyst,
+        //                           WaitingPeriod=@WaitPeriod, BandingType=@Banding, _LevelofComplexity=@Complexity, _DataLoads=@DataLoads, 
+        //                           _Communication=@Comm, _Broker_Involvement=@BrokerInv, _PlanTermination=@PlanTerm,
+        //                           _OverProposedFormCount=@OverCount, _OverProposedFormCountPrice=@OverPrice, 
+        //                           _OverProposedTrackedEmployeeCount=@OverTrackCount, _OverProposedTrackedEmployeeCountPrice=@OverTrackPrice,
+        //                           Priority=@Priority, _SpecialMailing=@SpecialMailing, _noAutoRenewal=@NoRenewal, SFTP=@SFTP, 
+        //                           _AnnualCOI=@AnnualCOI, _AnnualPO=@AnnualPO, _ConditionalOffer=@CondOffer, _SpecialPaymentDates=@SpecDates
+        //                           WHERE EmployerId=@Id";
+
+        //                    await db.ExecuteAsync(sqlExt, p, transaction: trans);
+        //                }
+
+        //                trans.Commit();
+        //            }
+        //            catch
+        //            {
+        //                trans.Rollback();
+        //                throw;
+        //            }
+        //        }
+        //    }
+        //}
+
+        // 4. DELETE (Soft Delete Core Table)
+        public async Task DeleteAsync(int id)
+        {
+            using (var db = Db)
+            {
+                await db.ExecuteAsync("UPDATE Employer SET IsDeleted=1 WHERE id=@Id", new { Id = id });
+            }
+        }
+        // -- DROPDOWN DATA (15 result sets from SP) ------------------
+        public async Task<EmployerDropdownDataModel> GetDropdownDataAsync(int employerId, int? brokerId = null, int? firmId = null)
+        {
+            var model = new EmployerDropdownDataModel();
+
+            using (var db = Db)
+            {
+                var p = new DynamicParameters();
+                p.Add("@Action", "GetDropdownData");
+                p.Add("@employerid", employerId.ToString());
+                p.Add("@isBilling", null);
+                p.Add("@brokerid", brokerId);
+                p.Add("@firmid", firmId);
+
+                using (var multi = await db.QueryMultipleAsync(
+                    "sp_GetDropdownDataEmployer_new1_tracker", p,
+                    commandType: CommandType.StoredProcedure))
+                {
+                    // RS 1: Industry (_IndustryId, _industryName)
+                    model.Industries = (await multi.ReadAsync<dynamic>())
+                        .Select(r => new DropdownItem { Id = (int)r._IndustryId, Name = (string)r._industryName })
+                        .ToList();
+
+                    // RS 2: DataType (_datatypeID, _datatypeName)
+                    model.DataTypes = (await multi.ReadAsync<dynamic>())
+                        .Select(r => new DropdownItem { Id = (int)r._datatypeID, Name = (string)r._datatypeName })
+                        .ToList();
+
+                    // RS 3: Account Managers (Id, _name)
+                    model.AccountManagers = (await multi.ReadAsync<dynamic>())
+                        .Select(r => new DropdownItem { Id = (int)r.Id, Name = (string)r._name })
+                        .ToList();
+
+                    // RS 4: Data Analysts (Id, _name)
+                    model.DataAnalysts = (await multi.ReadAsync<dynamic>())
+                        .Select(r => new DropdownItem { Id = (int)r.Id, Name = (string)r._name })
+                        .ToList();
+
+                    // RS 5: Sales Reps (srepid, srepname)
+                    model.SalesReps = (await multi.ReadAsync<dynamic>())
+                        .Select(r => new DropdownItem { Id = (int)r.srepid, Name = (string)r.srepname })
+                        .ToList();
+
+                    // RS 6: Firms (firmid, FirmName)
+                    model.Firms = (await multi.ReadAsync<dynamic>())
+                        .Select(r => new DropdownItem { Id = (int)r.firmid, Name = (string)r.FirmName })
+                        .ToList();
+
+                    // RS 7: Brokers (brokerid, BrokerName)
+                    model.Brokers = (await multi.ReadAsync<dynamic>())
+                        .Select(r => new DropdownItem { Id = (int)r.brokerid, Name = (string)r.BrokerName })
+                        .ToList();
+
+                    // RS 8: States (StateId, StateName)
+                    model.States = (await multi.ReadAsync<dynamic>())
+                        .Select(r => new DropdownItem { Id = (int)r.StateId, Name = (string)r.StateName })
+                        .ToList();
+
+                    // RS 9: Affiliates — SKIP (read and discard)
+                    await multi.ReadAsync<dynamic>();
+
+                    // RS 10: General Contacts (tbl_Medtracker_Contactid, name, phone, email)
+                    model.GeneralContacts = (await multi.ReadAsync<dynamic>())
+                        .Select(r => new ContactDropdownItem
+                        {
+                            Id = (int)r.tbl_Medtracker_Contactid,
+                            Name = (string)(r.name ?? ""),
+                            Phone = (string)(r.phone ?? ""),
+                            Email = (string)(r.email ?? "")
+                        }).ToList();
+
+                    // RS 11: Billing Contacts (tbl_Medtracker_Contactid, name, phone, email)
+                    model.BillingContacts = (await multi.ReadAsync<dynamic>())
+                        .Select(r => new ContactDropdownItem
+                        {
+                            Id = (int)r.tbl_Medtracker_Contactid,
+                            Name = (string)(r.name ?? ""),
+                            Phone = (string)(r.phone ?? ""),
+                            Email = (string)(r.email ?? "")
+                        }).ToList();
+
+                    // RS 12: Broker Contacts (Broker_Contactid, name, phone, email)
+                    model.BrokerContacts = (await multi.ReadAsync<dynamic>())
+                        .Select(r => new ContactDropdownItem
+                        {
+                            Id = (int)r.Broker_Contactid,
+                            Name = (string)(r.name ?? ""),
+                            Phone = (string)(r.phone ?? ""),
+                            Email = (string)(r.email ?? "")
+                        }).ToList();
+
+                    // RS 13: States ACA (id, state, code)
+                    model.StatesACA = (await multi.ReadAsync<dynamic>())
+                        .Select(r => new StateACAItem
+                        {
+                            Id = (int)r.id,
+                            State = (string)r.state,
+                            Code = (string)r.code
+                        }).ToList();
+
+                    // RS 14: Country ACA (id, country, code)
+                    model.CountriesACA = (await multi.ReadAsync<dynamic>())
+                        .Select(r => new CountryACAItem
+                        {
+                            Id = (int)r.id,
+                            Country = (string)r.country,
+                            Code = (string)r.code
+                        }).ToList();
+
+                    // RS 15: Broker Entity Details (Phone, Email)
+                    var brokerDetail = await multi.ReadFirstOrDefaultAsync<dynamic>();
+                    if (brokerDetail != null)
+                    {
+                        model.BrokerPhone = (string)(brokerDetail.Phone ?? "");
+                        model.BrokerEmail = (string)(brokerDetail.Email ?? "");
+                    }
+                }
+            }
+
+            return model;
+        }
+        // 5. SERVICES (Right Pane - Same as before)
+        public async Task<IEnumerable<EmployerServiceItem>> GetServicesAsync(int empId)
+        {
+            using (var db = Db)
+            {
+                return await db.QueryAsync<EmployerServiceItem>(
+                    "SELECT es.*, s.ServiceName, s.TaxYear FROM Tracker_EmployerService es JOIN Tracker_ServiceCatalog s ON es.ServiceId = s.ServiceId WHERE es.EmployerId = @Id AND es.IsDeleted=0",
+                    new { Id = empId });
+            }
+        }
+
+        public async Task SaveServiceAsync(EmployerServiceItem item)
+        {
+            try
+            {
+                using (var db = Db)
+                {
+                    var p = new DynamicParameters();
+                    p.Add("Action", item.EmployerServiceId == 0 ? "INSERT" : "UPDATE");
+                    p.Add("EmployerServiceId", item.EmployerServiceId);
+                    p.Add("EmployerId", item.EmployerId);
+                    p.Add("ServiceId", item.ServiceId);
+                    p.Add("Status", item.Status);
+                    p.Add("PotentialPenalty", item.PotentialPenalty);
+                    p.Add("SafeHarbor", item.SafeHarbor);
+                    p.Add("MedcomCOBRA", item.MedcomCOBRA);
+                    p.Add("CDHPClient", item.CDHPClient);
+                    p.Add("Required131", item.Required131);
+                    p.Add("WillNotSignSA", item.WillNotSignSA);
+                    p.Add("ProposalSentDate", item.ProposalSentDate);
+                    p.Add("ProposalSignedDate", item.ProposalSignedDate);
+                    p.Add("ContractSentDate", item.ContractSentDate);
+                    p.Add("ContractSignedDate", item.ContractSignedDate);
+                    p.Add("ProcessStep1095", item.ProcessStep1095);
+                    p.Add("LastUpdated1095", item.LastUpdated1095);
+                    p.Add("NextFollowUp1095", item.NextFollowUp1095);
+                    p.Add("SpecialDateDeadline", item.SpecialDateDeadline);
+                    p.Add("FTETrackingStep", item.FTETrackingStep);
+                    p.Add("LastUpdatedFTE", item.LastUpdatedFTE);
+                    p.Add("NextFollowUpFTE", item.NextFollowUpFTE);
+                    p.Add("ActualEmployeesTracked", item.ActualEmployeesTracked);
+                    p.Add("StateFilingStep", item.StateFilingStep);
+                    p.Add("LastUpdatedState", item.LastUpdatedState);
+                    p.Add("NextFollowUpState", item.NextFollowUpState);
+                    p.Add("MonthInitialData", item.MonthInitialData);
+                    p.Add("RenewalDate", item.RenewalDate);
+                    p.Add("Pricing", item.Pricing);
+                    p.Add("InitialBill", item.InitialBill);
+                    p.Add("FinalBill", item.FinalBill);
+                    p.Add("SOSAmount", item.SOSAmount);
+                    p.Add("FirstInvoiceDate", item.FirstInvoiceDate);
+                    p.Add("FinalInvoiceDate", item.FinalInvoiceDate);
+                    p.Add("AdditionalInvoiceAmount", item.AdditionalInvoiceAmount);
+                    p.Add("Payer", item.Payer);
+                    p.Add("ExtensionFiled", item.ExtensionFiled);
+                    p.Add("AuditBy", item.AuditBy);
+                    p.Add("AuditDate", item.AuditDate);
+                    p.Add("ACAOverageBill", item.ACAOverageBill);
+                    p.Add("FTEOverageBill", item.FTEOverageBill);
+                    p.Add("FormsMailed", item.FormsMailed);
+                    p.Add("EmployeesTracked", item.EmployeesTracked);
+                    p.Add("MostRecentFollowUpdate", item.MostRecentFollowUpdate);
+                    p.Add("ReceiptID", item.ReceiptID);
+                    p.Add("AffiliateId", item.AffiliateId);
+                    p.Add("Notes", item.Notes);
+                    p.Add("DataSheetReceivedDate", item.DataSheetReceivedDate);
+                    p.Add("FollowUpDate", item.FollowUpDate);
+                    p.Add("TaxYear", item.PlanYear);
+
+                    await db.ExecuteAsync(
+                        "sp_SaveEmployerService",
+                        p,
+                        commandType: CommandType.StoredProcedure
+                    );
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw new Exception($"Database error while saving employer service: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Unexpected error while saving employer service: {ex.Message}", ex);
+            }
+        }
+        public async Task<IEnumerable<dynamic>> GetServiceDropdownAsync()
+        {
+            using (var db = Db)
+            {
+                return await db.QueryAsync(
+                    "sp_GetDropdownDataService",
+                    new { Action = "GetDropdownData" },
+                    commandType: CommandType.StoredProcedure
+                );
+            }
+        }
+        public async Task<EmployerServiceItem?> GetServiceByIdAsync(int id)
+        {
+            using (var db = Db)
+            {
+                var sql = @"
+            SELECT es.*, s.ServiceName
+            FROM Tracker_EmployerService es 
+            JOIN Tracker_ServiceCatalog s ON es.ServiceId = s.ServiceId 
+            WHERE es.EmployerServiceId = @Id";
+
+                return await db.QueryFirstOrDefaultAsync<EmployerServiceItem>(sql, new { Id = id });
+            }
+        }
+        public async Task DeleteServiceAsync(int id)
+        {
+            using (var db = Db)
+            {
+                await db.ExecuteAsync("UPDATE Tracker_EmployerService SET IsDeleted = 1 WHERE EmployerServiceId = @Id", new { Id = id });
+            }
+        }
+
+        // -- AFFILIATES ------------------------------------------------
+        // Uses [Employer] table only — no Tracker_Affiliate table.
+        //   companyId IS NULL or 0  ?  Primary Employer (root)
+        //   companyId = X           ?  Affiliate of employer X
+
+        // 6a. GET full family list
+        // Resolves @RootId first so it works whether @EmployerId is
+        // the primary or an affiliate (sibling).
+        public async Task<IEnumerable<AffiliateEmployerItem>> GetAffiliatesAsync(int employerId)
+        {
+            const string sql = @"
+                DECLARE @RootId INT;
+                SELECT @RootId = CASE
+                                     WHEN companyId IS NULL OR companyId = 0 THEN id
+                                     ELSE companyId
+                                 END
+                FROM   [dbo].[Employer]
+                WHERE  id = @EmployerId AND IsDeleted != 1;
+
+                SELECT
+                    emp.id                                              AS EmployerId,
+                    emp.id                                              AS AffiliateId,
+                    emp.companyId                                       AS ParentEmployerId,
+                    emp.[name]                                          AS AffiliateName,
+                    emp.taxid                                           AS EIN,
+                    emp.[address]                                       AS [Address],
+                    emp.city                                            AS City,
+                    emp.[state]                                         AS [State],
+                    emp.zip                                             AS Zip,
+                    emp.phoneNumber                                     AS Phone,
+                    emp.email                                           AS Email,
+                    CAST(CASE
+                        WHEN emp.companyId IS NULL OR emp.companyId = 0 THEN 1
+                        ELSE 0
+                    END AS BIT)                                         AS IsMain
+                FROM [dbo].[Employer] emp
+                WHERE (emp.id = @RootId OR emp.companyId = @RootId)
+                  AND emp.IsDeleted != 1
+                ORDER BY IsMain DESC, emp.[name] ASC;";
+
+            using var db = Db;
+            return await db.QueryAsync<AffiliateEmployerItem>(sql, new { EmployerId = employerId });
+        }
+
+        // 6b. GET single affiliate record (for Edit modal pre-fill)
+        public async Task<AffiliateEmployerItem?> GetAffiliateByIdAsync(int id)
+        {
+            const string sql = @"
+                SELECT
+                    id              AS EmployerId,
+                    id              AS AffiliateId,
+                    companyId       AS ParentEmployerId,
+                    [name]          AS AffiliateName,
+                    taxid           AS EIN,
+                    [address]       AS [Address],
+                    city            AS City,
+                    [state]         AS [State],
+                    zip             AS Zip,
+                    phoneNumber     AS Phone,
+                    email           AS Email,
+                    CAST(CASE WHEN companyId IS NULL OR companyId = 0 THEN 1 ELSE 0 END AS BIT) AS IsMain
+                FROM [dbo].[Employer]
+                WHERE id = @Id AND IsDeleted != 1;";
+
+            using var db = Db;
+            return await db.QueryFirstOrDefaultAsync<AffiliateEmployerItem>(sql, new { Id = id });
+        }
+
+        // 6c. SAVE — INSERT new Employer row (companyId = root) or UPDATE existing
+        public async Task SaveAffiliateAsync(AffiliateEmployerItem item)
+        {
+            using var db = Db;
+
+            if (item.EmployerId == 0)
+            {
+                // INSERT: new Employer row linked to primary via companyId
+                const string sql = @"
+                    INSERT INTO [dbo].[Employer]
+                        ([name], taxid, [address], city, [state], zip,
+                         phoneNumber, email, companyId, IsDeleted, CreatedDate)
+                    VALUES
+                        (@AffiliateName, @EIN, @Address, @City, @State, @Zip,
+                         @Phone, @Email, @ParentEmployerId, 0, GETUTCDATE());";
+
+                await db.ExecuteAsync(sql, item);
+            }
+            else
+            {
+                // UPDATE: edit existing Employer row (never touch companyId on update)
+                const string sql = @"
+                    UPDATE [dbo].[Employer]
+                    SET [name]      = @AffiliateName,
+                        taxid       = @EIN,
+                        [address]   = @Address,
+                        city        = @City,
+                        [state]     = @State,
+                        zip         = @Zip,
+                        phoneNumber = @Phone,
+                        email       = @Email
+                    WHERE id = @EmployerId AND IsDeleted != 1;";
+
+                await db.ExecuteAsync(sql, item);
+            }
+        }
+
+        // 6d. DELETE — soft-delete; blocks deletion of the primary employer
+        // Returns false if the record is the root (companyId IS NULL / 0)
+        public async Task<bool> DeleteAffiliateAsync(int id)
+        {
+            using var db = Db;
+
+            // Check: is this the primary employer?
+            var companyId = await db.QueryFirstOrDefaultAsync<int?>(
+                "SELECT companyId FROM [dbo].[Employer] WHERE id = @Id AND IsDeleted != 1",
+                new { Id = id });
+
+            // companyId IS NULL or 0 means it's the root — never delete it
+            if (companyId == null || companyId == 0)
+                return false;
+
+            await db.ExecuteAsync(
+                "UPDATE [dbo].[Employer] SET IsDeleted = 1 WHERE id = @Id",
+                new { Id = id });
+
+            return true;
+        }
+
+        // -- NOTES -----------------------------------------------------
+        // Table: [dbo].[tbl_Medtracker_Note]
+        //   noteid, employerid, _category, _xnote, _PlanYear,
+        //   _timestamp, _inputUser
+
+        // 7a. GET all notes for an employer
+        public async Task<IEnumerable<EmployerNoteItem>> GetNotesAsync(int employerId)
+        {
+            using var db = Db;
+            return await db.QueryAsync<EmployerNoteItem>(
+                "sp_GetEmployerNotes",
+                new { EmployerId = employerId },
+                commandType: CommandType.StoredProcedure);
+        }
+
+        // 7b. SAVE (insert NoteId=0, update NoteId>0)
+        public async Task<int> SaveNoteAsync(EmployerNoteItem item, int currentUserId)
+        {
+            using var db = Db;
+            var result = await db.QueryFirstOrDefaultAsync<dynamic>(
+                "sp_SaveEmployerNote",
+                new
+                {
+                    NoteId = item.EmployerNoteId,
+                    item.EmployerId,
+                    item.Category,
+                    item.NoteText,
+                    NoteYear = item.NoteYear > 0 ? item.NoteYear : DateTime.Now.Year,
+                    InputUser = currentUserId
+                },
+                commandType: CommandType.StoredProcedure);
+
+            return (int)(result?.NoteId ?? item.EmployerNoteId);
+        }
+
+        // 7c. DELETE a note
+        public async Task DeleteNoteAsync(int noteId, int employerId)
+        {
+            using var db = Db;
+            await db.ExecuteAsync(
+                "sp_DeleteEmployerNote",
+                new { NoteId = noteId, EmployerId = employerId },
+                commandType: CommandType.StoredProcedure);
+        }
+
+    }
+}

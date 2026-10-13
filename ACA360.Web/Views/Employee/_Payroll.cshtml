@@ -1,0 +1,38 @@
+﻿@model ACA360.Web.Models.EmployeeListViewModel
+<div id="section_payroll">
+    <div class="section-header border-bottom">
+        <h6 class="fw-bold mb-0">Payroll Details</h6>
+        <div class="card-header-actions">
+            <button type="button" class="btn btn-sm btn-outline-primary btn-edit" onclick="toggleSection('section_payroll', true)">Edit Payroll</button>
+            <div class="action-buttons d-none">
+                <button type="button" class="btn btn-sm btn-primary" onclick="addDynamicRow('payroll')"><i class="bx bx-plus"></i> Add</button>
+                <button type="button" class="btn btn-sm btn-label-secondary" onclick="toggleSection('section_payroll', false)">Cancel</button>
+                <button type="button" class="btn btn-sm btn-success" onclick="saveGeneric('section_payroll', '/Employee/EmployeePayrollSave', 'EmployeePayrollDetails', event)">Save</button>
+            </div>
+        </div>
+    </div>
+    <div id="container_payroll">
+        @if (Model.SelectedEmployeeDetails?.EmployeePayrollDetails != null)
+        {
+            foreach (var item in Model.SelectedEmployeeDetails.EmployeePayrollDetails)
+            {
+                <div class="row g-3 mt-1 p-1 bg-label-secondary rounded dynamic-row align-items-end">
+                    <div class="text-end mb-n3 mt-0 ms-2">
+                        <button onclick="removeRow(this)" class="btn btn-sm bg-danger delete-btn float-end d-none" type="button">
+                            <i class="bx bx-trash fs-6 text-white"></i>
+                        </button>
+                    </div>
+                    <input type="hidden" class="data-field" data-key="Id" value="@item.Id" />
+                    <input type="hidden" class="data-field" data-key="EmployeeCodeId" value="@item.EmployeeCodeId" />
+                    <div class="col-md-4"><label class="form-label small">Hourly Pay Amount</label><input inputmode="decimal" class="form-control data-field" data-key="payPeriodHourlyAmount" value="@item.payPeriodHourlyAmount" oninput="this.value=this.value.replace(/[^0-9.]/g,'').replace(/(\..*)\./g,'$1').replace(/^(\d+)(\.\d{0,2})?.*$/,'$1$2')" disabled></div>
+                    <div class="col-md-4"><label class="form-label small">Salary Pay Amount</label><input inputmode="decimal" class="form-control data-field" data-key="payPeriodSalaryAmount" value="@item.payPeriodSalaryAmount" oninput="this.value=this.value.replace(/[^0-9.]/g,'').replace(/(\..*)\./g,'$1').replace(/^(\d+)(\.\d{0,2})?.*$/,'$1$2')" disabled></div>
+                    <div class="col-md-2"><label class="form-label small">Total Hours</label><input inputmode="decimal" class="form-control data-field" data-key="payPeriodTotalHours" value="@item.payPeriodTotalHours" oninput="this.value=this.value.replace(/[^0-9.]/g,'').replace(/(\..*)\./g,'$1').replace(/^(\d+)(\.\d{0,2})?.*$/,'$1$2')" disabled></div>
+                    <div class="col-md-2"><label class="form-label small">Additional</label><input inputmode="decimal" class="form-control data-field" data-key="payPeriodAdditional" value="@item.payPeriodAdditional" oninput="this.value=this.value.replace(/[^0-9.]/g,'').replace(/(\..*)\./g,'$1').replace(/^(\d+)(\.\d{0,2})?.*$/,'$1$2')" disabled></div>
+                    <div class="col-md-6"><label class="form-label small">Start Date</label><input type="date" class="form-control text-uppercase data-field start-date" data-key="payPeriodStartDate" onchange="var end=this.closest('.dynamic-row').querySelector('.end-date');end.min=this.value;if(end.value&&end.value<this.value)end.value='';" value="@(item.payPeriodStartDate?.ToString("yyyy-MM-dd"))" disabled></div>
+                    <div class="col-md-6"><label class="form-label small">End Date</label><input type="date" class="form-control text-uppercase data-field end-date" data-key="payPeriodEndDate" value="@(item.payPeriodEndDate?.ToString("yyyy-MM-dd"))" disabled></div>
+
+                </div>
+            }
+        }
+    </div>
+</div>

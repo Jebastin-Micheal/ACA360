@@ -1,0 +1,355 @@
+@model ACA360.Core.Models.EmployeeConsentViewModel
+@{
+    ViewData["Title"] = "My Tax Forms";
+    var isElectronic = string.Equals(Model.DeliveryPreference, "Electronic", StringComparison.OrdinalIgnoreCase);
+    var active = Model.IsElectronicActive;
+    var consentDate = Model.UpdatedOn ?? Model.CreatedOn;
+
+    var selectedYear = (int)(ViewBag.SelectedYear ?? Model.TaxYear);
+    var formType = ViewBag.FormType as string ?? "1095-C";
+    var paperSet = Model.HasRecord && !active;
+    var years = ViewBag.AvailableYears as List<int> ?? new List<int> { selectedYear };
+    var notifyRequested = ViewBag.NotifyRequested == true;
+    var formDesc = formType == "1095-B" ? "Health Coverage" : "Employer-Provided Health Insurance Offer and Coverage";
+    var isCurrentYear = ViewBag.IsCurrentYear == true;
+    var readOnly = !isCurrentYear;
+    var disabledAttr = readOnly ? "disabled" : null;
+}
+
+@if (ViewBag.Saved == true)
+{
+    <div class="alert alert-success alert-dismissible d-flex align-items-center" role="alert">
+        <i class="bx bx-check-circle me-2"></i> Your delivery preference has been saved.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (ViewBag.NotifyMessage != null)
+{
+    <div class="alert alert-info alert-dismissible d-flex align-items-center" role="alert">
+        <i class="bx bx-bell me-2"></i> @ViewBag.NotifyMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- ================= Your Tax Forms ================= -->
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h4 class="fw-bold mb-0">Your Tax Forms</h4>
+    @if (years.Count > 1)
+    {
+        <ul class="nav nav-pills portal-year-toggle mb-0">
+            @foreach (var y in years)
+            {
+                <li class="nav-item">
+                    <a class="nav-link @(y == selectedYear ? "active" : "")"
+                       href="@Url.Action("Index", "TaxForms", new { area = "Portal", year = y })">@y</a>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+<div class="card mb-4">
+    @if (ViewBag.FormAvailable == true && active)
+    {
+        <div class="card-body d-flex align-items-center flex-wrap gap-3">
+            <span class="avatar"><span class="avatar-initial rounded bg-label-primary"><i class="bx bxs-file-pdf"></i></span></span>
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="mb-0 fw-bold">Form @formType</h5>
+                    <span class="badge bg-label-secondary">@selectedYear</span>
+                </div>
+                <div class="text-muted small">@formDesc</div>
+                <div class="small text-muted mt-1">
+                    <i class="bx bx-calendar me-1"></i> Available Now
+                    <span class="mx-1">&middot;</span>
+                    <i class="bx bx-file me-1"></i> PDF Format
+                </div>
+            </div>
+            <a href="@Url.Action("Download", "TaxForms", new { area = "Portal", year = selectedYear })" target="_blank" class="btn btn-primary">
+                <i class="bx bx-download me-1"></i> Download
+            </a>
+        </div>
+    }
+    else if (ViewBag.FormAvailable == true)
+    {
+        <div class="card-body d-flex align-items-center flex-wrap gap-3">
+            <span class="avatar"><span class="avatar-initial rounded bg-label-warning"><i class="bx bx-envelope"></i></span></span>
+            <div class="flex-grow-1">
+                <div class="fw-bold">Form @formType <span class="badge bg-label-secondary ms-1">@selectedYear</span></div>
+                <div class="text-muted small">This form is delivered by mail to your address on file. @(isCurrentYear ? "Choose Electronic Delivery below to access it here." : "")</div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card-body d-flex align-items-center flex-wrap gap-3">
+            <span class="avatar"><span class="avatar-initial rounded bg-label-secondary"><i class="bx bx-time-five"></i></span></span>
+            <div class="flex-grow-1">
+                <div class="fw-bold">Form @formType <span class="badge bg-label-secondary ms-1">@selectedYear</span></div>
+                <div class="text-muted small">Your form for @selectedYear isn't ready yet. We'll notify you when it's available.</div>
+            </div>
+            @if (notifyRequested)
+            {
+                <button type="button" class="btn btn-outline-success" disabled><i class="bx bx-check me-1"></i> You'll be notified</button>
+            }
+            else
+            {
+                <form asp-area="Portal" asp-controller="TaxForms" asp-action="NotifyWhenReady" method="post" class="mb-0">
+                    <input type="hidden" name="year" value="@selectedYear" />
+                    <button type="submit" class="btn btn-outline-primary"><i class="bx bx-bell me-1"></i> Notify me when ready</button>
+                </form>
+            }
+        </div>
+    }
+</div>
+
+<!-- ================= Delivery preference ================= -->
+<div class="mb-4">
+    <h4 class="fw-bold mb-1">ACA Tax Form Delivery</h4>
+    <p class="text-muted mb-0">Choose how you'd like to receive your ACA tax forms (Form @formType).</p>
+</div>
+@if (!ViewData.ModelState.IsValid)
+{
+    <div asp-validation-summary="All" class="alert alert-danger py-2"></div>
+}
+
+<div class="row g-4">
+    <!-- ================= Left ================= -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <form asp-area="Portal" asp-controller="TaxForms" asp-action="SavePreference" method="post" id="prefForm">
+                    <input type="hidden" asp-for="TaxYear" value="@selectedYear" />
+
+                    @if (readOnly)
+                    {
+                        <div class="alert alert-secondary d-flex align-items-center py-2">
+                            <i class="bx bx-lock-alt me-2"></i> Delivery preferences for @selectedYear can't be changed. Only the current year is editable.
+                        </div>
+                    }
+
+                    <!-- Step 1 -->
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="badge rounded-circle bg-primary d-flex align-items-center justify-content-center step-number me-2">1</span>
+                        <h6 class="mb-0 fw-semibold">Choose your delivery preference</h6>
+                    </div>
+
+                    <label class="delivery-option card border mb-3 @(isElectronic ? "selected" : "")" id="optElectronic">
+                        <div class="card-body d-flex">
+                            <input class="form-check-input mt-1 me-3" type="radio" name="DeliveryPreference" value="Electronic" @(isElectronic ? "checked" : "") @disabledAttr />
+                            <div class="flex-grow-1">
+                                <div class="mb-1">
+                                    <span class="fw-semibold"><i class="bx bx-desktop me-1"></i> Electronic Delivery</span>
+                                    <span class="badge bg-label-success ms-1">Recommended</span>
+                                </div>
+                                <p class="text-muted small mb-2">Get your forms securely through your online account.</p>
+                                <div class="row g-2 small text-muted">
+                                    <div class="col-md-4"><i class="bx bx-check-circle text-success"></i> Available as soon as they're ready</div>
+                                    <div class="col-md-4"><i class="bx bx-check-circle text-success"></i> Download or print anytime</div>
+                                    <div class="col-md-4"><i class="bx bx-check-circle text-success"></i> We'll notify you when a new form is available</div>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+
+                    <label class="delivery-option card border mb-4 @(!isElectronic ? "selected" : "")" id="optPaper">
+                        <div class="card-body d-flex">
+                            <input class="form-check-input mt-1 me-3" type="radio" name="DeliveryPreference" value="Paper" @(!isElectronic ? "checked" : "") @disabledAttr />
+                            <div class="flex-grow-1">
+                                <span class="fw-semibold"><i class="bx bx-envelope me-1"></i> Paper Delivery</span>
+                                <p class="text-muted small mb-0">Receive your forms by mail at your address on file.</p>
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Step 2 -->
+                    <div id="emailBlock" class="@(isElectronic ? "" : "d-none")">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge rounded-circle bg-primary d-flex align-items-center justify-content-center step-number me-2">2</span>
+                            <h6 class="mb-0 fw-semibold">Provide your email for electronic delivery notifications</h6>
+                        </div>
+                        <div class="mb-4">
+                            <label asp-for="NotificationEmail" class="form-label">Notification email</label>
+                            <div class="input-group">
+                                <input asp-for="NotificationEmail" class="form-control" placeholder="you@company.com" disabled="@readOnly" />
+                                <span class="input-group-text"><i class="bx bx-check text-success"></i></span>
+                            </div>
+                            <span asp-validation-for="NotificationEmail" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div id="consentBlock" class="@(isElectronic ? "" : "d-none")">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge rounded-circle bg-primary d-flex align-items-center justify-content-center step-number me-2">3</span>
+                            <h6 class="mb-0 fw-semibold">Consent</h6>
+                        </div>
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="checkbox" id="AgreeToConsent" name="AgreeToConsent" value="true" @(active ? "checked" : "") @disabledAttr />
+                            <label class="form-check-label fw-semibold" for="AgreeToConsent">
+                                I consent to receive my ACA tax forms electronically.
+                            </label>
+                        </div>
+                        <p class="text-muted small ms-4 mb-2">By consenting, you agree to receive your ACA tax forms electronically instead of by mail.</p>
+                        <div class="ms-4 mb-3">
+                            <button type="button" class="btn btn-link btn-sm p-0 fw-semibold text-decoration-none"
+                                    data-bs-toggle="modal" data-bs-target="#disclosureModal">
+                                View Electronic Delivery Terms <i class="bx bx-link-external"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (!readOnly)
+                    {
+                        <button type="submit" class="btn btn-primary"><i class="bx bx-save me-1"></i> Save Preference</button>
+                        <p class="text-muted small mt-2 mb-0"><i class="bx bx-lock-alt"></i> Your information is secure and will only be used for ACA tax form delivery.</p>
+                    }
+                </form>
+            </div>
+        </div>
+
+        <div class="alert portal-panel border-0 d-flex align-items-start mt-4 mb-0">
+            <i class="bx bx-info-circle fs-5 text-primary me-2"></i>
+            <div class="small">
+                You can change your delivery preference at any time. Any changes you make will apply to future tax years.
+                <div class="mt-1">
+                    <a href="https://www.irs.gov/forms-pubs/about-form-1095-c" target="_blank" class="fw-semibold text-decoration-none">
+                        Learn more about ACA tax forms <i class="bx bx-link-external"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= Right ================= -->
+    <div class="col-lg-4">
+
+        @if (active)
+        {
+            <div class="card portal-panel-success mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="avatar avatar-sm me-2"><span class="avatar-initial rounded-circle bg-success"><i class="bx bx-check"></i></span></span>
+                        <h6 class="mb-0 text-success fw-bold">Electronic Delivery Active</h6>
+                    </div>
+                    <p class="text-muted small">Your ACA tax forms will be delivered electronically.</p>
+                    <hr />
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Notification email</small>
+                        <a href="javascript:void(0)" class="portal-change-email small text-decoration-none">Change</a>
+                    </div>
+                    <div class="fw-medium mb-2">@Model.NotificationEmail</div>
+                    @if (consentDate.HasValue)
+                    {
+                        <small class="text-muted">Consent provided</small>
+                        <div class="fw-medium mb-3">@consentDate.Value.ToString("MMM dd, yyyy 'at' h:mm tt") UTC</div>
+                    }
+                    <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#consentDetailsModal">
+                        View Consent Details
+                    </button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="avatar avatar-sm me-2"><span class="avatar-initial rounded-circle @(paperSet ? "bg-label-warning" : "bg-label-secondary")"><i class="bx @(paperSet ? "bx-envelope" : "bx-time-five")"></i></span></span>
+                        <h6 class="mb-0">@(paperSet ? "Paper Delivery Selected" : "Preference Not Set")</h6>
+                    </div>
+                    <p class="text-muted small mb-0">@(paperSet ? "Your ACA tax forms will be mailed to your address on file." : "Select a delivery preference and click Save.")</p>
+                </div>
+            </div>
+        }
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3">About Electronic Delivery</h6>
+                <div class="d-flex mb-3">
+                    <span class="avatar avatar-sm me-2"><span class="avatar-initial rounded bg-label-primary"><i class="bx bx-shield-quarter"></i></span></span>
+                    <div><div class="fw-semibold small">Secure</div><small class="text-muted">Your forms are available in your secure ACA 360 account.</small></div>
+                </div>
+                <div class="d-flex mb-3">
+                    <span class="avatar avatar-sm me-2"><span class="avatar-initial rounded bg-label-primary"><i class="bx bx-file"></i></span></span>
+                    <div><div class="fw-semibold small">Convenient</div><small class="text-muted">Access your forms anytime, anywhere. Download or print as needed.</small></div>
+                </div>
+                <div class="d-flex">
+                    <span class="avatar avatar-sm me-2"><span class="avatar-initial rounded bg-label-primary"><i class="bx bx-leaf"></i></span></span>
+                    <div><div class="fw-semibold small">Eco-friendly</div><small class="text-muted">Reduce paper and help protect the environment.</small></div>
+                </div>
+            </div>
+        </div>
+
+        @if (active && isCurrentYear)
+        {
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-1">Need paper forms instead?</h6>
+                    <p class="text-muted small">You can withdraw your consent and receive forms by mail.</p>
+                    <form asp-area="Portal" asp-controller="TaxForms" asp-action="Withdraw" method="post"
+                          onsubmit="return confirm('Withdraw electronic consent and switch to paper delivery?');">
+                        <input type="hidden" name="year" value="@selectedYear" />
+                        <button type="submit" class="btn btn-outline-danger w-100">Withdraw Electronic Consent</button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<!-- Consent Details modal -->
+@if (active)
+{
+    <div class="modal fade" id="consentDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content bg-white">
+                <div class="modal-header bg-white">
+                    <h5 class="modal-title text-dark"><i class="bx bx-detail me-2"></i>Consent Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body bg-white">
+                    <div class="row g-3">
+                        <div class="col-6"><small class="text-muted d-block">Employee</small><span class="fw-medium text-dark">@Model.EmployeeName</span></div>
+                        <div class="col-6"><small class="text-muted d-block">Status</small><span class="badge bg-label-success">Active</span></div>
+                        <div class="col-6"><small class="text-muted d-block">Effective Tax Year</small><span class="fw-medium text-dark">@Model.TaxYear</span></div>
+                        <div class="col-6"><small class="text-muted d-block">Consent ID</small><span class="fw-medium text-dark">@(string.IsNullOrEmpty(Model.ConsentId) ? "—" : Model.ConsentId)</span></div>
+                        <div class="col-6"><small class="text-muted d-block">Consent Method</small><span class="fw-medium text-dark">@Model.ConsentMethod</span></div>
+                        <div class="col-6"><small class="text-muted d-block">Consent Date</small><span class="fw-medium text-dark">@(consentDate.HasValue ? consentDate.Value.ToString("MMM dd, yyyy h:mm tt") + " UTC" : "—")</span></div>
+                        <div class="col-6"><small class="text-muted d-block">Notification Email</small><span class="fw-medium text-dark">@Model.NotificationEmail</span></div>
+                        <div class="col-6"><small class="text-muted d-block">IP Address</small><span class="fw-medium text-dark">@(string.IsNullOrEmpty(Model.IpAddress) ? "—" : Model.IpAddress)</span></div>
+                        <div class="col-12"><small class="text-muted d-block">Device / Browser</small><span class="fw-medium text-dark">@(string.IsNullOrEmpty(Model.UserAgent) ? "—" : Model.UserAgent)</span></div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Electronic Delivery Disclosure modal -->
+<div class="modal fade" id="disclosureModal" tabindex="-1" aria-hidden="true"
+     data-disclosure-url="@Url.Action("MarkDisclosureViewed", "TaxForms", new { area = "Portal", year = selectedYear })">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content bg-white">
+            <div class="modal-header bg-white">
+                <h5 class="modal-title text-dark"><i class="bx bx-file me-2"></i>Electronic Delivery Disclosure</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-white">
+                @await Html.PartialAsync("_ElectronicDeliveryDisclosure")
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/js/portal-taxforms.js"></script>
+}

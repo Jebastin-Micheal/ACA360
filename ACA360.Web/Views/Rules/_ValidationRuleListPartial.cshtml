@@ -1,0 +1,108 @@
+﻿@model ACA360.Web.Models.RulesViewModel
+
+@{
+    var metadata = Model.Metadata;
+    int countIndex = metadata != null ? ((metadata.CurrentPage - 1) * metadata.PageSize) + 1 : 1;
+}
+
+<div class="rules-table-container ui-table-responsive">
+    <table class="table table-bordered table-hover ui-table">
+        <thead>
+            <tr class="align-middle">
+                <th>#</th>
+                <th>
+                    @await Html.PartialAsync("_SortableHeader", new
+                    {
+                        Title = "Rule Name",
+                                        Column = 0,
+                                        SortColumn = Model.SortColumn,
+                                        SortOrder = Model.SortOrder
+                                        })
+                </th>
+                <th>
+                    @await Html.PartialAsync("_SortableHeader", new
+                                        {
+                        Title = "Target",
+                                        Column = 1,
+                                        SortColumn = Model.SortColumn,
+                                        SortOrder = Model.SortOrder
+                                        })
+                </th>
+                <th>
+                    @await Html.PartialAsync("_SortableHeader", new
+                                        {
+                        Title = "Type",
+                                        Column = 2,
+                                        SortColumn = Model.SortColumn,
+                                        SortOrder = Model.SortOrder
+                                        })
+                </th>
+                <th>Message</th>
+                <th>Status</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Rules != null && Model.Rules.Count > 0)
+            {
+                foreach (var rule in Model.Rules)
+                {
+                    <tr>
+                        <td class="text-muted">@(countIndex++)</td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span class="fw-semibold text-heading text-truncate" style="max-width: 200px;" title="@rule.RuleName">@rule.RuleName</span>
+                                <small class="text-muted">ID: #@rule.RuleId</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span class="badge bg-label-info mb-1">@rule.TargetTable</span>
+                                <small class="text-muted">Col: @rule.TargetColumn</small>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-truncate" style="max-width: 150px;">@rule.ValidationType</span>
+                        </td>
+                        <td>
+                            <span class="d-inline-block text-truncate text-muted" style="max-width: 250px;" title="@rule.ErrorMessage">
+                                @rule.ErrorMessage
+                            </span>
+                        </td>
+                        <td>
+                            @if (rule.IsActive)
+                            {
+                                <span class="badge bg-label-success rounded-pill">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-label-secondary rounded-pill">Inactive</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <button class="btn p-1 me-1 edit-Rules-btn" data-id="@rule.RuleId" title="Edit">
+                                <i class="icon-base bx bx-edit bg-info icon-sm fs-4 text-secondary"></i>
+                            </button>
+                            <a href="javascript:;" class="btn btn-icon dropdown-toggle hide-arrow action-dots-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="icon-base bx bx-dots-vertical-rounded icon-md"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end m-0">
+                                <a class="dropdown-item delete-Rules-btn" href="javascript:void(0);" data-id="@rule.RuleId">
+                                    <i class="bx bx-trash bg-danger me-1"></i> Delete
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-danger">No rules found.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@await Html.PartialAsync("_GridPagination", Model.Metadata)

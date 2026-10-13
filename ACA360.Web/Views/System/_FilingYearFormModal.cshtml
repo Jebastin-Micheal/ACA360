@@ -1,0 +1,59 @@
+﻿@model ACA360.Web.Models.FilingYearFormViewModel
+
+<form id="filingYearForm" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="FilingYear.Id" id="FilingYear_Id" value="@Model.FilingYear.Id" />
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="Year" class="form-label">Filing Year</label>
+            <input type="number" id="Year" name="FilingYear.Year" class="form-control" value="@(Model.FilingYear.Year == 0 ? "" : Model.FilingYear.Year)" required />
+        </div>
+        <div class="col-md-6">
+            <label for="FpgPremium" class="form-label">FPG Premium</label>
+            <input type="number" id="FpgPremium" name="FilingYear.FpgPremium" class="form-control" value="@Model.FilingYear.FpgPremium" required />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="FpgPercent" class="form-label">FPG Percent</label>
+            <input type="number" id="FpgPercent" name="FilingYear.FpgPercent" class="form-control" value="@Model.FilingYear.FpgPercent" required />
+        </div>
+        <div class="col-md-6">
+            <label for="RopHours" class="form-label">ROP Hours</label>
+            <input type="number" id="RopHours" name="FilingYear.RopHours" class="form-control" value="@Model.FilingYear.RopHours" required />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="OfferPercent" class="form-label">Offer Percent</label>
+            <input type="number" id="OfferPercent" name="FilingYear.OfferPercent" class="form-control" value="@Model.FilingYear.OfferPercent" required />
+        </div>
+   
+        <div class="col-md-6">
+            <label for="PenaltyAAnnual" class="form-label">Penalty(A)Annual</label>
+            <input type="number" id="PenaltyAAnnual" name="FilingYear.PenaltyAAnnual" class="form-control" value="@Model.FilingYear.PenaltyAAnnual" required />
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="PenaltyBAnnual" class="form-label">Penalty(B)Annual</label>
+            <input type="number" id="PenaltyBAnnual" name="FilingYear.PenaltyBAnnual" class="form-control" value="@Model.FilingYear.PenaltyBAnnual" required />
+        </div>
+        <div class="col-md-6">
+            <label for="IsActive" class="form-label">Status</label>
+            <select id="IsActive" name="FilingYear.IsActive" class="form-select">
+                @if (Model.FilingYear.IsActive)
+                {
+                    <option value="true" selected>Active</option>
+                    <option value="false">Inactive</option>
+                }
+                else
+                {
+                    <option value="true">Active</option>
+                    <option value="false" selected>Inactive</option>
+                }
+            </select>
+        </div>
+    </div>
+</form>

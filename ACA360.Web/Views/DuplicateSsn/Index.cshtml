@@ -1,0 +1,88 @@
+@model List<ACA360.Core.Models.DuplicateSsnRow>
+@{
+    ViewData["Title"] = "Duplicate SSNs";
+    int year = ViewBag.Year;
+    var years = (List<int>)ViewBag.Years;
+    var groups = Model.GroupBy(r => r.GroupNo).ToList();
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h4 class="mb-1">Duplicate SSNs</h4>
+        <small class="text-body opacity-75">SSNs on file more than once, or with a different name or birth date, for the employers you can see.</small>
+    </div>
+    <form method="get" class="d-flex align-items-center gap-2">
+        <label for="dupYear" class="form-label mb-0">Tax year</label>
+        <select id="dupYear" name="year" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+            @foreach (var y in years.Union(new[] { year }).OrderByDescending(v => v))
+            {
+                <option value="@y" selected="@(y == year)">@y</option>
+            }
+        </select>
+    </form>
+</div>
+
+@if (ViewBag.Error is string err) { <div class="alert alert-danger" role="alert">@err</div> }
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-3"><div class="card"><div class="card-body py-3"><div class="small text-body opacity-75">SSNs to review</div><div class="fs-4 fw-semibold" data-dup-groups>@groups.Count</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="card"><div class="card-body py-3"><div class="small text-body opacity-75">Under several employers</div><div class="fs-4 fw-semibold">@groups.Count(g => g.First().SeveralEmployers)</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="card"><div class="card-body py-3"><div class="small text-body opacity-75">Different names</div><div class="fs-4 fw-semibold">@groups.Count(g => g.First().DifferentNames)</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="card"><div class="card-body py-3"><div class="small text-body opacity-75">Different birth dates</div><div class="fs-4 fw-semibold">@groups.Count(g => g.First().DifferentBirthdates)</div></div></div></div>
+</div>
+
+@if (groups.Count == 0)
+{
+    <div class="card"><div class="card-body text-center py-5">
+        <i class="bx bx-check-shield fs-1 text-success"></i>
+        <p class="mb-0 mt-2">No shared or inconsistent SSNs for @year.</p>
+    </div></div>
+}
+else
+{
+    <div class="card">
+        <div class="table-responsive position-relative">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                    <tr><th>SSN</th><th>Why</th><th>Employee</th><th>Birth date</th><th>Employer</th><th>File</th><th class="text-end"><span class="visually-hidden">Open</span></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var g in groups)
+                    {
+                        var first = g.First();
+                        var reasons = new List<string>();
+                        if (first.SeveralEmployers) reasons.Add($"{first.Employers} employers");
+                        if (first.RepeatedInEmployer) reasons.Add("repeated under one employer");
+                        if (first.DifferentNames) reasons.Add("different names");
+                        if (first.DifferentBirthdates) reasons.Add("different birth dates");
+                        var rowIndex = 0;
+                        foreach (var r in g)
+                        {
+                            var open = Url.Action("SelectThis", "SelectEmployer", new { id = r.EmployerId, empname = r.EmployerName,
+                                returnUrl = Url.Action("Index", "Employee", new { focusId = r.EmployeeId }) });
+                            <tr class="@(rowIndex == 0 ? "border-top border-2" : "")" data-dup-group="@g.Key">
+                                @if (rowIndex == 0)
+                                {
+                                    <td rowspan="@g.Count()" class="fw-semibold text-nowrap">@first.SsnMasked</td>
+                                    <td rowspan="@g.Count()">
+                                        @foreach (var reason in reasons) { <span class="badge bg-label-warning me-1 mb-1">@reason</span> }
+                                    </td>
+                                }
+                                <td>@r.EmployeeName</td>
+                                <td class="text-nowrap">@r.Birthdate?.ToString("MM/dd/yyyy")</td>
+                                <td>@r.EmployerName <small class="text-body opacity-75 text-nowrap">@r.EIN</small></td>
+                                <td class="text-break small">@(r.FileName ?? "Added by hand")</td>
+                                <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="@open" title="Open this employee">Open</a></td>
+                            </tr>
+                            rowIndex++;
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <p class="small text-body opacity-75 mt-2">
+        The same person can work for two unrelated employers, and affiliated employers can share staff. A different name or
+        birth date under the same SSN is more often a typing mistake. New uploads also warn when an SSN is already on file for another employer.
+    </p>
+}

@@ -1,0 +1,30 @@
+@* "Install the ACA360 app" popup, shown by js/pwa.js on the first page after signing in, only when
+   this browser can install ACA360 and it is not installed yet. "Not now" (or closing it) asks again
+   after 14 days on this device; "Don't ask again" stops it (the profile menu item stays).
+   iPhone / iPad have no install button, so the steps are shown instead. *@
+<div class="modal fade" id="installAppModal" tabindex="-1" aria-labelledby="installAppTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title" id="installAppTitle">Install the ACA360 app</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-start gap-3">
+                    <img src="~/icons/icon-192.png" alt="" width="56" height="56" class="rounded-3 flex-shrink-0" />
+                    <div>
+                        <p class="mb-2">Open ACA360 straight from your desktop, Start menu or home screen, in its own window like any other app.</p>
+                        <p class="mb-0 small text-muted" data-install-steps="ios">
+                            On iPhone or iPad: tap <strong>Share</strong> <i class="bx bx-share"></i>, then <strong>Add to Home Screen</strong>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-link text-muted me-auto px-0" data-install-choice="never">Don't ask again</button>
+                <button type="button" class="btn btn-label-secondary" data-install-choice="later">Not now</button>
+                <button type="button" class="btn btn-primary" data-install-choice="install"><i class="bx bx-download me-1"></i> Install</button>
+            </div>
+        </div>
+    </div>
+</div>

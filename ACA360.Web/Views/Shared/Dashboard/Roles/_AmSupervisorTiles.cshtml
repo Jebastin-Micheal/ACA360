@@ -1,0 +1,126 @@
+@using ACA360.Core.Models
+@model EmployerDashboardPageViewModel
+@{
+    var rows = Model.Role.ClientsByManager;
+    var workload = Model.Role.TeamWorkload;
+    var maxLoad = Math.Max(1, workload.Any() ? workload.Max(w => w.FileCount) : 0);
+    var managerNames = rows.Where(r => r.ManagerNames != null)
+                           .SelectMany(r => r.ManagerNames!.Split(", "))
+                           .Distinct().OrderBy(n => n).ToList();
+    var unassigned = rows.Count(r => r.ManagerNames == null);
+}
+@* AM Supervisor: employers / process step / due date by account manager, team
+   workload and password resets, above the shared portfolio band. *@
+<section class="scope" data-section="role">
+    <div class="scope-bar">
+        <h2>Team overview</h2>
+        <span class="pill pill-info"><span class="dot"></span>@workload.Count account manager@(workload.Count == 1 ? "" : "s")</span>
+        <div class="sb-spacer"></div>
+        <span class="hint">All employers, plan year @Model.FilingYear</span>
+    </div>
+
+    <div class="grid" id="gridRole">
+
+        <div class="tile c8 @(unassigned > 0 ? "ac-warn" : "ac-blue")" data-w="clients-by-am" data-table-tools>
+            <div class="tile-head">
+                <h4><i class="bx bx-list-ul"></i> Employers by account manager</h4>
+                <div class="th-spacer"></div>
+                <div class="tbl-tools">
+                    <select class="tbl-filter" data-filter-col="1" data-filter-exact aria-label="Filter by account manager">
+                        <option value="">All account managers</option>
+                        @foreach (var n in managerNames)
+                        {
+                            <option value="@n">@n</option>
+                        }
+                        @if (unassigned > 0)
+                        {
+                            <option value="Unassigned">Unassigned (@unassigned)</option>
+                        }
+                    </select>
+                    <input type="search" class="tbl-search" placeholder="Search employer, EIN or step…" aria-label="Search table" />
+                </div>
+                <div class="tile-tools"></div>
+            </div>
+            <div class="tile-body">
+                <div class="table-wrap has-foot">
+                    <table class="tbl-interactive">
+                        <thead>
+                            <tr>
+                                <th data-sort="text">Employer</th>
+                                <th data-sort="text">Account manager</th>
+                                <th data-sort="text">Process step</th>
+                                <th data-sort="num">Due date</th>
+                                <th data-sort="text">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in rows)
+                            {
+                                <tr>
+                                    <td>
+                                        <a class="emp-link" href="@Url.Action(Model.PageAction, Model.PageController, new { id = r.EmployerId, year = Model.FilingYear })">@r.EmployerName</a>
+                                        <div class="mono sub">@r.Ein@(r.IsAffiliate ? " · affiliate" : "")</div>
+                                    </td>
+                                    <td>@(r.ManagerNames ?? "Unassigned")</td>
+                                    <td>@(r.ProcessStep ?? "—")</td>
+                                    <td class="num" data-sort="@(r.DueDate?.ToString("yyyyMMdd") ?? "99999999")">@(r.DueDate?.ToString("dd MMM yyyy") ?? "—")</td>
+                                    <td>
+                                        @if (r.DueDate == null)
+                                        {
+                                            <span class="pill pill-info"><span class="dot"></span>No due date</span>
+                                        }
+                                        else if (r.DaysOverdue > 0)
+                                        {
+                                            <span class="pill pill-crit"><span class="dot"></span>Past due · @r.DaysOverdue d</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="pill pill-good"><span class="dot"></span>On track</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="tbl-foot"></div>
+            </div>
+        </div>
+
+        <div class="tile c4 ac-indigo" data-w="team-workload">
+            <div class="tile-head">
+                <h4><i class="bx bx-bar-chart-alt-2"></i> Team workload</h4>
+                <div class="th-spacer"></div>
+                <span class="eyebrow">Clients per AM</span>
+                <div class="tile-tools"></div>
+            </div>
+            @if (workload.Any())
+            {
+                <ul class="bar-list">
+                    @foreach (var w in workload)
+                    {
+                        <li>
+                            <span class="bar-name" title="@w.Name">@w.Name</span>
+                            <span class="bar-track"><span class="bar-fill" style="width:@(w.FileCount * 100 / maxLoad)%"></span></span>
+                            <span class="bar-val num">@w.FileCount</span>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="sub">No active account managers.</div>
+            }
+        </div>
+
+        @if (Model.Role.CanManageUsers)
+        {
+            <partial name="Dashboard/Roles/_UserManagementTile" model="Model" />
+        }
+    </div>
+
+    <div class="tray" id="trayRole">
+        <h4>Hidden tiles &mdash; click to restore</h4>
+        <div class="tray-items"></div>
+    </div>
+</section>

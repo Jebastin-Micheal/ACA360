@@ -1,0 +1,202 @@
+﻿body, html {
+    height: 100%;
+    margin: 0;
+}
+h5 {
+    font-size:1rem;
+    font-style: italic;
+    color: var(--bs-gray-600);
+}
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: row;
+}
+
+.login-form {
+    /*background: linear-gradient(to bottom right, #0d47a1, #1976d2);*/
+    background: #ffffff;
+    color: black;
+    padding: 3rem;
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+    .login-form h1 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 2rem;
+        color:navy;
+        text-align:center;
+    }
+
+.form-control {
+    border-radius: 5px;
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #1565c0;
+    border: none;
+    border-radius: 5px;
+}
+
+    .btn-primary:hover {
+        background-color: #0d47a1;
+    }
+
+.right-image {
+    flex-grow: 1;
+    background: url('../images/login/rightBG.png') center center no-repeat;
+    background-size: cover;
+}
+
+.error-message {
+    color: #ffcccb;
+    font-size: 0.9rem;
+}
+
+.css-rsbo1m {
+    position: relative;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    outline: 0px;
+    border: 0px;
+    margin: 0px;
+    cursor: pointer;
+    vertical-align: middle;
+    appearance: none;
+    text-decoration: none;
+    font-family: Roboto, Helvetica, Arial, sans-serif;
+    letter-spacing: 0.02857em;
+    min-width: 64px;
+    width: 100%;
+    display: inline-flex;
+    -webkit-box-pack: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 0.5rem;
+    line-height: 1.4;
+    text-align: center;
+    text-transform: uppercase;
+    user-select: none;
+    transition: 150ms ease-in;
+    min-height: 2.5rem;
+    box-shadow: rgba(0, 0, 0, 0.11) 0rem 0.25rem 0.4375rem -0.0625rem, rgba(0, 0, 0, 0.07) 0rem 0.125rem 0.25rem -0.0625rem;
+    padding: 0.75rem 1.5rem;
+   /* background-image: linear-gradient(310deg, var(--bs-danger), var(--bs-warning));*/
+    background-image: linear-gradient(310deg, rgb(33, 82, 255), rgb(33, 212, 253));
+    background-position-y: initial;
+    background-repeat: initial;
+    background-attachment: initial;
+    background-origin: initial;
+    background-clip: initial;
+    background-color: initial;
+    color: rgb(255, 255, 255);
+    background-size: 150% !important;
+    background-position-x: 25% !important;
+}
+
+    .css-rsbo1m:hover {
+        background-image: linear-gradient(310deg, var(--bs-warning),var(--bs-danger));
+    }
+
+/* ===========================
+   Floating Label
+=========================== */
+
+.floating-group {
+    position: relative;
+}
+
+    .floating-group .form-control {
+        height: 56px;
+        padding: 20px 14px 8px;
+        border: 1px solid #d9dee3;
+        border-radius: 8px;
+        background: #fff;
+        transition: .25s;
+    }
+
+        .floating-group .form-control:focus {
+            border-color: #696cff;
+            box-shadow: none;
+        }
+
+    .floating-group .form-label {
+        position: absolute;
+        top: 50%;
+        left: 14px;
+        transform: translateY(-50%);
+        background: #fff;
+        padding: 0 6px;
+        margin: 0;
+        color: #8592a3;
+        pointer-events: none;
+        transition: .2s;
+        z-index: 2;
+    }
+
+    .floating-group .form-control:focus + .form-label,
+    .floating-group .form-control:not(:placeholder-shown) + .form-label {
+        top: 0;
+        left: 12px;
+        transform: translateY(-50%);
+        font-size: 17px;
+        color: #696cff;
+        font-weight: 600;
+    }
+
+/* ===========================
+   Floating Password (Eye Icon)
+=========================== */
+
+.floating-password .input-group {
+    position: relative;
+}
+
+.floating-password .form-control {
+    padding-right: 50px;
+}
+
+.floating-password .form-label {
+    left: 14px;
+    z-index: 5;
+}
+
+.floating-password .form-control:focus ~ .form-label,
+.floating-password .form-control:not(:placeholder-shown) ~ .form-label {
+    top: 0;
+    left: 12px;
+    transform: translateY(-50%);
+    font-size: 17px;
+    color: #696cff;
+    font-weight: 600;
+}
+
+.floating-password .input-group-text {
+    background: #fff;
+    border-left: 0;
+    cursor: pointer;
+}
+
+.floating-password .form-control:focus,
+.floating-password .form-control:not(:placeholder-shown) {
+    z-index: 3;
+}
+
+.floating-password .input-group-text {
+    z-index: 4;
+}
+
+
+ 

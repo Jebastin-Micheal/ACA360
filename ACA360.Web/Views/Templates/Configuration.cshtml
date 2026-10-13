@@ -1,0 +1,155 @@
+﻿@model ACA360.Core.Models.ViewModels.TemplateConfigurationViewModel
+@{
+    ViewData["Title"] = "Configure Template";
+}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold py-3 mb-0">@Model.TemplateName</h4>
+            <span class="text-muted">@Model.Description</span>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+    </div>
+
+    <div class="card">
+        <div class="card-header border-bottom">
+            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                @{
+                    bool isFirst = true;
+                }
+                @foreach (var sheetName in Model.GroupedMappings.Keys)
+                {
+                    <li class="nav-item">
+                        <button type="button" class="nav-link @(isFirst ? "active" : "")" role="tab"
+                                data-bs-toggle="tab" data-bs-target="#tab-@sheetName">
+                            @sheetName
+                        </button>
+                    </li>
+                    isFirst = false;
+                }
+            </ul>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="tab-content p-4">
+                @{
+                    isFirst = true;
+                }
+                @foreach (var group in Model.GroupedMappings)
+                {
+                    <div class="tab-pane fade @(isFirst ? "show active" : "")" id="tab-@group.Key" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 30%">System Field (DB)</th>
+                                        <th style="width: 10%" class="text-center">Required</th>
+                                        <th style="width: 50%">Excel Header Name</th>
+                                        <th style="width: 10%">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var map in group.Value)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <span class="fw-semibold">@map.TargetColumnName</span>
+                                                <small class="d-block text-muted">@map.TargetSheetName Table</small>
+                                            </td>
+                                            <td class="text-center">
+                                            </td>
+                                            <td>
+                                                <label class="form-label small text-muted mb-0">Primary Header</label>
+                                                <input type="text" class="form-control mapping-input mb-2"
+                                                       id="input-primary-@map.MapId"
+                                                       value="@map.SourceColumnName"
+                                                       data-id="@map.MapId"
+                                                       data-field="primary"
+                                                       data-original="@map.SourceColumnName" />
+
+                                                <label class="form-label small text-muted mb-0">Alternates (comma separated)</label>
+                                                <input type="text" class="form-control mapping-input form-control-sm"
+                                                       id="input-alt-@map.MapId"
+                                                       value="@map.AlternateNames"
+                                                       placeholder="e.g. SSN, Social Security"
+                                                       data-id="@map.MapId"
+                                                       data-field="alt"
+                                                       data-original="@(map.AlternateNames ?? "")" />
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary d-none"
+                                                        id="btn-@map.MapId"
+                                                        onclick="saveMapping(@map.MapId)">
+                                                    <i class="bx bx-save"></i> Save
+                                                </button>
+
+                                                <span class="text-success small d-none" id="msg-@map.MapId">
+                                                    <i class="bx bx-check"></i> Saved
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    isFirst = false;
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 1. Detect Changes to Show Save Button
+        $('.mapping-input').on('input', function() {
+            var id = $(this).data('id');
+            var currentVal = $(this).val();
+            var originalVal = $(this).data('original');
+
+            if (currentVal !== originalVal) {
+                $(`#btn-${id}`).removeClass('d-none'); // Show Save
+                $(`#msg-${id}`).addClass('d-none');    // Hide Success
+            } else {
+                $(`#btn-${id}`).addClass('d-none');
+            }
+        });
+
+        // 2. Save Function
+        function saveMapping(mapId) {
+            var input = $(`#input-${mapId}`);
+            var newVal = input.val();
+            var btn = $(`#btn-${mapId}`);
+            var msg = $(`#msg-${mapId}`);
+            var primaryVal = $(`#input-primary-${mapId}`).val();
+            var altVal = $(`#input-alt-${mapId}`).val();
+            btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin"></i>');
+
+            fetch('/Templates/UpdateMapping', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                mapId: mapId,
+                sourceColumnName: primaryVal,
+                alternateNames: altVal // <--- New Field
+            })
+                })
+            .then(response => {
+                if (response.ok) {
+                    // Update state
+                    input.data('original', newVal);
+                    btn.addClass('d-none').prop('disabled', false).html('<i class="bx bx-save"></i> Save');
+                    msg.removeClass('d-none');
+
+                    // Hide success message after 2 seconds
+                    setTimeout(() => msg.addClass('d-none'), 2000);
+                } else {
+                    alert('Failed to update mapping.');
+                    btn.prop('disabled', false).html('<i class="bx bx-save"></i> Save');
+                }
+            });
+        }
+    </script>
+}

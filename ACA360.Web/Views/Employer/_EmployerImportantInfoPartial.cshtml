@@ -1,0 +1,149 @@
+﻿@model ACA360.Web.Models.EmployerDetailsViewModel
+
+<form id="frmOtherInfo" autocomplete="off">
+    <input type="hidden" name="EmployerId" value="@Model.Employer_otherdetails.ImportantInfo.EmployerId" />
+
+    @if (string.IsNullOrEmpty(Model.Employer_otherdetails.ImportantInfo.EmployerId))
+    {
+        <input type="hidden" name="EmployerId" value="@Model.ACA_EmployerId" />
+    }
+
+    <div class="row align-items-stretch mb-4">      
+        <div class="col-lg-5 col-md-12">
+            <div class="card h-100 bg-lighter shadow-none border">
+                <div class="card-header bg-transparent border-bottom py-3 d-flex align-items-center">
+                    <i class='bx bx-lock-alt text-muted me-2 fs-5'></i>
+                    <h6 class="mb-0 text-muted fw-bold">System Records (Read Only)</h6>
+                </div>
+                <div class="card-body pt-3 d-flex flex-column justify-content-center">
+
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-light">
+                        <span class="text-muted small"><i class="bx bx-calendar me-1"></i>Most Recent Hire Date</span>
+                        <span class="fw-semibold text-dark" data-cmp-field="Most Recent Hire Date">@(Model.Employer_otherdetails.ImportantInfo.MostRecentHireDate?.ToString("MM/dd/yyyy") ?? "-")</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-light">
+                        <span class="text-muted small"><i class="bx bx-calendar-x me-1"></i>Most Recent Termination Date</span>
+                        <span class="fw-semibold text-dark" data-cmp-field="Most Recent Termination Date">@(Model.Employer_otherdetails.ImportantInfo.MostRecentTerminationDate?.ToString("MM/dd/yyyy") ?? "-")</span>
+                    </div>
+
+                    <div class="mt-auto">
+                        <span class="text-muted small text-uppercase mb-2 d-block">Safe Harbor Counts</span>
+                        <div class="d-flex justify-content-between gap-2 text-center">
+                            <div class="card flex-fill p-2 rounded border">
+                                <small class="text-muted d-block fw-bold" style="font-size: 0.70rem;">2F</small>
+                                <span class="fw-bold text-dark fs-6" data-cmp-field="Safe Harbor 2F">@Model.Employer_otherdetails.ImportantInfo.SafeHarbor2F</span>
+                            </div>
+                            <div class="card flex-fill p-2 rounded border">
+                                <small class="text-muted d-block fw-bold" style="font-size: 0.70rem;">2G</small>
+                                <span class="fw-bold text-dark fs-6" data-cmp-field="Safe Harbor 2G">@Model.Employer_otherdetails.ImportantInfo.SafeHarbor2G</span>
+                            </div>
+                            <div class="card flex-fill p-2 rounded border">
+                                <small class="text-muted d-block fw-bold" style="font-size: 0.70rem;">2H</small>
+                                <span class="fw-bold text-dark fs-6" data-cmp-field="Safe Harbor 2H">@Model.Employer_otherdetails.ImportantInfo.SafeHarbor2H</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7 col-md-12 mb-4 mb-lg-0">
+            <div class="card h-100 shadow-sm border-primary border-1">
+                <div class="card-header bg-transparent border-bottom py-3 d-flex align-items-center">
+                    <i class='bx bx-edit text-primary me-2 fs-5'></i>
+                    <h6 class="mb-0 text-primary fw-bold">Mail Fulfillment Memo</h6>
+                </div>
+                <div class="card-body pt-3">
+                    <textarea class="form-control"
+                              id="MailMemo"
+                              name="MailMemo"
+                              rows="7"
+                              placeholder="Enter memo details here...">@Model.Employer_otherdetails.ImportantInfo.MailMemo</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+        <button type="button" class="btn btn-outline-secondary rounded-pill btn-tab-back px-4" id="btnBackOtherInfo">
+            <i class='bx bx-arrow-back me-1'></i> Back
+        </button>
+
+        <button type="button" class="btn btn-success rounded-pill px-4 shadow-sm" id="btnSaveFinishOtherInfo">
+            <i class='bx bx-check-double me-1'></i> Save & Finish
+        </button>
+    </div>
+</form>
+<script>
+    $(document).ready(function () {
+
+        // --- SAVE & FINISH ---
+        $('#btnSaveFinishOtherInfo').on('click', function (e) {
+            e.preventDefault();
+
+            var $form = $('#frmOtherInfo');
+            var $btn = $(this);
+            var originalHtml = $btn.html();
+
+            // 1. Serialize
+            // Now produces: ImportantInfo.EmployerId=123&ImportantInfo.MailMemo=abc
+            var formData = $form.serialize();
+
+            // 2. Loading State
+            $btn.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin"></i> Saving...');
+             var token = $('input[name="__RequestVerificationToken"]').val();
+                    // 3. Send AJAX
+        $.ajax({
+            url: '@Url.Action("SaveEmployerImportantInfo", "Employer")', // Your specific action name
+            type: 'POST',
+            data: formData,
+            headers: {
+              "RequestVerificationToken": token
+             },
+            success: function (response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Saved!',
+                        text: response.message,
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#696cff'
+                    }).then(function () {
+                        window.location.href = '@Url.Action("Index", "Employer")';
+                    });
+                } else {
+                   Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: response.message
+                    });
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'System Error',
+                    text: 'Could not save data.'
+                });
+            },
+            complete: function () {
+                $btn.prop('disabled', false).html(originalHtml);
+            }
+        });
+    });
+
+        // // --- BACK BUTTON ---
+        // $('#btnBackOtherInfo').on('click', function () {
+        //     var $activeTab = $('.nav-pills .nav-link.active');
+        //     var $prevTab = $activeTab.parent().prev().find('.nav-link');
+
+        //     if ($prevTab.length > 0) {
+        //         $prevTab.trigger('click');
+        //     } else {
+        //         alert("This is the first tab.");
+        //     }
+        // });
+
+    });
+</script>

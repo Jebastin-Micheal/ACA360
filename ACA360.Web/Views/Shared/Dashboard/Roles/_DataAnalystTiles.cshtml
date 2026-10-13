@@ -1,0 +1,109 @@
+@using ACA360.Core.Models
+@using ACA360.Core.Helpers
+@model EmployerDashboardPageViewModel
+@{
+    var queue = Model.Role.Queue;
+    ViewData["FileCountsScope"] = "your files";
+    var canRules = User.Claims.Any(c => c.Type == "Permission" && string.Equals(c.Value, "Rules:Index", StringComparison.OrdinalIgnoreCase));
+
+    static string PillFor(string color) => color switch
+    {
+        "danger" => "crit",
+        "warning" => "warn",
+        "success" => "good",
+        _ => "info"
+    };
+}
+@* Data Analyst: the spec's file counts for the analyst's own files, their open files
+   most urgent first, and their employers, above the shared portfolio band. *@
+<section class="scope" data-section="role">
+    <div class="scope-bar">
+        <h2>My files</h2>
+        <div class="sb-spacer"></div>
+        <span class="hint">Files assigned to you, plan year @Model.FilingYear</span>
+    </div>
+
+    <div class="grid" id="gridRole">
+        <partial name="Dashboard/Roles/_FileCountTiles" model="Model" view-data="ViewData" />
+
+        <div class="tile c8 @(queue.Any() ? "ac-warn" : "ac-cyan")" data-w="da-queue">
+            <div class="tile-head">
+                <h4><i class="bx bxs-hot"></i> My priority queue</h4>
+                <div class="th-spacer"></div>
+                <span class="pill @(queue.Any() ? "pill-warn" : "pill-good")"><span class="dot"></span>@queue.Count open</span>
+                <div class="tile-tools"></div>
+            </div>
+            <div class="tile-body">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Employer / file</th>
+                                <th class="n">Waiting</th>
+                                <th class="n"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var f in queue)
+                            {
+                                // Same rule as the File Upload grid; every queue file is assigned.
+                                var st = FileStatusResolver.Resolve(f.ValidationStatusId, f.WorkflowStatusId, true);
+                                var age = DateTime.UtcNow - f.UploadedAt;
+                                <tr>
+                                    <td><span class="pill pill-@PillFor(st.Color)" title="@st.Tooltip"><span class="dot"></span>@st.Label</span></td>
+                                    <td>
+                                        <div style="font-weight:600">@f.EmployerName</div>
+                                        <div class="sub text-truncate" style="max-width:280px" title="@f.OriginalFileName">@f.OriginalFileName</div>
+                                    </td>
+                                    <td class="n num">@(age.TotalDays >= 1 ? $"{(int)age.TotalDays} d" : $"{Math.Max(0, (int)age.TotalHours)} h")</td>
+                                    <td class="n">
+                                        @if (st.Bucket == FileStatusBucket.NeedsFixes || st.Bucket == FileStatusBucket.ImportFailed)
+                                        {
+                                            <a class="btn btn-sm btn-danger" href="@Url.Action("ErrorTriageDashboard", "ErrorTriage", new { id = f.FileLogId })">Fix errors</a>
+                                        }
+                                        else if (st.Bucket == FileStatusBucket.ReadyToImport)
+                                        {
+                                            <a class="btn btn-sm btn-primary" href="@Url.Action("ErrorTriageDashboard", "ErrorTriage", new { id = f.FileLogId })">Review</a>
+                                        }
+                                        else
+                                        {
+                                            <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", "FileUpload")">View</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                            @if (!queue.Any())
+                            {
+                                <tr><td colspan="4" class="tbl-empty">Nothing waiting on you for this plan year.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tile stat c4 ac-indigo" data-w="da-employers">
+            <div class="tile-head"><h4>My employers</h4><div class="th-spacer"></div><div class="tile-tools"></div></div>
+            <div class="kpi-row">
+                <span class="kpi-ico ic-indigo"><i class="bx bx-buildings"></i></span>
+                <div>
+                    <div class="val num">@Model.Portfolio.TotalClientsAllEins.ToString("N0")</div>
+                    <div class="sub">@Model.Portfolio.TotalClientsMainEins main EINs assigned to you</div>
+                </div>
+            </div>
+            <div class="role-links mt-3">
+                <a class="btn btn-outline-primary btn-sm w-100 mb-2" href="@Url.Action("Index", "FileUpload")"><i class="bx bx-upload me-1"></i> Files</a>
+                @if (canRules)
+                {
+                    <a class="btn btn-outline-secondary btn-sm w-100" href="@Url.Action("Index", "Rules")"><i class="bx bx-book-bookmark me-1"></i> Validation rules</a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="tray" id="trayRole">
+        <h4>Hidden tiles &mdash; click to restore</h4>
+        <div class="tray-items"></div>
+    </div>
+</section>

@@ -1,0 +1,32 @@
+﻿@model dynamic
+<div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+        <aside id="layout-menu" class="layout-menu menu-vertical menu">
+            <div class="app-brand demos">
+                @await Html.PartialAsync("Components/Partials/_BrandingLogoPartial")
+            </div>
+            <div class="menu-inner-wrapper">
+                @await Component.InvokeAsync("SidebarMenu", new { viewName = "SideMenu" })
+            </div>
+        </aside>
+
+        <div class="layout-page">
+            <nav class="layout-navbar container-xxl navbar-detached navbar navbar-expand-xl bg-navbar-theme" id="layout-navbar">
+                <div class="layout-menu-toggle navbar-nav d-xl-none">
+                    <a class="nav-item nav-link px-0" href="javascript:void(0)">
+                        <i class="icon-base bx bx-menu icon-md"></i>
+                    </a>
+                </div>
+                <div class="navbar-nav-right d-flex align-items-center justify-content-end" id="navbar-collapse">
+                    @await Html.PartialAsync("Components/Partials/_NavbarRightItemsPartial")
+                </div>
+            </nav>
+            <div class="content-wrapper">
+                <div class="container-xxl flex-grow-1 container-p-y">
+                    @RenderBody()
+                </div>
+                @await Component.InvokeAsync("Footer")
+            </div>
+        </div>
+    </div>
+</div>

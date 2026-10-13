@@ -1,0 +1,148 @@
+@model List<ACA360.Core.Models.StateFilingSummaryRow>
+@using ACA360.Core.Models
+@{
+    ViewData["Title"] = "State Filings";
+    int year = ViewBag.Year;
+    var years = (List<int>)ViewBag.Years;
+    var deadlines = (List<FilingDeadline>)ViewBag.Deadlines;
+    var employers = Model.GroupBy(r => new { r.EmployerId, r.EmployerName, r.EIN }).OrderBy(g => g.Key.EmployerName).ToList();
+    var byState = StateFilingStates.All.Select(s => new
+    {
+        s.Code, s.Name, s.Note,
+        Employers = Model.Count(r => r.State == s.Code),
+        Residents = Model.Where(r => r.State == s.Code).Sum(r => r.Residents),
+        Covered = Model.Where(r => r.State == s.Code).Sum(r => r.Covered),
+        SelfInsured = Model.Where(r => r.State == s.Code).Sum(r => r.SelfInsuredCovered),
+        HirdEmployers = s.Code == "MA" ? Model.Count(r => r.State == "MA" && r.Residents >= 6) : 0,
+    }).ToList();
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h4 class="mb-1">State Filings</h4>
+        <small class="text-body opacity-75">Residents of the states with their own coverage reporting, for the employers you can see.</small>
+    </div>
+    <form method="get" class="d-flex align-items-center gap-2">
+        <label for="stateYear" class="form-label mb-0">Tax year</label>
+        <select id="stateYear" name="year" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+            @foreach (var y in years.Union(new[] { year }).OrderByDescending(v => v))
+            {
+                <option value="@y" selected="@(y == year)">@y</option>
+            }
+        </select>
+    </form>
+</div>
+
+@if (ViewBag.Error is string err) { <div class="alert alert-danger" role="alert">@err</div> }
+
+<div class="row g-3 mb-4">
+    @foreach (var s in byState)
+    {
+        var dates = deadlines.Where(d => d.Jurisdiction == s.Code).ToList();
+        <div class="col-sm-6 col-xl">
+            <div class="card h-100" data-state-card="@s.Code">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h6 class="mb-1">@s.Name</h6>
+                        <span class="badge bg-label-primary">@s.Code</span>
+                    </div>
+                    <div class="fs-5 fw-semibold">@s.Residents.ToString("N0") <small class="fs-6 fw-normal text-body opacity-75">residents</small></div>
+                    <div class="small">@s.Covered.ToString("N0") covered · <strong>@s.SelfInsured.ToString("N0")</strong> self-insured</div>
+                    <div class="small text-body opacity-75">@s.Employers employer@(s.Employers == 1 ? "" : "s")</div>
+                    @if (s.Code == "MA")
+                    {
+                        <div class="small mt-1">HIRD form: <strong>@s.HirdEmployers</strong> employer@(s.HirdEmployers == 1 ? "" : "s") with 6+ MA employees</div>
+                    }
+                    @foreach (var d in dates)
+                    {
+                        <div class="small mt-1">
+                            <i class="bx bx-calendar me-1"></i>@d.DueDate.ToString("MMM d, yyyy"): @d.Title.Replace(s.Name + ": ", "")
+                            @if (d.NeedsCheck) { <span class="badge bg-label-warning ms-1">Check</span> }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (employers.Count == 0)
+{
+    <div class="card"><div class="card-body text-center py-5">
+        <i class="bx bx-map-alt fs-1 text-body opacity-50"></i>
+        <p class="mb-0 mt-2">No employees living in CA, NJ, RI, DC or MA for @year.</p>
+    </div></div>
+}
+else
+{
+    <div class="card">
+        <div class="table-responsive position-relative">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Employer</th>
+                        @foreach (var s in StateFilingStates.All) { <th class="text-center">@s.Code</th> }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var g in employers)
+                    {
+                        <tr>
+                            <td>@g.Key.EmployerName <small class="text-body opacity-75 text-nowrap">@g.Key.EIN</small></td>
+                            @foreach (var s in StateFilingStates.All)
+                            {
+                                var r = g.FirstOrDefault(x => x.State == s.Code);
+                                <td class="text-center">
+                                    @if (r == null) { <span class="text-body opacity-50">–</span> }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-sm btn-link p-0" data-state-open
+                                                data-employer="@r.EmployerId" data-state="@s.Code" data-name="@g.Key.EmployerName"
+                                                title="@r.Residents residents, @r.Covered covered, @r.SelfInsuredCovered self-insured">
+                                            @r.Residents<small class="text-body opacity-75"> / @r.SelfInsuredCovered</small>
+                                        </button>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <p class="small text-body opacity-75 mt-2">
+        Each cell is residents / covered by a self-insured plan. Employers report the coverage they self-insure; insurers report insured plans.
+        Confirm each state's current rules and dates before filing. Open a cell for the residents and the Excel workbook.
+    </p>
+}
+
+<div class="modal fade" id="stateResidentsModal" tabindex="-1" aria-labelledby="stateResidentsTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="stateResidentsTitle">Residents</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="stateResidentsBody" aria-live="polite"></div>
+            <div class="modal-footer">
+                <a class="btn btn-success" id="stateResidentsExport" href="#"><i class="bx bx-download me-1"></i>Excel workbook</a>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).on('click', '[data-state-open]', function () {
+            var $b = $(this), q = { employerId: $b.data('employer'), state: $b.data('state'), year: @year };
+            $('#stateResidentsTitle').text($b.data('name') + ': ' + $b.data('state') + ' residents (' + q.year + ')');
+            $('#stateResidentsExport').attr('href', '@Url.Action("Export")?' + $.param(q));
+            $('#stateResidentsBody').html('<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading</span></div></div>');
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('stateResidentsModal')).show();
+            $.get('@Url.Action("Residents")', q)
+                .done(function (html) { $('#stateResidentsBody').html(html); })
+                .fail(function () { $('#stateResidentsBody').html('<div class="alert alert-danger">The residents could not be loaded.</div>'); });
+        });
+    </script>
+}

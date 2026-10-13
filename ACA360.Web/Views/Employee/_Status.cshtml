@@ -1,0 +1,41 @@
+﻿@model ACA360.Web.Models.EmployeeListViewModel
+<div id="section_status">
+    <div class="section-header border-bottom">
+        <h6 class="fw-bold mb-0">Status History</h6>
+        <div class="card-header-actions">
+            <button type="button" class="btn btn-sm btn-outline-primary btn-edit" onclick="toggleSection('section_status', true)">Edit Status</button>
+            <div class="action-buttons d-none">
+                <button type="button" class="btn btn-sm btn-primary" onclick="addDynamicRow('status')"><i class="bx bx-plus"></i> Add</button>
+                <button type="button" class="btn btn-sm btn-label-secondary" onclick="toggleSection('section_status', false)">Cancel</button>
+                <button type="button" class="btn btn-sm btn-success" onclick="saveGeneric('section_status', '/Employee/EmployeeStatusSave', 'EmployeeEnrollment', event)">Save</button>
+            </div>
+        </div>
+    </div>
+    <div id="container_status">
+        @if (Model.SelectedEmployeeDetails?.EmployeeStatus != null)
+        {
+            foreach (var item in Model.SelectedEmployeeDetails.EmployeeStatus)
+            {
+                <div class="row g-3 mt-1 p-1 bg-label-secondary rounded dynamic-row align-items-end">
+                    <div class="text-end mb-n3 mt-0 ms-2">
+                        <button onclick="removeRow(this)" class="btn btn-sm bg-danger delete-btn float-end d-none" type="button">
+                            <i class="bx bx-trash fs-6 text-white"></i>
+                        </button>
+                    </div>
+                    <input type="hidden" class="data-field" data-key="StatusId" value="@item.StatusId" />
+                    <input type="hidden" class="data-field" data-key="EmployeeCodeId" value="@item.EmployeeCodeId" />
+                    <div class="col-md-4">
+                        <label class="form-label small">Status</label>
+                        <select class="form-select data-field text-uppercase" data-key="Status" disabled>
+                            <option value="">-- Select Status --</option>
+                            <option value="0" selected="@(item.Status?.ToString() == "0" ? "selected" : null)">FULL-TIME</option>
+                            <option value="1" selected="@(item.Status?.ToString() == "1" ? "selected" : null)">PART-TIME</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4"><label class="form-label small">Start Date</label><input type="date" class="form-control text-uppercase data-field start-date" data-key="StatusStartDate" onchange="var end=this.closest('.dynamic-row').querySelector('.end-date');end.min=this.value;if(end.value&&end.value<this.value)end.value='';" value="@(item.StatusStartDate?.ToString("yyyy-MM-dd"))" disabled></div>
+                    <div class="col-md-4"><label class="form-label small">End Date</label><input type="date" class="form-control text-uppercase data-field end-date" data-key="StatusEndDate" value="@(item.StatusEndDate?.ToString("yyyy-MM-dd"))" disabled></div>
+                </div>
+            }
+        }
+    </div>
+</div>

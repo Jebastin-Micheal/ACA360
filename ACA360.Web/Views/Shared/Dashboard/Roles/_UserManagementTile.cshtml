@@ -1,0 +1,27 @@
+@using ACA360.Core.Models
+@model EmployerDashboardPageViewModel
+@* Only rendered when the user may open User Accounts. Adding, deleting and
+   resetting all happen there; a reset is Edit > Change Password, which gives the
+   user a temporary password and ends their open sessions (script 027). *@
+<div class="tile c3 ac-navy" data-w="user-management">
+    <div class="tile-head">
+        <h4><i class="bx bx-user-circle"></i> User management</h4>
+        <div class="th-spacer"></div>
+        <div class="tile-tools"></div>
+    </div>
+    <div class="role-links">
+        @if (Model.Role.CanAddUsers)
+        {
+            <a class="btn btn-primary btn-sm w-100 mb-2" href="@Url.Action("Index", "UserAccounts", new { open = "add" })">
+                <i class="bx bx-user-plus me-1"></i> Add a user
+            </a>
+        }
+        <a class="btn btn-outline-primary btn-sm w-100" href="@Url.Action("Index", "UserAccounts")">
+            <i class="bx bx-lock-open-alt me-1"></i> @(Model.Role.CanAddUsers ? "Manage, delete or reset" : "Reset a password")
+        </a>
+        <div class="sub mt-2">
+            To reset a password, open the user and choose <strong>Change Password</strong>.
+            They get a temporary password and are signed out everywhere.
+        </div>
+    </div>
+</div>

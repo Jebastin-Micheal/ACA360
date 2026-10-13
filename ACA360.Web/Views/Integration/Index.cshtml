@@ -1,0 +1,155 @@
+﻿@using ACA360.Core.Models;
+@model IEnumerable<ApiClientViewModel>
+@{
+    ViewData["Title"] = "Developer Console";
+    int employerId = ViewBag.EmployerId;
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">API Integration Settings</h1>
+        <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#createKeyModal">
+            <i class="fas fa-plus fa-sm text-white-50"></i> Generate New Key
+        </button>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Active API Keys</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Client ID (Public)</th>
+                            <th>Created</th>
+                            <th>Last Used</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var key in Model)
+                        {
+                            <tr>
+                                <td>@key.Name</td>
+                                <td class="text-monospace">@key.ClientId</td>
+                                <td>@key.CreatedOn.ToShortDateString()</td>
+                                <td>@(key.LastUsedOn?.ToString() ?? "Never")</td>
+                                <td>
+                                    <form asp-action="RevokeKey" method="post" onsubmit="return confirm('Are you sure? This will immediately break any integration using this key.');">
+                                        <input type="hidden" name="clientId" value="@key.ClientId" />
+                                        <input type="hidden" name="employerId" value="@employerId" />
+                                        <button type="submit" class="btn btn-danger btn-sm">Revoke</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if (!Model.Any())
+                {
+                    <div class="alert alert-info">No active API keys found. Create one to get started.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createKeyModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New API Key</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Integration Name (e.g. ADP, Internal HR)</label>
+                                <input type="text" class="form-control" id="keyNameInput" placeholder="Enter name...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-3">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="generateKey()">Generate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="secretModal" tabindex="-1" role="dialog" data-backdrop="static">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content border-left-success">
+            <div class="modal-header">
+                <h5 class="modal-title text-success">Key Generated Successfully!</h5>
+            </div>
+            <div class="modal-body">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <p class="text-danger font-weight-bold">
+                                <i class="fas fa-exclamation-triangle"></i> COPY THIS NOW. You will not be able to see it again.
+                            </p>
+
+                            <div class="form-group">
+                                <label>Client ID</label>
+                                <input type="text" class="form-control bg-light" id="newClientId" readonly>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Client Secret</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control bg-light text-monospace font-weight-bold" id="newClientSecret" readonly>
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="copySecret()">Copy</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-3">
+                <button type="button" class="btn btn-success" onclick="location.reload()">I have stored it</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function generateKey() {
+            var name = $('#keyNameInput').val();
+            var empId = '@employerId';
+
+            if(!name) { alert('Please enter a name'); return; }
+
+            $.post('/Integration/CreateKey', { employerId: empId, name: name }, function(data) {
+                $('#createKeyModal').modal('hide');
+
+                // Show the Secret Reveal Modal
+                $('#newClientId').val(data.clientId);
+                $('#newClientSecret').val(data.secret);
+                $('#secretModal').modal('show');
+            }).fail(function() {
+                alert('Error generating key.');
+            });
+        }
+
+        function copySecret() {
+            var copyText = document.getElementById("newClientSecret");
+            copyText.select();
+            document.execCommand("copy");
+            alert("Secret copied to clipboard!");
+        }
+    </script>
+}

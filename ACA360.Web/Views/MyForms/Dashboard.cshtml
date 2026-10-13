@@ -1,0 +1,43 @@
+﻿@model int // The Year
+@{
+    Layout = "_EmployeeLayout";
+    ViewData["Title"] = "My Documents";
+}
+
+<div class="text-center mb-4">
+    <div class="avatar avatar-xl bg-label-success rounded-circle mx-auto mb-3">
+        <i class='bx bx-check-shield fs-1'></i>
+    </div>
+    <h4>Identity Verified</h4>
+    <p class="text-muted">You may now download your tax forms.</p>
+</div>
+
+<div class="list-group">
+    <a href="@Url.Action("DownloadForm", new { year = Model })" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center p-3">
+        <div class="avatar me-3">
+            <span class="avatar-initial rounded bg-label-danger"><i class='bx bxs-file-pdf'></i></span>
+        </div>
+        <div class="flex-grow-1">
+            <h6 class="mb-0">Form 1095-C</h6>
+            <small class="text-muted">Tax Year @Model</small>
+        </div>
+        <i class='bx bx-download fs-4 text-primary'></i>
+    </a>
+
+    <a href="https://www.irs.gov/pub/irs-pdf/i1095c.pdf" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center p-3">
+        <div class="avatar me-3">
+            <span class="avatar-initial rounded bg-label-secondary"><i class='bx bx-info-circle'></i></span>
+        </div>
+        <div class="flex-grow-1">
+            <h6 class="mb-0">IRS Instructions</h6>
+            <small class="text-muted">How to read your form</small>
+        </div>
+        <i class='bx bx-link-external fs-4 text-secondary'></i>
+    </a>
+</div>
+
+<div class="mt-4 text-center">
+    <a href="@Url.Action("Logout")" class="btn btn-outline-secondary btn-sm">
+        Log Out
+    </a>
+</div>

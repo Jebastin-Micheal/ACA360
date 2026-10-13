@@ -1,0 +1,30 @@
+@using ACA360.Core.Models
+@model EmployerDashboardPageViewModel
+@{
+    ViewData["AlertsSpan"] = Model.Role.CanManageUsers ? "c3" : "c6";
+}
+@* ACA Director: IRS filing overview, critical alerts and user management, above the
+   shared portfolio band (past due, totals, forms mailed / eFiled, process table). *@
+<section class="scope" data-section="role">
+    <div class="scope-bar">
+        <h2>Director overview</h2>
+        <div class="sb-spacer"></div>
+        <span class="hint">All employers, plan year @Model.FilingYear</span>
+    </div>
+
+    <div class="grid" id="gridRole">
+        <partial name="Dashboard/Roles/_IrsOverviewTile" model="Model" />
+
+        <partial name="Dashboard/Roles/_AlertsTile" model="Model" view-data="ViewData" />
+
+        @if (Model.Role.CanManageUsers)
+        {
+            <partial name="Dashboard/Roles/_UserManagementTile" model="Model" />
+        }
+    </div>
+
+    <div class="tray" id="trayRole">
+        <h4>Hidden tiles &mdash; click to restore</h4>
+        <div class="tray-items"></div>
+    </div>
+</section>

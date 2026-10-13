@@ -1,0 +1,60 @@
+@using ACA360.Core.Models
+@model EmployerDashboardPageViewModel
+@{
+    var irs = Model.Role.Irs ?? new IrsFilingOverview();
+}
+@* Account Manager: IRS results for their own clients and the rejections that need
+   correcting, above the shared portfolio band (their book of business). *@
+<section class="scope" data-section="role">
+    <div class="scope-bar">
+        <h2>My filings</h2>
+        <div class="sb-spacer"></div>
+        <span class="hint">Your assigned employers, plan year @Model.FilingYear</span>
+    </div>
+
+    <div class="grid" id="gridRole">
+        <partial name="Dashboard/Roles/_IrsOverviewTile" model="Model" />
+
+        <div class="tile @(Model.Role.CanManageUsers ? "c3" : "c6") @(irs.RecentRejections.Any() ? "ac-danger" : "ac-cyan")" data-w="irs-rejections">
+            <div class="tile-head">
+                <h4><i class="bx bx-error-circle"></i> Rejections to fix</h4>
+                <div class="th-spacer"></div>
+                <span class="pill @(irs.Rejected > 0 ? "pill-crit" : "pill-good")"><span class="dot"></span>@irs.Rejected</span>
+                <div class="tile-tools"></div>
+            </div>
+            @if (irs.RecentRejections.Any())
+            {
+                <ul class="alert-list">
+                    @foreach (var r in irs.RecentRejections)
+                    {
+                        <li>
+                            <span class="alert-text">
+                                <strong>@r.EmployerName</strong><br />
+                                <span class="sub">@r.StatusMessage@(r.GeneratedDate != default ? $" · generated {r.GeneratedDate:dd MMM yyyy}" : "")</span>
+                            </span>
+                            <a class="alert-link" href="@Url.Action("CorrectionDetails", "Irs", new { id = r.SubmissionId })">Fix</a>
+                        </li>
+                    }
+                </ul>
+                @if (irs.Rejected > irs.RecentRejections.Count)
+                {
+                    <div class="sub mt-1">Showing the latest @irs.RecentRejections.Count of @irs.Rejected.</div>
+                }
+            }
+            else
+            {
+                <div class="sub"><span class="pill pill-good"><span class="dot"></span>No rejected filings</span></div>
+            }
+        </div>
+
+        @if (Model.Role.CanManageUsers)
+        {
+            <partial name="Dashboard/Roles/_UserManagementTile" model="Model" />
+        }
+    </div>
+
+    <div class="tray" id="trayRole">
+        <h4>Hidden tiles &mdash; click to restore</h4>
+        <div class="tray-items"></div>
+    </div>
+</section>

@@ -1,0 +1,66 @@
+@model List<ACA360.Core.Models.EmployeeHistoryRow>
+@{
+    var groups = Model.GroupBy(r => r.GroupKey).ToList();
+    string Icon(string source) => source switch { "Import" => "bx-import", "Codes" => "bx-barcode", _ => "bx-edit" };
+    string Color(string source) => source switch { "Import" => "primary", "Codes" => "info", _ => "warning" };
+}
+
+<div class="employee-history" data-employee-history>
+    @if (groups.Count == 0)
+    {
+        <p class="text-body opacity-75 my-4 text-center">No changes recorded for this employee yet. Imports from now on, hand edits and code changes are listed here.</p>
+    }
+    else
+    {
+        <ul class="timeline mb-0 mt-3 ps-0" style="list-style:none">
+            @foreach (var g in groups)
+            {
+                var first = g.First();
+                var fields = g.Where(r => !string.IsNullOrEmpty(r.FieldName)).ToList();
+                <li class="d-flex gap-3 pb-3 mb-3 border-bottom" data-history-source="@first.Source">
+                    <span class="avatar avatar-sm flex-shrink-0"><span class="avatar-initial rounded-circle bg-label-@Color(first.Source)"><i class="bx @Icon(first.Source)"></i></span></span>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="d-flex flex-wrap justify-content-between gap-1">
+                            <strong>@first.Summary</strong>
+                            <small class="text-body opacity-75 text-nowrap">@first.ChangedAt.ToString("MM/dd/yyyy h:mm tt")</small>
+                        </div>
+                        <div class="small text-body opacity-75">
+                            @(string.IsNullOrEmpty(first.ChangedBy) ? "" : "By " + first.ChangedBy)
+                            @if (!string.IsNullOrEmpty(first.FileName))
+                            {
+                                <span>@(string.IsNullOrEmpty(first.ChangedBy) ? "" : " · ")File <span class="text-break">@first.FileName</span> (#@first.FileLogId)</span>
+                            }
+                        </div>
+                        @if (fields.Count > 0)
+                        {
+                            var shown = fields.Take(12).ToList();
+                            <div class="table-responsive position-relative mt-2">
+                                <table class="table table-sm mb-0 small">
+                                    <thead class="table-light"><tr><th>Field</th><th>Was</th><th>Now</th></tr></thead>
+                                    <tbody>
+                                        @foreach (var f in shown)
+                                        {
+                                            <tr>
+                                                <td class="text-nowrap">@f.FieldName</td>
+                                                <td class="text-break">@(string.IsNullOrEmpty(f.OldValue) ? "(blank)" : f.OldValue)</td>
+                                                <td class="text-break fw-semibold">@(string.IsNullOrEmpty(f.NewValue) ? "(blank)" : f.NewValue)</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            @if (fields.Count > shown.Count)
+                            {
+                                <small class="text-body opacity-75">and @(fields.Count - shown.Count) more</small>
+                            }
+                        }
+                    </div>
+                </li>
+            }
+        </ul>
+        @if (Model.Count >= 500)
+        {
+            <p class="small text-body opacity-75 mb-0">Showing the most recent 500 changes.</p>
+        }
+    }
+</div>

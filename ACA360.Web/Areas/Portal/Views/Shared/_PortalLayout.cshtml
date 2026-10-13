@@ -1,0 +1,65 @@
+@{
+    var displayName = User?.Identity?.Name ?? "Employee";
+    var initials = "EM";
+    if (!string.IsNullOrWhiteSpace(displayName))
+    {
+        var parts = displayName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        initials = parts.Length >= 2 ? $"{parts[0][0]}{parts[^1][0]}".ToUpper()
+                                     : displayName.Substring(0, 1).ToUpper();
+    }
+}
+<!doctype html>
+<html lang="en" dir="ltr" data-skin="default" data-assets-path="@Url.Content("~/assets/")" data-bs-theme="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>@ViewData["Title"] &middot; ACA 360</title>
+
+    @await Html.PartialAsync("Components/_Styles")
+    <link rel="stylesheet" href="~/assets/css/portal.css" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="portal-body">
+
+    <nav class="navbar navbar-expand-lg portal-navbar">
+        <div class="container-fluid portal-container d-flex align-items-center justify-content-between">
+            @await Html.PartialAsync("Components/Partials/_BrandingLogoPartial")
+
+            <div class="dropdown">
+                <a class="d-flex align-items-center text-decoration-none dropdown-toggle hide-arrow"
+                   href="javascript:;" data-bs-toggle="dropdown">
+                    <span class="me-2 d-none d-sm-inline text-muted">Welcome, <span class="fw-medium text-body">@displayName</span></span>
+                    <span class="avatar avatar-sm"><span class="avatar-initial rounded-circle bg-primary">@initials</span></span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item" href="@Url.Action("Index", "TaxForms", new { area = "Portal" })">
+                            <i class="bx bx-file me-2"></i> My Tax Forms
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li>
+                        <a class="dropdown-item" href="@Url.Action("Logout", "Account", new { area = "Portal" })">
+                            <i class="bx bx-power-off me-2"></i> Log Out
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container-fluid portal-container portal-content">
+        @RenderBody()
+    </main>
+
+    @await Component.InvokeAsync("Footer")
+
+    @await Html.PartialAsync("_PortalAssistant")
+
+    <script src="~/assets/vendor/libs/jquery/jquery.js"></script>
+    <script src="~/assets/vendor/libs/popper/popper.js"></script>
+    <script src="~/assets/vendor/js/bootstrap.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

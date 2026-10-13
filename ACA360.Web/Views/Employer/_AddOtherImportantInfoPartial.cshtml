@@ -1,0 +1,112 @@
+﻿@model ACA360.Web.Models.AddEmployerViewModel
+<form id="formImportantInfo" autocomplete="off">
+    <div class="tab-pane fade show active" id="otherimportantinfo" role="tabpanel" aria-labelledby="Other_Important_Info-tab">
+
+        <input type="hidden" id="EmployerIdhdn_main" class="EmployerIdhdn_main" name="ImportantInfo.EmployerId" value="@Model.ImportantInfo.EmployerId" />
+
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <label class="form-label" for="MailMemo">Mail Fulfillment Memo</label>
+                <textarea class="form-control" id="MailMemo" name="ImportantInfo.MailMemo" rows="3">@Model.ImportantInfo.MailMemo</textarea>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-12">
+                <h5>Most Recent Dates</h5>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label" for="MostRecentHireDate">Most Recent Hire Date</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base bx bx-calendar"></i></span>
+                    <input type="date" class="form-control" id="MostRecentHireDate"
+                           name="ImportantInfo.MostRecentHireDate"
+                           value="@(Model.ImportantInfo.MostRecentHireDate?.ToString("yyyy-MM-dd"))"
+                           disabled />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" for="MostRecentTerminationDate">Most Recent Termination Date</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base bx bx-calendar"></i></span>
+                    <input type="date" class="form-control" id="MostRecentTerminationDate"
+                           name="ImportantInfo.MostRecentTerminationDate"
+                           value="@(Model.ImportantInfo.MostRecentTerminationDate?.ToString("yyyy-MM-dd"))"
+                           disabled />
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-12">
+                <h5>Safe Harbor Count</h5>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label class="form-label" for="SafeHarbor2F">2F</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base bx bx-briefcase-alt"></i></span>
+                    <input type="number" class="form-control" id="SafeHarbor2F"
+                           name="ImportantInfo.SafeHarbor2F"
+                           value="@Model.ImportantInfo.SafeHarbor2F"
+                           disabled />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="SafeHarbor2G">2G</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base bx bx-card"></i></span>
+                    <input type="number" class="form-control" id="SafeHarbor2G"
+                           name="ImportantInfo.SafeHarbor2G"
+                           value="@Model.ImportantInfo.SafeHarbor2G"
+                           disabled />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="SafeHarbor2H">2H</label>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text"><i class="icon-base bx bx-card"></i></span>
+                    <input type="number" class="form-control" id="SafeHarbor2H"
+                           name="ImportantInfo.SafeHarbor2H"
+                           value="@Model.ImportantInfo.SafeHarbor2H"
+                           disabled />
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="text-end mt-3">
+    <button type="button" class="btn btn-success dependent-save-btn me-2" onclick="saveImportantInfo()">Save</button>
+</div>
+
+<script>
+      function saveImportantInfo() {
+        // Since the other fields are 'disabled', .serialize() will ONLY pick up:
+        // 1. ImportantInfo.EmployerId (Hidden)
+        // 2. ImportantInfo.MailMemo (TextArea)
+        var formData = $("#formImportantInfo").serialize();
+        var token = $('input[name="__RequestVerificationToken"]').val();
+        $.ajax({
+            url: '/Employer/SaveEmployerImportantInfo',
+            type: 'POST',
+            headers: {
+              "RequestVerificationToken": token
+            },
+            data: formData,
+            success: function (response) {
+                if (response.success) {
+                  window.location.reload();
+                } else {
+                    alert(response.message || "Error saving details.");
+                }
+            },
+            error: function () {
+                alert("Unexpected error occurred.");
+            }
+        });
+    }
+</script>

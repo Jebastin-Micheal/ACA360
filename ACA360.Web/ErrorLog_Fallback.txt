@@ -1,0 +1,198 @@
+
+[12/2/2025 12:33:05 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:05 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:07 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:07 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:08 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:08 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:09 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:09 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:10 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:10 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:10 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:11 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:11 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:11 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:13 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:13 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:23 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:23 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:24 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:24 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:39 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:39 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:39 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:39 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:41 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/2/2025 12:33:41 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/3/2025 7:24:14 AM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/3/2025 7:24:14 AM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/3/2025 7:24:16 AM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/3/2025 7:24:16 AM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/3/2025 7:24:42 AM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/3/2025 7:24:42 AM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/3/2025 8:30:48 AM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/3/2025 8:30:48 AM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/3/2025 8:30:56 AM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/3/2025 8:30:56 AM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/4/2025 1:06:36 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/4/2025 1:06:36 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/4/2025 1:06:44 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/4/2025 1:06:44 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/4/2025 1:06:51 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[12/4/2025 1:06:51 PM] Logging Error: Cannot insert the value NULL into column 'User_Ip', table 'ACA360_Copy.dbo.tbl_ErrorLogs'; column does not allow nulls. INSERT fails.
+The statement has been terminated.
+Original Error: Could not find stored procedure 'sp_EmployeeTabView_new'.
+
+[6/19/2026 12:54:09 PM] Logging Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+Original Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+
+[6/19/2026 12:54:09 PM] Logging Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+Original Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+
+[6/19/2026 12:54:18 PM] Logging Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+Original Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+
+[6/19/2026 12:54:18 PM] Logging Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+Original Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+
+[6/19/2026 12:54:39 PM] Logging Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+Original Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+
+[6/19/2026 12:54:39 PM] Logging Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+Original Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+
+[6/19/2026 12:54:45 PM] Logging Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+Original Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+
+[6/19/2026 12:54:46 PM] Logging Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+Original Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+
+[6/19/2026 12:54:49 PM] Logging Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+Original Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+
+[6/19/2026 12:54:49 PM] Logging Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+Original Error: A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)

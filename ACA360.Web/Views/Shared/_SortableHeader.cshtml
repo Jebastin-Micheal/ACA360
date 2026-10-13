@@ -1,0 +1,50 @@
+﻿@model dynamic
+@{
+    // Extract properties safely
+    string title = Model.Title;
+    string column = Model.Column?.ToString() ?? "";
+    string sortCol = Model.SortColumn?.ToString() ?? "";
+
+    // Safely handle nulls and force lowercase (e.g., "ASC" becomes "asc")
+    string rawSortOrder = Model.SortOrder?.ToString() ?? "";
+    string sortOrder = string.IsNullOrEmpty(rawSortOrder) ? "asc" : rawSortOrder.ToLower();
+
+    // Determine current state
+    bool isCurrentColumn = (sortCol == column);
+
+    // If it is the active column, figure out if it's descending. If not, default to ascending.
+    bool isDesc = isCurrentColumn && sortOrder == "desc";
+    bool isAsc = isCurrentColumn && !isDesc;
+
+    // Determine which buttons to show
+    bool showAscBtn = !isCurrentColumn || isAsc;
+    bool showDescBtn = !isCurrentColumn || isDesc;
+}
+
+<div class="d-flex align-items-center">
+    <span class="me-1">@title</span>
+    <span class="d-flex flex-column lh-1">
+
+        @if (showAscBtn)
+        {
+            <a class="grid-sort-header asc-sort icon-xs cursor-pointer @(isAsc ? "text-white fw-bold" : "text-muted")"
+               data-column="@column"
+               data-sort="@(isAsc ? "desc" : "asc")"
+               title="@(isAsc ? "Sort Descending" : "Sort Ascending")"
+               style="text-decoration:none;">
+                &#9652;
+            </a>
+        }
+
+        @if (showDescBtn)
+        {
+            <a class="grid-sort-header desc-sort icon-xs cursor-pointer @(isDesc ? "text-white fw-bold" : "text-muted")"
+               data-column="@column"
+               data-sort="@(isDesc ? "asc" : "desc")"
+               title="@(isDesc ? "Sort Ascending" : "Sort Descending")"
+               style="text-decoration:none;">
+                &#x25BE;
+            </a>
+        }
+    </span>
+</div>

@@ -1,0 +1,16 @@
+@inject ACA360.BusinessLogic.Interfaces.ISystemSettingsService PwaSystemSettings
+@* Installable app (PWA): manifest, icons and theme colour for PC, Android and iPhone / iPad.
+   js/pwa.js registers the service worker and runs the "Install app" button. The cache version
+   changes when a SuperAdmin clears the app cache (System settings > Maintenance); pwa.js then
+   drops this browser's ACA360 caches and reloads once. *@
+<link rel="manifest" href="~/manifest.webmanifest" />
+<meta name="theme-color" content="#3F4B6E" />
+<meta name="aca360-cache-version" content="@(await PwaSystemSettings.GetAppCacheVersionAsync())" />
+<meta name="application-name" content="ACA360" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="ACA360" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<link rel="apple-touch-icon" href="~/icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="~/icons/favicon-32.png" />
+<script src="~/js/pwa.js" asp-append-version="true" defer></script>

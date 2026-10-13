@@ -1,0 +1,66 @@
+@using ACA360.Core.Models
+@model (EmployerYearFigures ThisYear, EmployerYearFigures? LastYear)
+@{
+    // Penalty Risk: this filing year next to the one before (script 064), from the 1095-C codes.
+    var now = Model.ThisYear;
+    var before = Model.LastYear;
+    var rows = new (string Label, Func<EmployerYearFigures, decimal> Value, bool Money, bool LowerIsBetter)[]
+    {
+        ("Employees", f => f.Employees, false, false),
+        ("Full-time employees", f => f.FullTimeEmployees, false, false),
+        ("Months offered coverage", f => f.OfferedMonths, false, false),
+        ("Months enrolled (2C)", f => f.EnrolledMonths, false, false),
+        ("Months not offered while full-time (4980H(a) risk)", f => f.NotOfferedMonths, false, true),
+        ("Offered months with no safe harbor (4980H(b) risk)", f => f.UnaffordableMonths, false, true),
+        ("Employees at risk", f => f.AtRiskEmployees, false, true),
+        ("Estimated penalty", f => f.EstimatedPenalty, true, true),
+    };
+    string Show(decimal v, bool money) => money ? v.ToString("$#,##0") : v.ToString("#,##0");
+}
+<div class="card mb-4">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h5 class="card-title mb-0"><i class="bx bx-trending-up me-1"></i>Compared with @(now.FilingYear - 1)</h5>
+        <small class="text-body opacity-75">From the 1095-C codes of each year.</small>
+    </div>
+    @if (before == null || before.CodeRows == 0)
+    {
+        <div class="card-body small">There are no codes for this employer in @(now.FilingYear - 1) to compare with.</div>
+    }
+    else if (now.CodeRows == 0)
+    {
+        <div class="card-body small">Codes for @now.FilingYear have not been generated yet.</div>
+    }
+    else
+    {
+        <div class="table-responsive position-relative">
+            <table class="table table-sm align-middle mb-0">
+                <caption class="visually-hidden">This year compared with last year</caption>
+                <thead class="table-light">
+                    <tr><th scope="col"></th><th scope="col" class="text-end">@before.FilingYear</th><th scope="col" class="text-end">@now.FilingYear</th><th scope="col" class="text-end">Change</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in rows)
+                    {
+                        var a = r.Value(before);
+                        var b = r.Value(now);
+                        var change = b - a;
+                        var worse = r.LowerIsBetter ? change > 0 : false;
+                        var better = r.LowerIsBetter && change < 0;
+                        <tr>
+                            <th scope="row" class="fw-normal small">@r.Label</th>
+                            <td class="text-end small">@Show(a, r.Money)</td>
+                            <td class="text-end small fw-semibold">@Show(b, r.Money)</td>
+                            <td class="text-end small @(worse ? "text-danger fw-semibold" : better ? "text-success" : "")">
+                                @(change == 0 ? "—" : (change > 0 ? "+" : "−") + Show(Math.Abs(change), r.Money))
+                                @if (a != 0 && change != 0)
+                                {
+                                    <span class="opacity-75">(@((change / a).ToString("+0%;−0%")))</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

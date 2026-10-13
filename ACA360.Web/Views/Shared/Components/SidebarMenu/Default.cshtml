@@ -1,0 +1,26 @@
+﻿@using ACA360.Core.Models
+@model List<Menu>
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    
+}
+
+<ul class="menu-inner ps-4">
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var topLevelMenu in Model.Where(m => m.ParentMenuId == null).OrderBy(m => m.DisplayOrder))
+        {
+            <!-- Pass 'true' because this IS horizontal -->
+            @await Html.PartialAsync("_RecursiveSidebarItem", (topLevelMenu, Model, currentController, true))
+        }
+    }
+    
+    <li class="menu-item">
+        <a href="@Url.Action("Logout", "Account")" class="menu-link">
+            <i class="menu-icon icon-base bx bx-power-off"></i>
+            <div data-i18n="Log Out">Log Out</div>
+        </a>
+    </li>
+    
+</ul>

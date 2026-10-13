@@ -1,0 +1,161 @@
+﻿@model ACA360.Core.Models.RolePermissionViewModels
+
+@{
+    ViewData["Title"] = "Role Permissions";
+}
+<link rel="stylesheet" href="~/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.css" />
+<link rel="stylesheet" href="~/assets/vendor/libs/datatables-bs5/buttons.bootstrap5.css" />
+<link href="~/assets/vendor/libs/select2/select2.css" rel="stylesheet" />
+<style>
+    .select2-container {
+        z-index: 9999 !important;
+    }
+
+    .select2-container--open {
+        z-index: 9999 !important;
+    }
+
+    .select2-container--default.select2-container--focus .select2-selection--multiple .select2-selection__rendered {
+        padding-left: inherit;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+        padding-left: inherit;
+    }
+</style>
+
+<div class="card">
+    <div class="row mb-3 ms-5 mt-5">
+        <h2>Permissions : <span class="text-info"> @Model.RoleName</span></h2>
+    </div>
+
+    <div class="row mb-3 ms-5">
+        <div class="col-md-4">
+            <input type="text" id="menuSearch" class="form-control" placeholder="Search Menu Name...">
+        </div>
+    </div>
+
+    <form asp-action="Update" asp-route-roleId="@Model.RoleId" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="card-body">
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Menu</th>
+                        <th>Controller</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var groupedPermissions = Model.Permissions.GroupBy(p => new { p.MenuId, p.MenuName, p.Controller });
+                    }
+
+                    @foreach (var group in groupedPermissions)
+                    {
+                        <tr>
+                            <td>@group.Key.MenuName</td>
+                            <td>@group.Key.Controller</td>
+                            <td>
+                                <div>
+                                    <select class="permission-select form-select" id="select_@group.Key.MenuId" name="SelectedActions[@group.Key.MenuId]" multiple>
+                                        <option value="select_toggle" data-special="true">-- Select All --</option>
+                                        @foreach (var permission in group)
+                                        {
+                                            if (permission.IsEnabled)
+                                            {
+                                                <option value="@permission.ActionId" selected>@permission.ActionName</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@permission.ActionId">@permission.ActionName</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer float-end">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a asp-controller="Role" asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </div>
+
+    </form>
+</div>
+
+<script src="~/assets/vendor/libs/select2/select2.js"></script>
+
+<script>
+    $(document).ready(function () {
+        const $select = $('.permission-select');
+
+        $select.select2({
+            placeholder: 'Select actions',
+            width: '100%',
+            templateResult: function (data) {
+                if (!data.id) return data.text;
+                if (data.element && $(data.element).data('special')) {
+                    return $('<span class="select2-special-option">' + data.text + '</span>');
+                }
+                return data.text;
+            }
+        });
+
+        // --- Use "this" so each row works independently ---
+        $select.on('select2:select', function (e) {
+            const $ddl = $(this);
+            const selectedValue = e.params.data.id;
+
+            if (selectedValue === 'select_toggle') {
+                const allOptionValues = [];
+                $ddl.find('option').each(function () {
+                    const val = $(this).val();
+                    if (val !== 'select_toggle') allOptionValues.push(val);
+                });
+
+                const currentValues = $ddl.val() || [];
+                const isSelecting = currentValues.length < allOptionValues.length;
+
+                if (isSelecting) {
+                    $ddl.val(allOptionValues).trigger('change');
+                    $ddl.find('option[value="select_toggle"]')
+                        .text('-- Deselect All --')
+                        .attr('data-toggled', 'true');
+                } else {
+                    $ddl.val(null).trigger('change');
+                    $ddl.find('option[value="select_toggle"]')
+                        .text('-- Select All --')
+                        .attr('data-toggled', 'false');
+                }
+            }
+        });
+
+        $select.on('change', function () {
+            const $ddl = $(this);
+            const totalOptions = $ddl.find('option').length - 1; // excluding toggle
+            const selectedOptions = ($ddl.val() || []).length;
+            const toggleText = selectedOptions === totalOptions
+                ? '-- Deselect All --'
+                : '-- Select All --';
+
+            $ddl.find('option[value="select_toggle"]').text(toggleText);
+        });
+
+        // --- NEW: Menu Name Search Filter ---
+        $('#menuSearch').on('keyup', function () {
+            const searchTerm = $(this).val().toLowerCase();
+
+            $('table tbody tr').filter(function () {
+                // Find the text in the first td (MenuName)
+                const menuName = $(this).find('td:first').text().toLowerCase();
+                // Toggle row visibility based on the search match
+                $(this).toggle(menuName.indexOf(searchTerm) > -1);
+            });
+        });
+    });
+</script>

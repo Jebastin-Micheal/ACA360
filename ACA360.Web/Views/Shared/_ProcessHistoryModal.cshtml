@@ -1,0 +1,34 @@
+﻿<div class="modal fade" id="processHistoryModal" tabindex="-1" aria-hidden="true" style="z-index: 1056;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-light border-bottom py-3">
+                <h5 class="modal-title fw-bold" id="historyModalTitleHtml">
+                    <i class="bx bx-history text-primary me-2 fs-4"></i>Process History View
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" style="max-height: 60vh; overflow-y: auto;">
+                <div class="table-responsive border rounded">
+                    <table class="table table-hover table-striped mb-0 text-nowrap">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th class="fw-bold small text-uppercase">Process Step</th>
+                                <th class="fw-bold small text-uppercase">Date</th>
+                                <th class="fw-bold small text-uppercase">Next Follow-up</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="historyPopupLoader" class="text-center py-4" style="display:none;">
+                    <div class="spinner-border text-primary spinner-border-sm"></div>
+                    <span class="ms-2 text-muted x-small">Loading history records...</span>
+                </div>
+            </div>
+            <div class="modal-footer border-top bg-light py-2">
+                <button type="button" class="btn btn-outline-secondary px-4 fw-semibold shadow-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
